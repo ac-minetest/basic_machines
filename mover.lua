@@ -272,8 +272,9 @@ minetest.register_node("basic_machines:keypad", {
 
 local function use_keypad(pos,name)
 	
+	
+	local meta = minetest.get_meta(pos);	
 	if minetest.is_protected(pos, name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
-	local meta = minetest.get_meta(pos);
 	local count = meta:get_int("count") or 0;
 		
 	if count<=0 then return end; count = count - 1; meta:set_int("count",count);
