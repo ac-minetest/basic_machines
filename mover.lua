@@ -272,13 +272,14 @@ minetest.register_node("basic_machines:keypad", {
 
 local function use_keypad(pos,name)
 	
-	
+		
 	local meta = minetest.get_meta(pos);	
-	if minetest.is_protected(pos, name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
+	local name =  meta:get_string("owner");
+	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
 	local count = meta:get_int("count") or 0;
 		
 	if count<=0 then return end; count = count - 1; meta:set_int("count",count);
-	minetest.after(5, function() use_keypad(pos,name) end )  -- repeat operation as many times as set with "iter"
+	minetest.after(5, function() use_keypad(pos) end )  -- repeat operation as many times as set with "iter"
 	
 	local x0,y0,z0;
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
@@ -305,7 +306,7 @@ end
 local function check_keypad(pos,name)
 	local meta = minetest.get_meta(pos);
 	local pass =  meta:get_string("pass");
-	if pass == "" then meta:set_int("count",meta:get_int("iter")); use_keypad(pos,name) return end
+	if pass == "" then meta:set_int("count",meta:get_int("iter")); use_keypad(pos) return end
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
@@ -533,7 +534,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				return
 			end
 		minetest.chat_send_player(name,"ACCESS GRANTED.")
-		meta:set_int("count",meta:get_int("iter"));	use_keypad(pos,name)
+		meta:set_int("count",meta:get_int("iter"));use_keypad(pos)
 		return
 		end
 	end
