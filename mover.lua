@@ -337,7 +337,13 @@ end
 local function check_keypad(pos,name)
 	local meta = minetest.get_meta(pos);
 	local pass =  meta:get_string("pass");
-	if pass == "" then meta:set_int("count",meta:get_int("iter")); use_keypad(pos) return end
+	if pass == "" then 
+		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
+			meta:set_int("count",meta:get_int("iter")); use_keypad(pos) 
+			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
+		end
+		return 
+	end
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
@@ -576,7 +582,12 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				return
 			end
 		minetest.chat_send_player(name,"ACCESS GRANTED.")
-		meta:set_int("count",meta:get_int("iter"));use_keypad(pos)
+		
+		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
+			meta:set_int("count",meta:get_int("iter")); use_keypad(pos) 
+			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
+		end
+		
 		return
 		end
 	end
