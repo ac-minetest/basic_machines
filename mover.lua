@@ -24,7 +24,7 @@ minetest.register_node("basic_machines:mover", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
-		meta:set_string("infotext", "Mover block. Right click to set it up. Or set positions by punching it.")
+		meta:set_string("infotext", "Mover block. Right click to set it up. Or set positions by punching it (while holding shift).")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		meta:set_int("x0",0);meta:set_int("y0",-1);meta:set_int("z0",0); -- source1
 		meta:set_int("x1",0);meta:set_int("y1",-1);meta:set_int("z1",0); -- source2: defines cube
@@ -211,12 +211,11 @@ minetest.register_node("basic_machines:mover", {
 		if dig then 
 			-- check for cactus or tree
 			local dig_up = false
-			local dig_up_table = {"default:cactus","default:tree","default:jungletree","default:papyrus"};
-			for i,v in pairs(dig_up_table) do
-				if node1.name==v then dig_up = true break end
-			end
+			-- define which nodes are dug up completely, like a tree
+			local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:papyrus"]=true};
 			
-			
+			if dig_up_table[node1.name] then dig_up = true end
+						
 			if dig_up == true then -- dig up to height 10, break sooner if needed
 				for i=0,10 do
 					local pos3 = {x=pos1.x,y=pos1.y+i,z=pos1.z};
@@ -224,6 +223,7 @@ minetest.register_node("basic_machines:mover", {
 					if dname ~=node1.name then break end
 					minetest.set_node(pos3,{name="air"}); count = count+1;
 				end
+				--minetest.chat_send_all(" debug: digged up " .. count)
 			end
 			
 			-- read what to drop, if none just keep original node
@@ -275,7 +275,7 @@ minetest.register_node("basic_machines:keypad", {
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("infotext", "Keypad. Right click to set it up. Or punch it while sneaking (shift).")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
-		meta:set_int("x0",0);meta:set_int("y0",1);meta:set_int("z0",0); -- target
+		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
 		meta:set_string("pass", "");
 		meta:set_int("iter",1);
 	end,
@@ -283,7 +283,7 @@ minetest.register_node("basic_machines:keypad", {
 	mesecons = {effector = {
 		action_on = function (pos, node) 
 		local meta = minetest.get_meta(pos);
-		-- not yet defined ... ???
+		check_keypad(pos,"");
 	end
 	}
 	},
@@ -344,6 +344,7 @@ local function check_keypad(pos,name)
 		end
 		return 
 	end
+	if name == "" then return end
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
@@ -363,8 +364,10 @@ minetest.register_node("basic_machines:detector", { -- TO DO
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("infotext", "Detector. Right click/punch to set it up.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
-		meta:set_int("x1",0);meta:set_int("y1",-1);meta:set_int("z0",0); -- source: read
-		meta:set_int("x2",0);meta:set_int("y2",-1);meta:set_int("z2",0); -- target: activate
+		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z0",0); -- source: read
+		meta:set_int("x2",0);meta:set_int("y2",0);meta:set_int("z2",0); -- target: activate
+		meta:set_string("node","");
+		meta:set_int("public",0);
 	end,
 		
 	mesecons = {effector = {
@@ -377,21 +380,55 @@ minetest.register_node("basic_machines:detector", { -- TO DO
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
-		local x0,y0,z0,pass,iter;
-		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
-		
-		pass = meta:get_string("pass");
+		local x0,y0,z0,x1,y1,z1,node;
+		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
+		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
+		node=meta:get_string("node") or "";
 		local form  = 
 		"size[3,2.75]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button[0.,2.25;1,1;OK;OK] field[0.25,1.5;3,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]";
-		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
+		"field[0.25,0.5;1,1;x0;source;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+		"button[2.,2.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node to detect: ;"..node.."]";
+		minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
 	end
 })
 
 
+minetest.register_abm({ 
+	nodenames = {"basic_machines:detector"},
+	neighbors = {""},
+	interval = 5,
+	chance = 1,
+	action = function(pos, node, active_object_count, active_object_count_wider)
+		local meta = minetest.get_meta(pos);
+		local x0,y0,z0,x1,y1,z1,node;
+		x0=meta:get_int("x0")+pos.x;y0=meta:get_int("y0")+pos.y;z0=meta:get_int("z0")+pos.z;
+		x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;
+		node=meta:get_string("node") or ""; 
+		local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name;
+		local trigger = false
+		if node == "" and tnode~="air" then trigger = true end
+		if node ~= "" and tnode == node then trigger = true end
+		
+		if trigger then
+			local node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
+			local table = minetest.registered_nodes[node.name];
+			if not table then return end -- error
+			if not table.mesecons then return end -- error
+			if not table.mesecons.effector then return end -- error
+			local effector=table.mesecons.effector;
+			if not effector.action_on then return end
+			effector.action_on({x=x1,y=y1,z=z1},node); -- run
+		end
+
+	end,
+}) 
+
+
+
+
 local punchset = {}; 
-punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true};
+punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true,["basic_machines:detector"]=true};
 
 -- handles set up punches
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
@@ -417,9 +454,9 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	if node.name == "basic_machines:mover" then -- mover init code
 		if punchset[name].state == 0 then 
-			if not puncher:get_player_control().sneak then
-				return
-			end
+			-- if not puncher:get_player_control().sneak then
+				-- return
+			-- end
 			minetest.chat_send_player(name, "MOVER: Now punch starting and end position to set up mover.")
 			punchset[name].node = node.name;punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
 			punchset[name].state = 1 
@@ -430,9 +467,16 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	 if punchset[name].node == "basic_machines:mover" then -- mover code
 		if punchset[name].state == 1 then 
 			if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
-					minetest.chat_send_player(name, "mover setup: Punch closer to mover. reseting.")
+					minetest.chat_send_player(name, "MOVER: Punch closer to mover. reseting.")
 					punchset[name].state = 0; return
 			end
+			
+			if punchset[name].pos.x==pos.x and punchset[name].pos.y==pos.y and punchset[name].pos.z==pos.z then 
+				minetest.chat_send_player(name, "MOVER: Punch something else. aborting.")
+				punchset[name].state = 0;
+				return 
+			end
+			
 			punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};punchset[name].state = 2;
 			minetest.chat_send_player(name, "MOVER: Start position for mover set. Punch again to set end position.")
 			return
@@ -444,8 +488,9 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 					minetest.chat_send_player(name, "MOVER: Punch closer to mover. aborting.")
 					punchset[name].state = 0; return
 			end
+			
 			punchset[name].pos2 = {x=pos.x,y=pos.y,z=pos.z}; punchset[name].state = 0;
-			minetest.chat_send_player(name, "End position for mover set.")
+			minetest.chat_send_player(name, "MOVER: End position for mover set.")
 			local x = punchset[name].pos1.x-punchset[name].pos.x;
 			local y = punchset[name].pos1.y-punchset[name].pos.y;
 			local z = punchset[name].pos1.z-punchset[name].pos.z;
@@ -461,29 +506,28 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		end
 	end
 	
+	-- KEYPAD
 	if node.name == "basic_machines:keypad" then -- keypad init/usage code
-		if not puncher:get_player_control().sneak then
-			check_keypad(pos,name)-- not setup, just standard operation
-			return
-		end
 		local meta = minetest.get_meta(pos);
-		if meta:get_string("owner")~= name then minetest.chat_send_player(name, "Only owner can set up keypad.") return end
-		
-		if punchset[name].state == 0 then 
-			minetest.chat_send_player(name, "KEYPAD: Now punch the target block.")
-			punchset[name].node = node.name;punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
-			punchset[name].state = 1 
-			return
+		if not (meta:get_int("x0")==0 and meta:get_int("y0")==0 and meta:get_int("z0")==0) then -- already configured
+			check_keypad(pos,name)-- not setup, just standard operation
+		else
+			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "KEYPAD: Only owner can set up keypad.") return end
+			if punchset[name].state == 0 then 
+				minetest.chat_send_player(name, "KEYPAD: Now punch the target block.")
+				punchset[name].node = node.name;punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
+				punchset[name].state = 1 
+				return
+			end
 		end
 	end
 	
 	if punchset[name].node=="basic_machines:keypad" then -- keypad setup code
-		if punchset[name].state == 1 then 
+		if punchset[name].state == 0 then 
 			local meta = minetest.get_meta(punchset[name].pos);
 			local x = pos.x-punchset[name].pos.x;
 			local y = pos.y-punchset[name].pos.y;
 			local z = pos.z-punchset[name].pos.z;
-			
 			if math.abs(x)>5 or math.abs(y)>5 or math.abs(z)>5 then
 					minetest.chat_send_player(name, "KEYPAD: Punch closer to keypad. reseting.")
 					punchset[name].state = 0; return
@@ -496,6 +540,52 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			return
 		end
 	end
+
+	-- DETECTOR "basic_machines:detector"
+	if node.name == "basic_machines:detector" then -- detector init code
+		local meta = minetest.get_meta(pos);
+			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "DETECTOR: Only owner can set up detector.") return end
+			if punchset[name].state == 0 then 
+				minetest.chat_send_player(name, "DETECTOR: Now punch the source block.")
+				punchset[name].node = node.name;
+				punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
+				punchset[name].state = 1 
+				return
+			end
+	end
+	
+	if punchset[name].node == "basic_machines:detector" then
+			if punchset[name].state == 1 then 
+				if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
+					punchset[name].state = 0; return
+				end
+				minetest.chat_send_player(name, "DETECTOR: Now punch the target machine.")
+				punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};
+				punchset[name].state = 2 
+				return
+			end
+			
+			if punchset[name].state == 2 then 
+				if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
+					punchset[name].state = 0; return
+				end
+				minetest.chat_send_player(name, "DETECTOR: Setup complete.")
+			
+				local x = punchset[name].pos1.x-punchset[name].pos.x;
+				local y = punchset[name].pos1.y-punchset[name].pos.y;
+				local z = punchset[name].pos1.z-punchset[name].pos.z;
+				local meta = minetest.get_meta(punchset[name].pos);
+				meta:set_int("x0",x);meta:set_int("y0",y);meta:set_int("z0",z);
+				x=pos.x-punchset[name].pos.x;y=pos.y-punchset[name].pos.y;z=pos.z-punchset[name].pos.z;
+				meta:set_int("x1",x);meta:set_int("y1",y);meta:set_int("z1",z);
+				punchset[name].state = 0 
+				return
+			end
+	end
+
+	
 	
 end)
 
@@ -513,7 +603,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		if fields.help == "help" then
 			local text = "SETUP: right click and define box where to dig from and where to put. Positions are defined by x y z coordinates (see top of mover). Mover has coordinates 0 0 0. If you prefer interactive setup "..
-			"punch the mover while sneaking (hold shift)and then punch source and target node. Put chest with fuel right next to it. "..
+			"punch the mover and then punch source and target node. Put chest with fuel right next to it. "..
 			"\n\nMODES of operation: normal ( just teleport), dig ( digs and gives you resulted node), drop "..
 			"( drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects). "..
 			"\n\nBy setting 'filter only block' only selected nodes are moved. Activate it by keypad signal or mese signal (if mesecons mod) .";
@@ -538,7 +628,6 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_int("pc",0); meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
 			meta:set_string("prefer",fields.prefer or "");
-			meta:set_string("mode",fields.mode or "");
 			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put chest with coal next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 		end
@@ -590,6 +679,32 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		return
 		end
+	end
+	
+	-- MOVER
+	local fname = "basic_machines:detector_"
+	if string.sub(formname,0,string.len(fname)) == fname then
+		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
+		local name = player:get_player_name(); if name==nil then return end
+		local meta = minetest.get_meta(pos)
+		if name ~= meta:get_string("owner") or not fields then return end -- only owner can interact
+		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
+		
+		if fields.OK == "OK" then
+			local x0,y0,z0,x1,y1,z1,node;
+			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 0;z0=tonumber(fields.z0) or 0
+			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or 0;z1=tonumber(fields.z1) or 0
+			
+			if math.abs(x0)>5 or math.abs(y0)>5 or math.abs(z0)>5 or math.abs(x1)>5 or math.abs(y1)>5 or math.abs(z1)>5 then
+				minetest.chat_send_player(name,"all coordinates must be between -5 and 5"); return
+			end
+
+			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
+			meta:set_string("node",fields.node or "");
+
+		end
+		return
 	end
 	
 end)
