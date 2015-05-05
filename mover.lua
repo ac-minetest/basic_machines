@@ -265,43 +265,6 @@ minetest.register_node("basic_machines:mover", {
 })
 
 -- KEYPAD
-
-minetest.register_node("basic_machines:keypad", {
-	description = "Keypad",
-	tiles = {"keypad.png"},
-	groups = {oddly_breakable_by_hand=2},
-	sounds = default.node_sound_wood_defaults(),
-	after_place_node = function(pos, placer)
-		local meta = minetest.env:get_meta(pos)
-		meta:set_string("infotext", "Keypad. Right click to set it up. Or punch it while sneaking (shift).")
-		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
-		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
-		meta:set_string("pass", "");
-		meta:set_int("iter",1);
-	end,
-		
-	mesecons = {effector = {
-		action_on = function (pos, node) 
-		local meta = minetest.get_meta(pos);
-		check_keypad(pos,"");
-	end
-	}
-	},
-	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		local meta = minetest.get_meta(pos);
-		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
-		local x0,y0,z0,pass,iter;
-		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
-		
-		pass = meta:get_string("pass");
-		local form  = 
-		"size[3,2.75]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;3,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]";
-		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
-	end
-})
-
 local function use_keypad(pos,name)
 		
 	local meta = minetest.get_meta(pos);	
@@ -340,7 +303,6 @@ local function check_keypad(pos,name)
 	if pass == "" then 
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
 			meta:set_int("count",meta:get_int("iter")); use_keypad(pos) 
-			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
 		end
 		return 
 	end
@@ -352,6 +314,44 @@ local function check_keypad(pos,name)
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
 
 end
+
+minetest.register_node("basic_machines:keypad", {
+	description = "Keypad",
+	tiles = {"keypad.png"},
+	groups = {oddly_breakable_by_hand=2},
+	sounds = default.node_sound_wood_defaults(),
+	after_place_node = function(pos, placer)
+		local meta = minetest.env:get_meta(pos)
+		meta:set_string("infotext", "Keypad. Right click to set it up. Or punch it while sneaking (shift).")
+		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
+		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
+		meta:set_string("pass", "");
+		meta:set_int("iter",1);
+	end,
+		
+	mesecons = {effector = {
+		action_on = function (pos, node) 
+		local meta = minetest.get_meta(pos);
+		check_keypad(pos,"");
+	end
+	}
+	},
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+		local meta = minetest.get_meta(pos);
+		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
+		local x0,y0,z0,pass,iter;
+		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
+		
+		pass = meta:get_string("pass");
+		local form  = 
+		"size[3,2.75]" ..  -- width, height
+		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;3,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]";
+		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
+	end
+})
+
+
 
 -- DETECTOR
 
@@ -419,6 +419,8 @@ minetest.register_abm({
 			local effector=table.mesecons.effector;
 			if not effector.action_on then return end
 			effector.action_on({x=x1,y=y1,z=z1},node); -- run
+			meta:set_string("infotext", "detector: on");
+			else meta:set_string("infotext", "detector: idle");
 		end
 
 	end,
