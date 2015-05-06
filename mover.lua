@@ -44,6 +44,9 @@ minetest.register_node("basic_machines:mover", {
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
 		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
+		machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
+		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
+		
 		prefer = meta:get_string("prefer");mode = meta:get_string("mode");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
@@ -353,6 +356,7 @@ minetest.register_node("basic_machines:keypad", {
 		local x0,y0,z0,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
+		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
 		
 		pass = meta:get_string("pass");
 		local form  = 
@@ -399,6 +403,10 @@ minetest.register_node("basic_machines:detector", {
 		local x0,y0,z0,x1,y1,z1,r,node,NOT;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
+		
+		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
+		machines.pos2[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos2(player:get_player_name()) -- mark pos2
+
 		node=meta:get_string("node") or "";
 		NOT=meta:get_int("NOT");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
@@ -581,6 +589,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			end
 			
 			punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};punchset[name].state = 2;
+			machines.pos1[name] = punchset[name].pos1;machines.mark_pos1(name) -- mark position
 			minetest.chat_send_player(name, "MOVER: Start position for mover set. Punch again to set end position.")
 			return
 		end
@@ -593,6 +602,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			end
 			
 			punchset[name].pos2 = {x=pos.x,y=pos.y,z=pos.z}; punchset[name].state = 0;
+			machines.pos2[name] = punchset[name].pos2;machines.mark_pos2(name) -- mark pos2
+			
 			minetest.chat_send_player(name, "MOVER: End position for mover set.")
 			local x = punchset[name].pos1.x-punchset[name].pos.x;
 			local y = punchset[name].pos1.y-punchset[name].pos.y;
@@ -635,7 +646,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 					minetest.chat_send_player(name, "KEYPAD: Punch closer to keypad. reseting.")
 					punchset[name].state = 0; return
 			end
-			
+			machines.pos1[name] = pos;machines.mark_pos1(name) -- mark pos1
 			meta:set_int("x0",x);meta:set_int("y0",y);meta:set_int("z0",z);	
 			punchset[name].state = 0 
 			minetest.chat_send_player(name, "KEYPAD: Keypad target set with coordinates " .. x .. " " .. y .. " " .. z)
@@ -665,6 +676,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				end
 				minetest.chat_send_player(name, "DETECTOR: Now punch the target machine.")
 				punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};
+				machines.pos1[name] = pos;machines.mark_pos1(name) -- mark pos1
 				punchset[name].state = 2 
 				return
 			end
@@ -680,7 +692,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 					punchset[name].state = 0; return
 				end
 				minetest.chat_send_player(name, "DETECTOR: Setup complete.")
-			
+				machines.pos2[name] = pos;machines.mark_pos2(name) -- mark pos2
 				local x = punchset[name].pos1.x-punchset[name].pos.x;
 				local y = punchset[name].pos1.y-punchset[name].pos.y;
 				local z = punchset[name].pos1.z-punchset[name].pos.z;
