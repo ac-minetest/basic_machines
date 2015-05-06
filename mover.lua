@@ -491,16 +491,16 @@ minetest.register_abm({
 		if not table.mesecons then return end -- error
 		if not table.mesecons.effector then return end -- error
 		local effector=table.mesecons.effector;
-		
 			
 		if trigger then -- activate target node if succesful
+			meta:set_string("infotext", "detector: on");
 			if not effector.action_on then return end
 			effector.action_on({x=x1,y=y1,z=z1},node); -- run
-			meta:set_string("infotext", "detector: on");
+			
 			else 
+			meta:set_string("infotext", "detector: idle");
 			if not effector.action_off then return end
 			effector.action_off({x=x1,y=y1,z=z1},node); -- run
-			meta:set_string("infotext", "detector: idle");
 		end
 			
 	end,

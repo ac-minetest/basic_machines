@@ -5,6 +5,7 @@ machines = {}; machines.pos1 = {}; machines.pos2 = {};
 machines.marker1 = {}
 machines.marker2 = {}
 machines.marker_region = {}
+machines.timer  = 10;
 
 
 
@@ -65,13 +66,16 @@ minetest.register_entity(":machines:pos1", {
 		physical = false,
 	},
 	on_step = function(self, dtime)
-		if machines.marker1[self.name] == nil then
+		machines[self.name].timer = machines[self.name].timer - dtime
+		if machines[self.name].timer<=0 or machines.marker1[self.name] == nil then
 			self.object:remove()
+			machines[self.name].timer = 10
 		end
 	end,
 	on_punch = function(self, hitter)
 		self.object:remove()
 		machines.marker1[self.name] = nil
+		machines[self.name].timer = 10
 	end,
 })
 
