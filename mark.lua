@@ -66,6 +66,7 @@ minetest.register_entity(":machines:pos1", {
 		physical = false,
 	},
 	on_step = function(self, dtime)
+		if not machines[self.name] then machines[self.name]={}; machines[self.name].timer = 10 end
 		machines[self.name].timer = machines[self.name].timer - dtime
 		if machines[self.name].timer<=0 or machines.marker1[self.name] == nil then
 			self.object:remove()

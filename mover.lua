@@ -139,8 +139,8 @@ minetest.register_node("basic_machines:mover", {
 				inv:remove_item("main", stack)
 				meta:set_float("fuel", fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel);
 				fuel = fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel;
-				meta:set_string("infotext", "Mover block. Fuel "..MOVER_FUEL_STORAGE_CAPACITY);
-			else meta:set_string("infotext", "Mover block. Out of fuel.");return
+				meta:set_string("infotext", "Mover block refueled. Fuel "..MOVER_FUEL_STORAGE_CAPACITY);
+			else meta:set_string("infotext", "Mover block. Out of fuel. Put fuel chest so that it touches mover.");return
 			end
 			--check fuel
 			if fuel == 0 then return  end
@@ -210,10 +210,9 @@ minetest.register_node("basic_machines:mover", {
 		local inv = cmeta:get_inventory();
 		
 		-- dig tree or cactus
-		local count = 0;
+		local count = 0;-- check for cactus or tree
+		local dig_up = false;
 		if dig then 
-			-- check for cactus or tree
-			local dig_up = false
 			-- define which nodes are dug up completely, like a tree
 			local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:papyrus"]=true};
 			
@@ -239,10 +238,9 @@ minetest.register_node("basic_machines:mover", {
 		end
 
 		local stack = ItemStack(node1.name)
-		if dig_up then
-			stack = ItemStack({name=node1.name, count=count}) -- if tree or cactus was digged up
-		else
-			stack = ItemStack(node1.name)
+		
+		if dig_up  then
+			stack = ItemStack(node1.name .. " " .. count) -- if tree or cactus was digged up
 		end
 		
 		if inv:room_for_item("main", stack) then
@@ -704,8 +702,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				return
 			end
 	end
-
-	
 	
 end)
 
