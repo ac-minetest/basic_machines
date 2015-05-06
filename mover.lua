@@ -244,7 +244,9 @@ minetest.register_node("basic_machines:mover", {
 	end	
 	
 	minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
-	fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
+	if not(target_chest and source_chest) then -- chest to chest transport is free
+		fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
+	end
 	meta:set_string("infotext", "Mover block. Fuel "..fuel);
 	
 	
