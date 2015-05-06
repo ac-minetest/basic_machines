@@ -453,7 +453,7 @@ minetest.register_abm({
 			if node~="" and string.find(tnode,"default:chest") then -- it source is chest, look inside chest for items
 				local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
 				local inv = cmeta:get_inventory();
-				local stack = ItemStack({name=node})
+				local stack = ItemStack(node)
 				if inv:contains_item("main", stack) then trigger = true end
 			else -- source not a chest
 				if (node=="" and tnode~="air") or node == tnode then trigger = true end
@@ -462,7 +462,6 @@ minetest.register_abm({
 					if node ~= "" and found_node then trigger = true end
 				end
 			end
-			
 			if NOT ==  1 then trigger = not trigger end
 		else
 			local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
