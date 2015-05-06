@@ -15,6 +15,7 @@
 -- replacement for mesecons blinky plant, limited to max 100 operations.
 -- As a simple example it can be used to open doors, which close automatically after 5 seconds.
 
+local punchset = {}; 
 
 MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump
 minetest.register_node("basic_machines:mover", {
@@ -24,7 +25,7 @@ minetest.register_node("basic_machines:mover", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
-		meta:set_string("infotext", "Mover block. Right click to set it up. Or set positions by punching it (while holding shift).")
+		meta:set_string("infotext", "Mover block. Right click to set it up. Or set positions by punching it.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		meta:set_int("x0",0);meta:set_int("y0",-1);meta:set_int("z0",0); -- source1
 		meta:set_int("x1",0);meta:set_int("y1",-1);meta:set_int("z1",0); -- source2: defines cube
@@ -34,6 +35,8 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_string("prefer", "");
 		local inv = meta:get_inventory();inv:set_size("mode", 5*1) 
 		inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
+		
+		local name = placer:get_player_name(); punchset[name].state = 0
 	end,
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
@@ -339,6 +342,7 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
 		meta:set_string("pass", "");meta:set_int("mode",1);
 		meta:set_int("iter",1);
+		local name = placer:get_player_name();punchset[name] =  {};punchset[name].state = 0
 	end,
 		
 	mesecons = {effector = { -- if keypad activated it acts as if punched by player ""
@@ -386,6 +390,7 @@ minetest.register_node("basic_machines:detector", {
 		meta:set_int("public",0);
 		local inv = meta:get_inventory();inv:set_size("mode_select", 2*1) 
 		inv:set_stack("mode_select", 1, ItemStack("default:coal_lump"))
+		local name = placer:get_player_name();punchset[name] =  {}; punchset[name].node = "";	punchset[name].state = 0
 	end,
 		
 	mesecons = {effector = {
@@ -533,7 +538,7 @@ minetest.register_node("basic_machines:light_on", {
 })
 
 
-local punchset = {}; 
+
 punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true,["basic_machines:detector"]=true};
 
 -- handles set up punches
