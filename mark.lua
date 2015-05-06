@@ -5,7 +5,6 @@ machines = {}; machines.pos1 = {}; machines.pos2 = {};
 machines.marker1 = {}
 machines.marker2 = {}
 machines.marker_region = {}
-machines.timer  = 10;
 
 
 
@@ -18,6 +17,9 @@ machines.mark_pos1 = function(name)
 		local manip = minetest.get_voxel_manip()
 		manip:read_from_map(pos1, pos1)
 	end
+	
+	if not machines[name] then machines[name]={} end
+	machines[name].timer = 10;
 	if machines.marker1[name] ~= nil then --marker already exists
 		machines.marker1[name]:remove() --remove marker
 		machines.marker1[name] = nil
@@ -40,6 +42,9 @@ machines.mark_pos2 = function(name)
 		local manip = minetest.get_voxel_manip()
 		manip:read_from_map(pos2, pos2)
 	end
+	
+	if not machines[name] then machines[name]={} end
+	machines[name].timer = 10;
 	if machines.marker2[name] ~= nil then --marker already exists
 		machines.marker2[name]:remove() --remove marker
 		machines.marker2[name] = nil
@@ -70,7 +75,6 @@ minetest.register_entity(":machines:pos1", {
 		machines[self.name].timer = machines[self.name].timer - dtime
 		if machines[self.name].timer<=0 or machines.marker1[self.name] == nil then
 			self.object:remove()
-			machines[self.name].timer = 10
 		end
 	end,
 	on_punch = function(self, hitter)
@@ -91,12 +95,9 @@ minetest.register_entity(":machines:pos2", {
 		physical = false,
 	},
 	on_step = function(self, dtime)
-		if machines.marker2[self.name] == nil then
+		if not machines[self.name] then machines[self.name]={}; machines[self.name].timer = 10 end
+		if machines[self.name].timer<=0 or machines.marker2[self.name] == nil then
 			self.object:remove()
 		end
-	end,
-	on_punch = function(self, hitter)
-		self.object:remove()
-		machines.marker2[self.name] = nil
 	end,
 })

@@ -47,8 +47,11 @@ minetest.register_node("basic_machines:mover", {
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
 		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
-		machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
-		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
+		
+		machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};
+		machines.mark_pos1(player:get_player_name()) -- mark pos1
+		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};
+		machines.mark_pos2(player:get_player_name()) -- mark pos2
 		
 		prefer = meta:get_string("prefer");mode = meta:get_string("mode");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
@@ -358,6 +361,7 @@ minetest.register_node("basic_machines:keypad", {
 		local x0,y0,z0,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
+		
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
 		
 		pass = meta:get_string("pass");
