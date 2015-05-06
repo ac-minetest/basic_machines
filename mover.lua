@@ -448,12 +448,21 @@ minetest.register_abm({
 		
 		local trigger = false
 		if mode == "node" then
-			local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name;
-			if (node=="" and tnode~="air") or node == tnode then trigger = true end
-			if r>0 and node~="" then
-				local found_node = minetest.find_node_near({x=x0, y=y0, z=z0}, r, {node})
-				if node ~= "" and found_node then trigger = true end
+			local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name; -- read node at source position
+			
+			if node~="" and string.find(tnode,"default:chest") then -- it source is chest, look inside chest for items
+				local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
+				local inv = cmeta:get_inventory();
+				local stack = ItemStack({name=node})
+				if inv:contains_item("main", stack) then trigger = true end
+			else -- source not a chest
+				if (node=="" and tnode~="air") or node == tnode then trigger = true end
+				if r>0 and node~="" then
+					local found_node = minetest.find_node_near({x=x0, y=y0, z=z0}, r, {node})
+					if node ~= "" and found_node then trigger = true end
+				end
 			end
+			
 			if NOT ==  1 then trigger = not trigger end
 		else
 			local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
