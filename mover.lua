@@ -802,10 +802,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local text = "SETUP: right click or punch and follow chat instructions. Detector checks area around source position inside specified radius."..
 			"If detector activates it will trigger machine at target position.\n\n There are 2 modes of operation - node or player detection. Inside node/player "..
 			"write node/player name. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
-			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ";
-			
-			local form = "size [5,5] textarea[0,0;5.5,6.5;help;MOVER HELP;".. text.."]"
-			minetest.show_formspec(name, "basic_machines:help_mover", form)
+			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
+			"If source position is chest it will look into it and check if there are items inside. For example to check if there is at least 2 dirt write default:dirt 2"
+			local form = "size [5,5] textarea[0,0;5.5,6.5;help;DETECTOR HELP;".. text.."]"
+			minetest.show_formspec(name, "basic_machines:help_detector", form)
 		end
 		
 		if fields.OK == "OK" then
