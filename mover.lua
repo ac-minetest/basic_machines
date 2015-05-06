@@ -189,7 +189,7 @@ minetest.register_node("basic_machines:mover", {
 			--minetest.chat_send_all(" source chest detected")
 			local cmeta = minetest.get_meta(pos1);
 			local inv = cmeta:get_inventory();
-			local stack = ItemStack({name=prefer})
+			local stack = ItemStack(prefer)
 			if inv:contains_item("main", stack) then
 				inv:remove_item("main", stack);
 				else return
@@ -214,7 +214,7 @@ minetest.register_node("basic_machines:mover", {
 			-- define which nodes are dug up completely, like a tree
 			local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:papyrus"]=true};
 			
-			if dig_up_table[node1.name] then dig_up = true end
+			if not source_chest and dig_up_table[node1.name] then dig_up = true end
 						
 			if dig_up == true then -- dig up to height 10, break sooner if needed
 				for i=0,10 do
@@ -236,7 +236,11 @@ minetest.register_node("basic_machines:mover", {
 		end
 
 		local stack = ItemStack(node1.name)
-		if count>0 then stack = ItemStack({name=node1.name, count=count}) end
+		if dig_up then
+			stack = ItemStack({name=node1.name, count=count}) -- if tree or cactus was digged up
+		else
+			stack = ItemStack(node1.name)
+		end
 		
 		if inv:room_for_item("main", stack) then
 			inv:add_item("main", stack);
