@@ -828,6 +828,23 @@ minetest.register_craft({
 })
 
 minetest.register_craft({
+	output = "basic_machines:detector",
+	recipe = {
+		{"default:mese_crystal", "default:mese_crystal"},
+		{"default:mese_crystal", "default:mese_crystal"}
+	}
+})
+
+minetest.register_craft({
+	output = "basic_machines:light_on",
+	recipe = {
+		{"default:torch", "default:torch"},
+		{"default:torch", "default:torch"}
+	}
+})
+
+
+minetest.register_craft({
 	output = "basic_machines:keypad",
 	recipe = {
 		{"default:stick"},
