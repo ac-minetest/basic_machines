@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------------------------------------------
 -- BASIC MACHINES MOD by rnd
--- mod with basic simple automatization for minetest. No background processing, no abm's or other lag causing background processing.
+-- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer, no other lag causing background processing.
 ------------------------------------------------------------------------------------------------------------------------------------
 
 -- MOVER: universal moving machine, requires coal in nearby chest to operate
@@ -264,6 +264,7 @@ minetest.register_node("basic_machines:mover", {
 })
 
 -- KEYPAD
+
 local function use_keypad(pos,name)
 		
 	local meta = minetest.get_meta(pos);	
@@ -275,9 +276,10 @@ local function use_keypad(pos,name)
 	meta:set_string("infotext", "Keypad operation: ".. count .." cycles left")
 	minetest.after(5, function() use_keypad(pos) end )  -- repeat operation as many times as set with "iter"
 	
-	local x0,y0,z0;
+	local x0,y0,z0,mode;
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 	x0=pos.x+x0;y0=pos.y+y0;z0=pos.z+z0;
+	mode = meta:get_int("mode");
 	--minetest.chat_send_all("KEYPAD USED. TARGET ".. x0 .. " " .. y0 .. " " .. z0);
 	local tpos = {x=x0,y=y0,z=z0};
 	
@@ -289,9 +291,13 @@ local function use_keypad(pos,name)
 	if not table.mesecons then return end -- error
 	if not table.mesecons.effector then return end -- error
 	local effector=table.mesecons.effector;
-	if not effector.action_on then return end
-	
-	effector.action_on(tpos,node); -- run
+	if mode == 1 then
+		if not effector.action_on then return end
+		effector.action_on(tpos,node); -- run
+	else
+		if not effector.action_off then return end
+		effector.action_off(tpos,node); -- run
+	end
 	--minetest.chat_send_all("MESECONS RUN")
 			
 end
@@ -324,11 +330,11 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_string("infotext", "Keypad. Right click to set it up or punch it.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
-		meta:set_string("pass", "");
+		meta:set_string("pass", "");meta:set_int("mode",1);
 		meta:set_int("iter",1);
 	end,
 		
-	mesecons = {effector = {
+	mesecons = {effector = { -- if keypad activated it acts as if punched by player ""
 		action_on = function (pos, node) 
 		local meta = minetest.get_meta(pos);
 		check_keypad(pos,"");
@@ -338,14 +344,16 @@ minetest.register_node("basic_machines:keypad", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
-		local x0,y0,z0,pass,iter;
+		local x0,y0,z0,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
+		mode = meta:get_int("mode") or 1;
 		
 		pass = meta:get_string("pass");
 		local form  = 
 		"size[3,2.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;3,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]";
+		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]"..
+		"field[2.25,1.5;1,1;mode;ON/OFF: ;"..mode.."]"
 		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 	end
 })
@@ -480,7 +488,7 @@ minetest.register_abm({
 
 minetest.register_node("basic_machines:light_off", {
 	description = "Light off",
-	tiles = {"light.png"},
+	tiles = {"light_off.png"},
 	groups = {oddly_breakable_by_hand=2},
 	mesecons = {effector = {
 		action_on = function (pos, node) 
@@ -488,9 +496,6 @@ minetest.register_node("basic_machines:light_off", {
 		end
 				}
 	},
-	on_punch = function(pos, node, puncher, pointed_thing)
-		minetest.set_node(pos,{name = "basic_machines:light_on"});	
-	end,
 })
 
 
@@ -505,9 +510,6 @@ minetest.register_node("basic_machines:light_on", {
 		end
 				}
 	},
-	on_punch = function(pos, node, puncher, pointed_thing)
-		minetest.set_node(pos,{name = "basic_machines:light_off"});	
-	end,
 })
 
 
@@ -735,14 +737,14 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if name ~= meta:get_string("owner") or not fields then return end -- only owner can interact
 		
 		if fields.OK == "OK" then
-			local x0,y0,z0,pass;
+			local x0,y0,z0,pass,mode;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
-			pass = fields.pass or "";
+			pass = fields.pass or ""; mode = fields.mode or 1;
 			if math.abs(x0)>5 or math.abs(y0)>5 or math.abs(z0)>5 then
 				minetest.chat_send_player(name,"all coordinates must be between -5 and 5"); return
 			end
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);meta:set_string("pass",pass);
-			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,100));
+			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,100));meta:set_int("mode",mode);
 			meta:set_string("infotext", "Punch keypad to use it.");
 			if pass~="" then meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); end
 		end
