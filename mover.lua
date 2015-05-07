@@ -278,7 +278,7 @@ minetest.register_node("basic_machines:mover", {
 
 -- KEYPAD
 
-local function use_keypad(pos,name)
+local function use_keypad(pos)
 		
 	local meta = minetest.get_meta(pos);	
 	local name =  meta:get_string("owner");
@@ -345,12 +345,15 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
 		meta:set_string("pass", "");meta:set_int("mode",1);
 		meta:set_int("iter",1);
+		meta:set_int("op_count",0)
 		local name = placer:get_player_name();punchset[name] =  {};punchset[name].state = 0
 	end,
 		
 	mesecons = {effector = { -- if keypad activated it acts as if punched by player ""
 		action_on = function (pos, node) 
 		local meta = minetest.get_meta(pos);
+		-- this line prevents infinite recursion if one keypad links back to itself, even through other keypads
+		local op_count = meta:get_int("op_count");if op_count > 2 then return end;	meta:set_int("op_count",op_count+1)
 		check_keypad(pos,"");
 	end
 	}
@@ -631,6 +634,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	if node.name == "basic_machines:keypad" then -- keypad init/usage code
 		local meta = minetest.get_meta(pos);
 		if not (meta:get_int("x0")==0 and meta:get_int("y0")==0 and meta:get_int("z0")==0) then -- already configured
+				meta:set_int("op_count",0)
 			check_keypad(pos,name)-- not setup, just standard operation
 		else
 			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "KEYPAD: Only owner can set up keypad.") return end
