@@ -16,8 +16,11 @@
 -- As a simple example it can be used to open doors, which close automatically after 5 seconds.
 
 local punchset = {}; 
+local max_range = 10;
+local machines_timer = 5
 
-MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump
+MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - base unit
+
 minetest.register_node("basic_machines:mover", {
 	description = "Mover",
 	tiles = {"compass_top.png","default_furnace_top.png"},
@@ -41,7 +44,8 @@ minetest.register_node("basic_machines:mover", {
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
-		if meta:get_string("owner")~=player:get_player_name() then return end -- only owner can set up mover
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return end -- only owner can set up mover
 		
 		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
@@ -116,12 +120,13 @@ minetest.register_node("basic_machines:mover", {
 			pos1.x = pos.x+pos1.x;pos1.y = pos.y+pos1.y;pos1.z = pos.z+pos1.z;
 	
 		if fuel<=0 then -- needs fuel to operate, find nearby open chest with fuel within radius 1
-			local r = 1;
-		
-			local positions = minetest.find_nodes_in_area( --find furnace with fuel
+			
+			local found_fuel = nil;
+			
+			local r = 1;local positions = minetest.find_nodes_in_area( --find furnace with fuel
 			{x=pos.x-r, y=pos.y-r, z=pos.z-r},
 			{x=pos.x+r, y=pos.y+r, z=pos.z+r},
-			"default:chest")
+			"default:chest_locked")
 			local fpos = nil;
 			for _, p in ipairs(positions) do
 				-- dont take coal from source or target location
@@ -133,8 +138,9 @@ minetest.register_node("basic_machines:mover", {
 			if not fpos then return end -- no chest found
 			local cmeta = minetest.get_meta(fpos);
 			local inv = cmeta:get_inventory();
-			local fuels = {["default:coal_lump"]=1,["default:cactus"]=1,["default:coalblock"]=10};
-			local found_fuel = nil;local stack;
+			--fuels and their caloric value: 1 = 5 uses
+			local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:coalblock"]=10,["default:lava_source"]=40};
+			local stack;
 			for i,v in pairs(fuels) do
 				stack = ItemStack({name=i})
 				if inv:contains_item("main", stack) then found_fuel = v break end
@@ -240,7 +246,6 @@ minetest.register_node("basic_machines:mover", {
 					node1={}; node1.name = table.drop;
 				end
 			end
-			
 		end
 
 		local stack = ItemStack(node1.name)
@@ -287,7 +292,7 @@ local function use_keypad(pos)
 		
 	if count<=0 then return end; count = count - 1; meta:set_int("count",count);
 	meta:set_string("infotext", "Keypad operation: ".. count .." cycles left")
-	minetest.after(5, function() use_keypad(pos) end )  -- repeat operation as many times as set with "iter"
+	minetest.after(machines_timer, function() use_keypad(pos) end )  -- repeat operation as many times as set with "iter"
 	
 	local x0,y0,z0,mode;
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
@@ -360,7 +365,8 @@ minetest.register_node("basic_machines:keypad", {
 	},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
-		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
 		local x0,y0,z0,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
@@ -409,7 +415,8 @@ minetest.register_node("basic_machines:detector", {
 	},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
-		if meta:get_string("owner")~= player:get_player_name() then return end -- only owner can setup keypad
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
 		local x0,y0,z0,x1,y1,z1,r,node,NOT;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
@@ -428,7 +435,6 @@ minetest.register_node("basic_machines:detector", {
 		"button[3.,0.25;1,1;help;help]"..
 		"label[0.,3.0;MODE: node,player]"..	"list["..list_name..";mode_select;0.,3.5;3,1;]"..
 		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
-		
 		
 		minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
 	end,
@@ -460,7 +466,7 @@ minetest.register_node("basic_machines:detector", {
 minetest.register_abm({ 
 	nodenames = {"basic_machines:detector"},
 	neighbors = {""},
-	interval = 5,
+	interval = machines_timer,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
@@ -515,6 +521,64 @@ minetest.register_abm({
 			
 	end,
 }) 
+
+-- DISTRIBUTOR: spreads one signal to many outputs ( 4 max?)
+
+-- TO DO ....... need to save several coordinates in metadata
+minetest.register_node("basic_machines:distributor", {
+	description = "Detector",
+	tiles = {"distributor.png"},
+	groups = {oddly_breakable_by_hand=2},
+	sounds = default.node_sound_wood_defaults(),
+	after_place_node = function(pos, placer)
+		local meta = minetest.env:get_meta(pos)
+		meta:set_string("infotext", "Distributor. Right click/punch to set it up.")
+		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
+		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z0",0); -- source: read
+		meta:set_int("x2",0);meta:set_int("y2",0);meta:set_int("z2",0); -- target: activate
+		meta:set_int("op_count",0); -- this should be smaller than 10, will be used to prevent infinite recursion
+		meta:set_int("public",0);
+		local name = placer:get_player_name();punchset[name] =  {}; punchset[name].node = "";	punchset[name].state = 0
+	end,
+		
+	mesecons = {effector = {
+		action_on = function (pos, node) 
+		local meta = minetest.get_meta(pos);
+		-- not yet defined ... ???
+	end
+	}
+	},
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
+		local x0,y0,z0,x1,y1,z1,r,node,NOT;
+		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
+		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
+		
+		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
+		machines.pos2[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos2(player:get_player_name()) -- mark pos2
+
+		node=meta:get_string("node") or "";
+		NOT=meta:get_int("NOT");
+		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
+		local form  = 
+		"size[4,4.25]" ..  -- width, height
+		"field[0.25,0.5;1,1;x0;source;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]".. 
+		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+		"button[3.,3.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
+		"button[3.,0.25;1,1;help;help]"..
+		"label[0.,3.0;MODE: node,player]"..	"list["..list_name..";mode_select;0.,3.5;3,1;]"..
+		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
+		
+		
+		minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
+	end,
+	}
+)
+	
+
+
 
 -- LIGHT
 
@@ -587,7 +651,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	 if punchset[name].node == "basic_machines:mover" then -- mover code
 		if punchset[name].state == 1 then 
-			if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+			
+			if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "MOVER: Punch closer to mover. reseting.")
 					punchset[name].state = 0; return
 			end
@@ -606,7 +671,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		
 		if punchset[name].state == 2 then 
 			if punchset[name].node~="basic_machines:mover" then punchset[name].state = 0 return end
-			if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+			if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "MOVER: Punch closer to mover. aborting.")
 					punchset[name].state = 0; return
 			end
@@ -653,7 +718,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			local x = pos.x-punchset[name].pos.x;
 			local y = pos.y-punchset[name].pos.y;
 			local z = pos.z-punchset[name].pos.z;
-			if math.abs(x)>5 or math.abs(y)>5 or math.abs(z)>5 then
+			if math.abs(x)>max_range or math.abs(y)>max_range or math.abs(z)>max_range then
 					minetest.chat_send_player(name, "KEYPAD: Punch closer to keypad. reseting.")
 					punchset[name].state = 0; return
 			end
@@ -681,7 +746,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	if punchset[name].node == "basic_machines:detector" then
 			if punchset[name].state == 1 then 
-				if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
 					punchset[name].state = 0; return
 				end
@@ -698,7 +763,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			end
 				
 			if punchset[name].state == 2 then 
-				if math.abs(punchset[name].pos.x - pos.x)>5 or math.abs(punchset[name].pos.y - pos.y)>5 or math.abs(punchset[name].pos.z - pos.z)>5 then
+				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
 					punchset[name].state = 0; return
 				end
@@ -728,7 +793,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
-		if name ~= meta:get_string("owner") or not fields then return end -- only owner can interact
+		local privs = minetest.get_player_privs(name);
+		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		if fields.help == "help" then
 			local text = "SETUP: right click and define box where to dig from and where to put. Positions are defined by x y z coordinates (see top of mover). Mover has coordinates 0 0 0. If you prefer interactive setup "..
@@ -745,19 +811,21 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
 			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
 			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
-			if math.abs(x1)>5 or math.abs(y1)>5 or math.abs(z1)>5 or math.abs(x2)>5 or math.abs(y2)>5 or math.abs(z2)>5 then
-				minetest.chat_send_player(name,"all coordinates must be between -5 and 5"); return
+			if math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>5 or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range then
+				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
-			if x1<x0 or y1<y0 or z1<z0 then
-				minetest.chat_send_player(name,"second source coordinates must all be larger than first source coordinates"); return
-			end
+			
+			local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);
+			local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
+			local z = z0; z0 = math.min(z,z1); z1 = math.max(z,z1);
+			
 			
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
 			meta:set_int("pc",0); meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
 			meta:set_string("prefer",fields.prefer or "");
-			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put chest with coal next to it and start it with keypad/mese signal.");
+			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put locked chest with fuel next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 		end
 		return
@@ -769,14 +837,16 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
-		if name ~= meta:get_string("owner") or not fields then return end -- only owner can interact
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
 		
 		if fields.OK == "OK" then
 			local x0,y0,z0,pass,mode;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
 			pass = fields.pass or ""; mode = fields.mode or 1;
-			if math.abs(x0)>5 or math.abs(y0)>5 or math.abs(z0)>5 then
-				minetest.chat_send_player(name,"all coordinates must be between -5 and 5"); return
+			
+			if math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range then
+				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);meta:set_string("pass",pass);
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,100));meta:set_int("mode",mode);
@@ -816,7 +886,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
-		if name ~= meta:get_string("owner") or not fields then return end -- only owner can interact
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		
 		if fields.help == "help" then
@@ -836,8 +907,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			r=tonumber(fields.r) or 1;
 			NOT = tonumber(fields.NOT)
 			
-			if math.abs(x0)>5 or math.abs(y0)>5 or math.abs(z0)>5 or math.abs(x1)>5 or math.abs(y1)>5 or math.abs(z1)>5 then
-				minetest.chat_send_player(name,"all coordinates must be between -5 and 5"); return
+			if math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range then
+				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
