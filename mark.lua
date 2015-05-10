@@ -1,11 +1,12 @@
 -- rnd: code borrowed from machines, mark.lua
 
 -- need for marking
-machines = {}; machines.pos1 = {}; machines.pos2 = {}; 
+machines = {}; 
+
+machines.pos1 = {}; machines.pos2 = {}; 
 machines.marker1 = {}
 machines.marker2 = {}
 machines.marker_region = {}
-
 
 
 --marks machines region position 1
