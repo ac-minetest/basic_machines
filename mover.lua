@@ -101,7 +101,7 @@ minetest.register_node("basic_machines:mover", {
 	end,
 	
 	mesecons = {effector = {
-		action_on = function (pos, node,machines_TTL) 
+		action_on = function (pos, node,ttl) 
 		local meta = minetest.get_meta(pos);
 		local fuel = meta:get_float("fuel");
 		
@@ -554,6 +554,7 @@ minetest.register_node("basic_machines:distributor", {
 		
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
+			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
 			local x1,y1,z1,x2,y2,z2,active1,active2
 			x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;active1=meta:get_int("active1");
@@ -590,12 +591,14 @@ minetest.register_node("basic_machines:distributor", {
 	end,
 	
 	action_off = function (pos, node,ttl) 
+			if ttl<0 then return end			
 			local meta = minetest.get_meta(pos);
 			local x1,y1,z1,x2,y2,z2,active1,active2
 			x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;active1=meta:get_int("active1");
 			x2=meta:get_int("x2")+pos.x;y2=meta:get_int("y2")+pos.y;z2=meta:get_int("z2")+pos.z;active2=meta:get_int("active2");
 
 			local node, table
+			node = nil;
 			
 			if active1~=0 then
 				node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
@@ -660,7 +663,7 @@ minetest.register_node("basic_machines:light_off", {
 	tiles = {"light_off.png"},
 	groups = {oddly_breakable_by_hand=2},
 	mesecons = {effector = {
-		action_on = function (pos, node) 
+		action_on = function (pos, node,ttl) 
 			minetest.set_node(pos,{name = "basic_machines:light_on"});		
 		end
 				}
@@ -674,7 +677,7 @@ minetest.register_node("basic_machines:light_on", {
 	groups = {oddly_breakable_by_hand=2},
 	light_source = LIGHT_MAX,
 	mesecons = {effector = {
-		action_off = function (pos, node) 
+		action_off = function (pos, node,ttl) 
 			minetest.set_node(pos,{name = "basic_machines:light_off"});		
 		end
 				}
