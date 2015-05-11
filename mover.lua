@@ -958,7 +958,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
 			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
 			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
-			if math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>5 or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range then
+			if math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 			
