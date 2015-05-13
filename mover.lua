@@ -596,6 +596,8 @@ minetest.register_node("basic_machines:distributor", {
 	end,
 	
 	action_off = function (pos, node,ttl) 
+			
+			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end			
 			local meta = minetest.get_meta(pos);
 			local x1,y1,z1,x2,y2,z2,active1,active2
