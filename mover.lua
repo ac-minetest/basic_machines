@@ -1134,3 +1134,11 @@ minetest.register_craft({
 		{"default:wood"},
 	}
 })
+
+minetest.register_craft({
+	output = "basic_machines:distributor",
+	recipe = {
+		{"default:steel_ingot"},
+		{"default:mese_crystal"},
+	}
+})
