@@ -103,7 +103,7 @@ minetest.register_node("basic_machines:mover", {
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
 		
-			if type(ttl)~="number" then return end
+			if type(ttl)~="number" then ttl = 1 end
 			local meta = minetest.get_meta(pos);
 			local fuel = meta:get_float("fuel");
 			
@@ -372,7 +372,7 @@ minetest.register_node("basic_machines:keypad", {
 		
 	mesecons = {effector = { 
 		action_on = function (pos, node,ttl) 
-		if type(ttl)~="number" then return end
+		if type(ttl)~="number" then ttl = 1 end
 		if ttl<0 then return end -- machines_TTL prevents infinite recursion
 		use_keypad(pos,ttl-1);
 	end
@@ -423,7 +423,7 @@ minetest.register_node("basic_machines:detector", {
 		
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-			if type(ttl)~="number" then return end
+			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end -- prevent infinite recursion
 			local meta = minetest.get_meta(pos);
 		-- not yet defined ... ???
@@ -558,7 +558,7 @@ minetest.register_node("basic_machines:distributor", {
 		
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-			if type(ttl)~="number" then return end
+			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
 			local x1,y1,z1,x2,y2,z2,active1,active2
@@ -669,7 +669,7 @@ minetest.register_node("basic_machines:light_off", {
 	groups = {oddly_breakable_by_hand=2},
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-			if type(ttl)~="number" then return end
+			if type(ttl)~="number" then ttl = 1 end
 			minetest.set_node(pos,{name = "basic_machines:light_on"});		
 		end
 				}
