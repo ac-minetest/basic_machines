@@ -742,8 +742,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	 if punchset[name].node == "basic_machines:mover" then -- mover code
 		if punchset[name].state == 1 then 
-			
-			if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
+			local privs = minetest.get_player_privs(puncher:get_player_name());
+			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range) then
 					minetest.chat_send_player(name, "MOVER: Punch closer to mover. reseting.")
 					punchset[name].state = 0; return
 			end
@@ -762,7 +762,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		
 		if punchset[name].state == 2 then 
 			if punchset[name].node~="basic_machines:mover" then punchset[name].state = 0 return end
-			if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
+			local privs = minetest.get_player_privs(puncher:get_player_name());
+			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range) then
 					minetest.chat_send_player(name, "MOVER: Punch closer to mover. aborting.")
 					punchset[name].state = 0; return
 			end
