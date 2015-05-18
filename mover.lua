@@ -19,6 +19,7 @@ local punchset = {};
 
 minetest.register_on_joinplayer(function(player) 
 	local name = player:get_player_name(); if name == nil then return end
+	punchset[name] = {};
 	punchset[name].state = 0;
 end
 )
