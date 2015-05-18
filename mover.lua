@@ -17,6 +17,12 @@
 
 local punchset = {}; 
 
+minetest.register_on_joinplayer(function(player) 
+	local name = player:get_player_name(); if name == nil then return end
+	punchset[name].state = 0;
+end
+)
+
 local max_range = 10; -- machines range of operation
 local machines_timer = 5 -- timestep
 local machines_TTL = 4; -- time to live for signals
