@@ -542,7 +542,7 @@ minetest.register_abm({
 -- DISTRIBUTOR: spreads one signal to two outputs
 
 minetest.register_node("basic_machines:distributor", {
-	description = "Detector",
+	description = "Distributor",
 	tiles = {"distributor.png"},
 	groups = {oddly_breakable_by_hand=2},
 	sounds = default.node_sound_wood_defaults(),
@@ -1056,7 +1056,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			r=tonumber(fields.r) or 1;
 			NOT = tonumber(fields.NOT)
 			
-			if math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range then
+			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 
