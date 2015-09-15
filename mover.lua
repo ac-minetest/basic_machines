@@ -201,7 +201,7 @@ minetest.register_node("basic_machines:mover", {
 				
 				for _,obj in pairs(minetest.get_objects_inside_radius(pos1, r)) do
 					local lua_entity = obj:get_luaentity() 
-					if not obj:is_player() and lua_entity and lua_entity.name == "__builtin:item" and lua_entity.itemstring ~= "" then
+					if not obj:is_player() and lua_entity and lua_entity.itemstring ~= "" then
 						-- put item in chest
 						local stack = ItemStack(lua_entity.itemstring) 
 						if inv:room_for_item("main", stack) then
