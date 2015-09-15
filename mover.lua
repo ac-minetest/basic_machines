@@ -188,10 +188,37 @@ minetest.register_node("basic_machines:mover", {
 		local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 		
 		if mode == "object" then -- teleport objects, for free
-			for _,obj in pairs(minetest.get_objects_inside_radius(pos1, 2)) do
+			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
+			-- if target is chest put items in it
+			local target_chest = false
+			if node2.name == "default:chest" or node2.name == "default:chest_locked" then
+				target_chest = true
+			end
+			local r = math.max(math.abs(x1),math.abs(y1),math.abs(z1)); r = math.min(r,10);
+			if target_chest then
+				local cmeta = minetest.get_meta(pos2);
+				local inv = cmeta:get_inventory();
+				
+				for _,obj in pairs(minetest.get_objects_inside_radius(pos1, r)) do
+					local lua_entity = obj:get_luaentity() 
+					if not obj:is_player() and lua_entity and lua_entity.name == "__builtin:item" and lua_entity.itemstring ~= "" then
+						-- put item in chest
+						local stack = ItemStack(lua_entity.itemstring) 
+						if inv:room_for_item("main", stack) then
+							inv:add_item("main", stack);
+						end
+						obj:remove();
+					end
+				end
+				
+				return
+			end
+			
+			
+			for _,obj in pairs(minetest.get_objects_inside_radius(pos1, r)) do
 				obj:moveto(pos2, false) 	
 			end
-			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
+			
 			--meta:set_float("fuel", fuel - 1);
 			return 
 		end
@@ -333,6 +360,12 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	if not table.mesecons then return end -- error
 	if not table.mesecons.effector then return end -- error
 	local effector=table.mesecons.effector;
+	
+	if mode == 2 then -- keypad in toggle mode
+		local state = meta:get_int("state") or 0;state = 1-state; meta:set_int("state",state);
+		if state == 0 then mode = 0 else mode = 1 end
+	end
+	
 	-- pass the signal on to target
 	if mode == 1 then
 		if not effector.action_on then return end
@@ -397,10 +430,10 @@ minetest.register_node("basic_machines:keypad", {
 		
 		pass = meta:get_string("pass");
 		local form  = 
-		"size[3,2.75]" ..  -- width, height
+		"size[4,2.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]"..
-		"field[2.25,1.5;1,1;mode;ON/OFF: ;"..mode.."]"
+		"field[2.25,1.5;2,1;mode;ON/OFF/TOGGLE: ;"..mode.."]"
 		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 	end
 })
@@ -440,7 +473,7 @@ minetest.register_node("basic_machines:detector", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
+		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup
 		local x0,y0,z0,x1,y1,z1,r,node,NOT;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
@@ -646,7 +679,7 @@ minetest.register_node("basic_machines:distributor", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
+		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup 
 		local x1,y1,z1,x2,y2,z2,active1,active2
 		
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");active1=meta:get_int("active1");
@@ -957,7 +990,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local text = "SETUP: right click and define box where to dig from and where to put. Positions are defined by x y z coordinates (see top of mover). Mover has coordinates 0 0 0. If you prefer interactive setup "..
 			"punch the mover and then punch source and target node. Put chest with fuel right next to it. "..
 			"\n\nMODES of operation: normal ( just teleport), dig ( digs and gives you resulted node), drop "..
-			"( drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects). "..
+			"( drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
 			"\n\nBy setting 'filter only block' only selected nodes are moved. Activate it by keypad signal or mese signal (if mesecons mod) .";
 			local form = "size [5,5] textarea[0,0;5.5,6.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
