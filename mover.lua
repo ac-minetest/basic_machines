@@ -151,7 +151,7 @@ minetest.register_node("basic_machines:mover", {
 				local cmeta = minetest.get_meta(fpos);
 				local inv = cmeta:get_inventory();
 				--fuels and their caloric value: 1 = 5 uses
-				local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:coalblock"]=10,["default:lava_source"]=40};
+				local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
 				local stack;
 				for i,v in pairs(fuels) do
 					stack = ItemStack({name=i})
@@ -198,8 +198,7 @@ minetest.register_node("basic_machines:mover", {
 			if target_chest then
 				local cmeta = minetest.get_meta(pos2);
 				local inv = cmeta:get_inventory();
-				
-				for _,obj in pairs(minetest.get_objects_inside_radius(pos1, r)) do
+				for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
 					local lua_entity = obj:get_luaentity() 
 					if not obj:is_player() and lua_entity and lua_entity.itemstring ~= "" then
 						-- put item in chest
@@ -215,7 +214,7 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			
-			for _,obj in pairs(minetest.get_objects_inside_radius(pos1, r)) do
+			for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
 				obj:moveto(pos2, false) 	
 			end
 			
@@ -265,7 +264,7 @@ minetest.register_node("basic_machines:mover", {
 			local dig_up = false;
 			if dig then 
 				-- define which nodes are dug up completely, like a tree
-				local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:papyrus"]=true};
+				local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,["default:acacia_tree"]=true,["default:papyrus"]=true};
 				
 				if not source_chest and dig_up_table[node1.name] then dig_up = true end
 							
@@ -282,7 +281,23 @@ minetest.register_node("basic_machines:mover", {
 				local table = minetest.registered_items[node1.name];
 				if table~=nil then 
 					if table.drop~= nil and table.drop~="" then 
-						node1={}; node1.name = table.drop;
+						--handle drops better, simulate drop code, read from drop table, take first drop
+						if table.drop.max_items then
+							local drop = table.drop;
+							for k,v in pairs(drop.items) do
+								local rnd = v.rarity; -- 
+								if rnd then
+									if math.random(1, rnd)==1 then
+										node1={};node1.name = v.items[math.random(1,#v.items)];break; -- pick item randomly from list
+									end
+								else
+									node1={};node1.name = v.items[math.random(1,#v.items)];break;
+								end
+								
+							end
+						else
+							node1={}; node1.name = table.drop;
+						end
 					end
 				end
 			end
