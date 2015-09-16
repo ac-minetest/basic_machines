@@ -46,7 +46,7 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_int("x2",0);meta:set_int("y2",1);meta:set_int("z2",0);
 		meta:set_float("fuel",0)
 		meta:set_string("prefer", "");
-		local inv = meta:get_inventory();inv:set_size("mode", 5*1) 
+		local inv = meta:get_inventory();inv:set_size("mode", 6) 
 		inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
 		
 		local name = placer:get_player_name(); punchset[name].state = 0
@@ -70,15 +70,15 @@ minetest.register_node("basic_machines:mover", {
 		prefer = meta:get_string("prefer");mode = meta:get_string("mode");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
-		"size[5,5.5]" ..  -- width, height
+		"size[4.5,6]" ..  -- width, height
 		--"size[6,10]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 		"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-		"button_exit[3,3.25;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter only block;"..prefer.."]"..
+		"button_exit[3,3.25;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter/inventory name;"..prefer.."]"..
 		"button[3,2.25;1,1;help;help]"..
-		"label[0.,4.0;MODE: normal,dig,drop,reverse,object]"..
-		"list["..list_name..";mode;0.,4.5;6,1;]"--.. 
+		"label[0.,4.0;MODE: normal,dig,drop,reverse,object,inventory]"..
+		"list["..list_name..";mode;0.,4.5;4,2;]"--.. 
 		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
 		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 	end,
@@ -101,6 +101,7 @@ minetest.register_node("basic_machines:mover", {
 			elseif to_index==3 then mode = "drop"
 			elseif to_index==4 then mode = "reverse"
 			elseif to_index==5 then mode = "object"
+			elseif to_index==6 then mode = "inventory"
 		end
 		meta:set_string("mode",mode)
 		if mode == "" then mode = "normal" end;	minetest.chat_send_player(player:get_player_name(), "MOVER: Mode of operation set  to: "..mode)
@@ -131,6 +132,7 @@ minetest.register_node("basic_machines:mover", {
 				pos1.z = z0 + pc;
 				pos1.x = pos.x+pos1.x;pos1.y = pos.y+pos1.y;pos1.z = pos.z+pos1.z;
 		
+			-- FUEL OPERATIONS
 			if fuel<=0 then -- needs fuel to operate, find nearby open chest with fuel within radius 1
 				
 				local found_fuel = nil;
@@ -141,7 +143,7 @@ minetest.register_node("basic_machines:mover", {
 				"default:chest_locked")
 				local fpos = nil;
 				for _, p in ipairs(positions) do
-					-- dont take coal from source or target location
+					-- dont take coal from source or target location to avoid chest/fuel confusion isssues
 					if (p.x ~= pos1.x or p.y~=pos1.y or p.z ~= pos1.z) and (p.x ~= pos2.x or p.y~=pos2.y or p.z ~= pos2.z) then
 						fpos = p;
 					end
@@ -233,26 +235,50 @@ minetest.register_node("basic_machines:mover", {
 		if node2.name == "default:chest" or node2.name == "default:chest_locked" then
 			target_chest = true
 		end
-		if not target_chest and minetest.get_node(pos2).name ~= "air" then return end -- do nothing if target nonempty and not chest
-
+		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" then return end -- do nothing if target nonempty and not chest
+		
+		local invName="";
+		if mode == "inventory" then 
+			local i = prefer:find("%s"); if not i then return end
+			invName = prefer:sub(1,i-1); prefer = prefer:sub(i+1);
+			--minetest.chat_send_all(" invname ".. invName .. " prefer "..prefer);
+		end
+		--if prefer:find() then end
+		
 		-- filtering
 		if prefer~="" then -- prefered node set
-			if prefer~=node1.name and not source_chest  then return end -- only take prefered node or from chests
+			if prefer~=node1.name and not source_chest and mode ~= "inventory"  then return end -- only take prefered node or from chests/inventories
 			if source_chest then -- take stuff from chest
 				--minetest.chat_send_all(" source chest detected")
 				local cmeta = minetest.get_meta(pos1);
 				local inv = cmeta:get_inventory();
-				local stack = ItemStack(prefer)
+				local stack = ItemStack(prefer);
+				
 				if inv:contains_item("main", stack) then
 					inv:remove_item("main", stack);
-					else return
+					else return -- item not found in chest
 				end
+			
+			else
+			
+				if mode == "inventory" then
+					local cmeta = minetest.get_meta(pos1);
+					local inv = cmeta:get_inventory();
+					local stack = ItemStack(prefer);
+					if inv:contains_item(invName, stack) then
+						inv:remove_item(invName, stack);
+						else
+						return
+					end
+				end
+			
 			end
+
 			node1 = {}; node1.name = prefer; 
 		end
 		
-		if source_chest and prefer == "" then return end -- doesnt know what to take out of chest
-		--minetest.chat_send_all(" moving ")
+		if (prefer == "" and (source_chest or mode=="inventory")) then return end -- doesnt know what to take out of chest/inventory
+		
 		
 		-- if target chest put in chest
 		if target_chest then
@@ -278,10 +304,10 @@ minetest.register_node("basic_machines:mover", {
 					inv:add_item("main", node1.name .. " " .. count-1);-- if tree or cactus was digged up
 				end
 				
-				-- drop handling
+				
 				local table = minetest.registered_items[node1.name];
-				if table~=nil then 
-					if table.drop~= nil then 
+				if table~=nil then --put in chest
+					if table.drop~= nil then -- drop handling 
 						if table.drop.items then
 						--handle drops better, emulation of drop code
 						local max_items = table.drop.max_items or 0;
@@ -306,24 +332,31 @@ minetest.register_node("basic_machines:mover", {
 						inv:add_item("main",node1.name);
 					end
 				end
+			else -- if not dig just put it in
+			inv:add_item("main",node1.name);
 			end
-			
+		else
+			if mode == "inventory" then
+				local cmeta = minetest.get_meta(pos2);
+				local inv = cmeta:get_inventory();
+				inv:add_item(invName,node1.name);
+			end
 		end	
 		
 		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
-		if not(target_chest and source_chest) then -- chest to chest transport is free
+		if not(target_chest and source_chest) or not(mode=="inventory") then -- chest to chest transport is free
 			fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
 		end
 		meta:set_string("infotext", "Mover block. Fuel "..fuel);
 		
 		
-		if not target_chest then
+		if not(target_chest) and not(mode=="inventory") then
 			if not drop then minetest.set_node(pos2, {name = node1.name}); end
 			if drop then 
 				local stack = ItemStack(node1.name);minetest.add_item(pos2,stack) -- drops it
 			end
 		end 
-		if not source_chest then
+		if not(source_chest) and not(mode=="inventory") then
 			if dig then nodeupdate(pos1) end
 			minetest.set_node(pos1, {name = "air"});
 			end
@@ -1001,10 +1034,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields.help == "help" then
 			local text = "SETUP: right click and define box where to dig from and where to put. Positions are defined by x y z coordinates (see top of mover). Mover has coordinates 0 0 0. If you prefer interactive setup "..
 			"punch the mover and then punch source and target node. Put chest with fuel right next to it. "..
-			"\n\nMODES of operation: normal ( just teleport), dig ( digs and gives you resulted node), drop "..
-			"( drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
-			"\n\nBy setting 'filter only block' only selected nodes are moved. Activate it by keypad signal or mese signal (if mesecons mod) .";
-			local form = "size [5,5] textarea[0,0;5.5,6.5;help;MOVER HELP;".. text.."]"
+			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node), drop "..
+			"(drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
+			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between chests and other nodes inventories defined by inventory name - like 'fuel','dst', 'src' with furnaces. To add 4 coal into furnace for example use 'fuel default:coal_lump 4' To put cobble in furnace to smelt use 'src default:cobble'.To take smelted stone use 'dst default:stone'\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
+			local form = "size [5,5.5] textarea[0,0;5.5,6.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
 		end
 		
