@@ -258,7 +258,7 @@ minetest.register_node("basic_machines:mover", {
 		if target_chest then
 			local cmeta = minetest.get_meta(pos2);
 			local inv = cmeta:get_inventory();
-			
+						
 			-- dig tree or cactus
 			local count = 0;-- check for cactus or tree
 			local dig_up = false;
@@ -275,42 +275,39 @@ minetest.register_node("basic_machines:mover", {
 						if dname ~=node1.name then break end
 						minetest.set_node(pos3,{name="air"}); count = count+1;
 					end
+					inv:add_item("main", node1.name .. " " .. count-1);-- if tree or cactus was digged up
 				end
 				
-				-- read what to drop, if none just keep original node
+				-- drop handling
 				local table = minetest.registered_items[node1.name];
 				if table~=nil then 
-					if table.drop~= nil and table.drop~="" then 
-						--handle drops better, simulate drop code, read from drop table, take first drop
-						if table.drop.max_items then
+					if table.drop~= nil then 
+						if table.drop.items then
+						--handle drops better, emulation of drop code
+						local max_items = table.drop.max_items or 0;
+							if max_items==0 then -- just drop all the items (taking the rarity into consideration)
+								max_items = #table.drop.items or 0;
+							end
 							local drop = table.drop;
+							local i = 0;
 							for k,v in pairs(drop.items) do
-								local rnd = v.rarity; -- 
-								if rnd then
-									if math.random(1, rnd)==1 then
-										node1={};node1.name = v.items[math.random(1,#v.items)];break; -- pick item randomly from list
-									end
-								else
-									node1={};node1.name = v.items[math.random(1,#v.items)];break;
+								if i > max_items then break end; i=i+1;								
+								local rare = v.rarity or 1;
+								if math.random(1, rare)==1 then
+									node1={};node1.name = v.items[math.random(1,#v.items)]; -- pick item randomly from list
+									inv:add_item("main",node1.name);
+									minetest.chat_send_all("added " .. node1.name);
 								end
-								
 							end
 						else
-							node1={}; node1.name = table.drop;
-						end
+							inv:add_item("main",table.drop);
+						end	
+					else
+						inv:add_item("main",node1.name);
 					end
 				end
 			end
-
-			local stack = ItemStack(node1.name)
 			
-			if dig_up  then
-				stack = ItemStack(node1.name .. " " .. count) -- if tree or cactus was digged up
-			end
-			
-			if inv:room_for_item("main", stack) then
-				inv:add_item("main", stack);
-			end
 		end	
 		
 		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
@@ -471,7 +468,7 @@ minetest.register_node("basic_machines:detector", {
 		meta:set_int("r",0)
 		meta:set_string("node","");meta:set_int("NOT",0);meta:set_string("mode","node");
 		meta:set_int("public",0);
-		local inv = meta:get_inventory();inv:set_size("mode_select", 2*1) 
+		local inv = meta:get_inventory();inv:set_size("mode_select", 3*1) 
 		inv:set_stack("mode_select", 1, ItemStack("default:coal_lump"))
 		local name = placer:get_player_name();punchset[name] =  {}; punchset[name].node = "";	punchset[name].state = 0
 	end,
@@ -503,9 +500,9 @@ minetest.register_node("basic_machines:detector", {
 		"size[4,4.25]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;source;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]".. 
 		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-		"button[3.,3.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
+		"button[3.,3.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
 		"button[3.,0.25;1,1;help;help]"..
-		"label[0.,3.0;MODE: node,player]"..	"list["..list_name..";mode_select;0.,3.5;3,1;]"..
+		"label[0.,3.0;MODE: node,player,object]"..	"list["..list_name..";mode_select;0.,3.5;3.5,1;]"..
 		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
 		
 		minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
@@ -525,6 +522,10 @@ minetest.register_node("basic_machines:detector", {
 		local mode = "node";
 		if to_index == 2 then 
 			mode = "player";
+			meta:set_int("r",math.max(meta:get_int("r"),1))
+		end
+		if to_index == 3 then 
+			mode = "object";
 			meta:set_int("r",math.max(meta:get_int("r"),1))
 		end
 		meta:set_string("mode",mode)
@@ -568,7 +569,14 @@ minetest.register_abm({
 		else
 			local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
 			for _,obj in pairs(objects) do
-				if obj:is_player() and (node=="" or obj:get_player_name()==node) then trigger = true break end
+				if mode == "player" then
+					if obj:is_player() and (node=="" or obj:get_player_name()==node) then trigger = true break end
+				elseif mode == "object" and not obj:is_player() then
+					if node=="" then trigger = true break end
+					if obj:get_luaentity() then
+						if obj:get_luaentity().name==node then trigger=true break end
+					end
+				end
 			end
 			if NOT ==  1 then trigger = not trigger end
 		end
@@ -974,17 +982,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	end
 
 
-
-	
-
-
-
-
-
-
-
-
-
 	
 end)
 
@@ -1097,8 +1094,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if fields.help == "help" then
 			local text = "SETUP: right click or punch and follow chat instructions. Detector checks area around source position inside specified radius."..
-			"If detector activates it will trigger machine at target position.\n\n There are 2 modes of operation - node or player detection. Inside node/player "..
-			"write node/player name. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
+			"If detector activates it will trigger machine at target position.\n\n There are 3 modes of operation - node/player/object detection. Inside node/player/object "..
+			"write node/player/object name. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
 			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
 			"If source position is chest it will look into it and check if there are items inside. For example to check if there is at least 2 dirt write default:dirt 2"
 			local form = "size [5,5] textarea[0,0;5.5,6.5;help;DETECTOR HELP;".. text.."]"
