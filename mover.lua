@@ -322,7 +322,7 @@ minetest.register_node("basic_machines:mover", {
 								if math.random(1, rare)==1 then
 									node1={};node1.name = v.items[math.random(1,#v.items)]; -- pick item randomly from list
 									inv:add_item("main",node1.name);
-									minetest.chat_send_all("added " .. node1.name);
+									--minetest.chat_send_all("added " .. node1.name);
 								end
 							end
 						else
