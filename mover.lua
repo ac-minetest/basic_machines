@@ -1147,7 +1147,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,5));
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,10));
 			meta:set_int("NOT",NOT);
 			meta:set_string("node",fields.node or "");
 
