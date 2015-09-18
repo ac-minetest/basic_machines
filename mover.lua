@@ -1057,7 +1057,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
-			meta:set_int("pc",0); meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
+			meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
 			meta:set_string("prefer",fields.prefer or "");
 			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put locked chest with fuel next to it and start it with keypad/mese signal.");
@@ -1084,7 +1084,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);meta:set_string("pass",pass);
-			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,100));meta:set_int("mode",mode);
+			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
 			meta:set_string("infotext", "Punch keypad to use it.");
 			if pass~="" then meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); end
 		end
@@ -1147,7 +1147,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,10));
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,5));
 			meta:set_int("NOT",NOT);
 			meta:set_string("node",fields.node or "");
 
