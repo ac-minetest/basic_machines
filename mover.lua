@@ -190,7 +190,7 @@ minetest.register_node("basic_machines:mover", {
 		local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 		
 		if mode == "object" then -- teleport objects, for free
-			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
+			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 			-- if target is chest put items in it
 			local target_chest = false
 			if node2.name == "default:chest" or node2.name == "default:chest_locked" then
@@ -343,7 +343,7 @@ minetest.register_node("basic_machines:mover", {
 			end
 		end	
 		
-		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 32,})
+		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 		if not(target_chest and source_chest) or not(mode=="inventory") then -- chest to chest transport is free
 			fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
 		end
@@ -511,8 +511,18 @@ minetest.register_node("basic_machines:detector", {
 			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end -- prevent infinite recursion
 			local meta = minetest.get_meta(pos);
-		-- not yet defined ... ???
-	end
+			local state = meta:get_int("state") or 0;
+			state = state + 1;
+			meta:set_int("state",state);
+		end,
+		action_off = function (pos, node,ttl) 
+			if type(ttl)~="number" then ttl = 1 end
+			if ttl<0 then return end -- prevent infinite recursion
+			local meta = minetest.get_meta(pos);
+			local state = meta:get_int("state") or 0;
+			state = state - 1;
+			meta:set_int("state",state);
+		end
 	}
 	},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
@@ -535,7 +545,7 @@ minetest.register_node("basic_machines:detector", {
 		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 		"button[3.,3.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
 		"button[3.,0.25;1,1;help;help]"..
-		"label[0.,3.0;MODE: node,player,object]"..	"list["..list_name..";mode_select;0.,3.5;3.5,1;]"..
+		"label[0.,3.0;MODE: node,player,object,signal]"..	"list["..list_name..";mode_select;0.,3.5;3.5,1;]"..
 		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
 		
 		minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
@@ -561,6 +571,10 @@ minetest.register_node("basic_machines:detector", {
 			mode = "object";
 			meta:set_int("r",math.max(meta:get_int("r"),1))
 		end
+		if to_index == 4 then 
+			mode = "signal";
+			meta:set_int("r",math.max(meta:get_int("r"),1))
+		end
 		meta:set_string("mode",mode)
 		minetest.chat_send_player(player:get_player_name(), "DETECTOR: Mode of operation set  to: "..mode)
 		return count
@@ -583,6 +597,17 @@ minetest.register_abm({
 		node=meta:get_string("node") or ""; mode=meta:get_string("mode") or ""; 
 		
 		local trigger = false
+		if mode == "signal" then
+			local state = meta:get_int("state");
+			meta:set_int("state",0);
+			if state<0 then 
+				trigger=false 
+			elseif state>0 then trigger=true
+			else return
+			end
+			
+		end
+		
 		if mode == "node" then
 			local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name; -- read node at source position
 			
@@ -601,8 +626,10 @@ minetest.register_abm({
 			if NOT ==  1 then trigger = not trigger end
 		else
 			local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
+			local player_near=false;
 			for _,obj in pairs(objects) do
 				if mode == "player" then
+					if obj:is_player() then player_near = true end;
 					if obj:is_player() and (node=="" or obj:get_player_name()==node) then trigger = true break end
 				elseif mode == "object" and not obj:is_player() then
 					if node=="" then trigger = true break end
@@ -611,7 +638,10 @@ minetest.register_abm({
 					end
 				end
 			end
-			if NOT ==  1 then trigger = not trigger end
+			-- negation
+			if node~="" and NOT==1 and not(trigger) and not(player_near) then trigger = false -- name specified, but noone around and negation -> 0
+				else if NOT ==  1 then trigger = not trigger end
+			end
 		end
 		
 		local node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
@@ -1127,10 +1157,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if fields.help == "help" then
 			local text = "SETUP: right click or punch and follow chat instructions. Detector checks area around source position inside specified radius."..
-			"If detector activates it will trigger machine at target position.\n\n There are 3 modes of operation - node/player/object detection. Inside node/player/object "..
+			"If detector activates it will trigger machine at target position.\n\n There are 3 modes of operation - node/player/object/signal detection. Inside node/player/object "..
 			"write node/player/object name. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
 			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
-			"If source position is chest it will look into it and check if there are items inside. For example to check if there is at least 2 dirt write default:dirt 2"
+			"If source position is chest it will look into it and check if there are items inside. For example to check if there is at least 2 dirt write default:dirt 2. In signal mode detector counts how many times has it been activated/deactivated in last 5 seconds. If the number is higher then specified, it activates if not it deactivates target"
 			local form = "size [5,5] textarea[0,0;5.5,6.5;help;DETECTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_detector", form)
 		end
@@ -1147,7 +1177,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,5));
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,10));
 			meta:set_int("NOT",NOT);
 			meta:set_string("node",fields.node or "");
 
