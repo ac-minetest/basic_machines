@@ -5,13 +5,18 @@ local recycler_process = function(pos)
 	if node ~= "default:furnace_active" then return end
 	local meta = minetest.get_meta(pos);local inv = meta:get_inventory();
 	local stack = inv:get_stack("src",1);
-	
+		if stack:is_empty() then return end; -- nothing to do
 	--minetest.chat_send_all("listname " .. listname .. " item " ..stack:to_string());
 		local itemlist = minetest.get_craft_recipe( stack:to_string() ).items;
-		--minetest.chat_send_all("will drop " .. dump(minetest.get_craft_recipe( stack:to_string() )));
+		
+		--minetest.chat_send_all("will drop " .. dump(  minetest.get_craft_recipe( stack:to_string() )  ));
+		
 		if not itemlist then itemlist = {stack:to_string()} end
 		local output = minetest.get_craft_recipe( stack:to_string() ).output or "";
-		if string.find(output," ") then itemlist = {stack:to_string()} end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
+		if string.find(output," ") then 
+			local par = string.find(output," ");
+			if (tonumber(string.sub(output, par)) or 0)>1 then	itemlist = {stack:to_string()} end
+		end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
 		
 
 		--empty dst inventory before proceeding
@@ -23,6 +28,8 @@ local recycler_process = function(pos)
 		for _,  v in pairs(itemlist) do
 			if math.random(1, 4)<=3 then -- probability 3/4 = 75%
 				if not string.find(v,"group") then -- dont add if item described with group
+					local par = string.find(v,"\"") or 0;
+					--minetest.chat_send_all(" par location at " .. par .. " item ".. v);
 					inv:add_item("dst",ItemStack(v));
 				end
 			end

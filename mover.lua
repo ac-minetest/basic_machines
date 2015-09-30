@@ -639,7 +639,7 @@ minetest.register_abm({
 				end
 			end
 			-- negation
-			if node~="" and NOT==1 and not(trigger) and not(player_near) then trigger = false -- name specified, but noone around and negation -> 0
+			if node~="" and NOT==1 and not(trigger) and not(player_near) and mode == "player" then trigger = false -- name specified, but noone around and negation -> 0
 				else if NOT ==  1 then trigger = not trigger end
 			end
 		end
