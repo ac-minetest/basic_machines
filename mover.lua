@@ -62,8 +62,11 @@ minetest.register_node("basic_machines:mover", {
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
 		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
 
-		machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};
+		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};
 		machines.mark_pos1(player:get_player_name()) -- mark pos1
+		machines.pos11[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};
+		machines.mark_pos11(player:get_player_name()) -- mark pos11
+		
 		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};
 		machines.mark_pos2(player:get_player_name()) -- mark pos2
 		
