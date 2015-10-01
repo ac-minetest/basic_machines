@@ -190,7 +190,7 @@ minetest.register_node("basic_machines:mover", {
 		local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 		
 		if mode == "object" then -- teleport objects, for free
-			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+			minetest.sound_play("tng_transporter1", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 			-- if target is chest put items in it
 			local target_chest = false
 			if node2.name == "default:chest" or node2.name == "default:chest_locked" then
@@ -343,7 +343,12 @@ minetest.register_node("basic_machines:mover", {
 			end
 		end	
 		
-		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+		if mode == "inventory" then
+			minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+		else
+			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+		end
+		
 		if not(target_chest and source_chest) and not(mode=="inventory") then -- chest to chest transport/inventory transport is free
 			fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
 		end
@@ -806,7 +811,7 @@ minetest.register_node("basic_machines:light_off", {
 
 
 minetest.register_node("basic_machines:light_on", {
-	description = "Light off",
+	description = "Light on",
 	tiles = {"light.png"},
 	groups = {oddly_breakable_by_hand=2},
 	light_source = LIGHT_MAX,

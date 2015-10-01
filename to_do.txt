@@ -1,0 +1,2 @@
+display source 2 block too ( maybe different mark T for target)
+to do: use timer to run the keypad (then turn the timer off when done)
