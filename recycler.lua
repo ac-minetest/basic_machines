@@ -1,3 +1,7 @@
+-- rnd 2015:
+
+-- this node works as a reverse of crafting process with a 25% loss of items (aka recycling). You can select which recipe to use when recycling.
+-- There is a certain fuel cost to recycle as a working furnace is needed for operation.
 
 local recycler_process = function(pos) 
 	
@@ -7,18 +11,36 @@ local recycler_process = function(pos)
 	local stack = inv:get_stack("src",1);
 		if stack:is_empty() then return end; -- nothing to do
 	--minetest.chat_send_all("listname " .. listname .. " item " ..stack:to_string());
-		local itemlist = minetest.get_craft_recipe( stack:to_string() ).items;
+		-- look if we already handled this item
+		local known_recipe=true;
+		if stack:to_string()~=meta:get_string("node") then-- did we already handle this? if yes read from cache
+			meta:set_string("node",stack:to_string());
+			known_recipe=false;
+		end
 		
-		--minetest.chat_send_all("will drop " .. dump(  minetest.get_craft_recipe( stack:to_string() )  ));
+		local itemlist;
+		if not known_recipe then
+			local recipe = minetest.get_all_craft_recipes( stack:to_string() );
+			local recipe_id = tonumber(meta:get_int("recipe")) or 1;
+			
+			if not recipe then 
+				return
+			else 
+				itemlist = recipe[recipe_id];
+				if not itemlist then meta:set_string("node","") return end;
+				itemlist=itemlist.items;
+			end
+			local output = recipe[recipe_id].output or "";
+			if string.find(output," ") then 
+				local par = string.find(output," ");
+				if (tonumber(string.sub(output, par)) or 0)>1 then itemlist = {stack:to_string()} end
+			end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
+			
+			meta:set_string("itemlist",minetest.serialize(itemlist)); -- read cached itemlist
+		else 
+			itemlist=minetest.deserialize(meta:get_string("itemlist")) or {};
+		end
 		
-		if not itemlist then itemlist = {stack:to_string()} end
-		local output = minetest.get_craft_recipe( stack:to_string() ).output or "";
-		if string.find(output," ") then 
-			local par = string.find(output," ");
-			if (tonumber(string.sub(output, par)) or 0)>1 then	itemlist = {stack:to_string()} end
-		end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
-		
-
 		--empty dst inventory before proceeding
 		-- local size = inv:get_size("dst"); 
 		-- for i=1,size do
@@ -46,6 +68,24 @@ local recycler_process = function(pos)
 	
 end
 
+
+local recycler_update_meta = function(pos)
+		local meta = minetest.get_meta(pos);
+		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+		local form  = 
+		"size[8,8]" ..  -- width, height
+		--"size[6,10]" ..  -- width, height
+		"label[0,0;IN] label[1,0;OUT]"..
+		"list["..list_name..";src;0.,0.5;1,1;]".. 
+		"list["..list_name..";dst;1.,0.5;3,3;]"..
+		"list[current_player;main;0,4;8,4;]"..
+		"field[4.5,0.75;2,1;recipe;select recipe: ;" .. (meta:get_int("recipe")) .. "]"..
+		"button[6.5,0.5;1,1;OK;OK]";
+		
+		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
+		meta:set_string("formspec", form);
+end
+
 minetest.register_node("basic_machines:recycler", {
 	description = "Recycler",
 	tiles = {"recycler.png"},
@@ -55,7 +95,7 @@ minetest.register_node("basic_machines:recycler", {
 		local meta = minetest.get_meta(pos);
 		meta:set_string("infotext", "Recycler: put one item in it (src) and obtain 75% of raw materials (dst). To operate it must sit on top of working furnace.")
 		meta:set_string("owner", placer:get_player_name());
-		
+		meta:set_int("recipe",1);
 		local inv = meta:get_inventory();inv:set_size("src", 1);inv:set_size("dst",9);
 		--inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
 	end,
@@ -64,21 +104,7 @@ minetest.register_node("basic_machines:recycler", {
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return end -- only owner can interact with recycler
-		
-		minetest.log("OK!");
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
-		local form  = 
-		"size[8,8]" ..  -- width, height
-		--"size[6,10]" ..  -- width, height
-		"label[0,0;IN] label[1,0;OUT]"..
-		"list["..list_name..";src;0.,0.5;1,1;]".. 
-		"list["..list_name..";dst;1.,0.5;3,3;]"..
-		"list[current_player;main;0,4;8,4;]"
-		;
-		
-		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
-		
-		minetest.show_formspec(player:get_player_name(), "basic_machines:recycler_"..minetest.pos_to_string(pos), form)
+		recycler_update_meta(pos);
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -108,7 +134,20 @@ minetest.register_node("basic_machines:recycler", {
 	}
 	},
 	
-	
+	on_receive_fields = function(pos, formname, fields, sender) 
+		--	minetest.chat_send_all("Player "..sender:get_player_name().." submitted fields "..dump(fields))
+		if fields.quit then return end
+		local meta = minetest.get_meta(pos);
+		local recipe=1;
+		if fields.recipe then
+			recipe = tonumber(fields.recipe) or 1;
+			else return;
+		end
+		meta:set_int("recipe",recipe);
+		meta:set_string("node",""); -- this will force to reread recipe on next use
+		recycler_update_meta(pos);
+	end,
+
 })
 
 
