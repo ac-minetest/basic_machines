@@ -6,11 +6,29 @@
 local recycler_process = function(pos) 
 	
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name;
-	if node ~= "default:furnace_active" then return end
 	local meta = minetest.get_meta(pos);local inv = meta:get_inventory();
+	
+	local fuel = meta:get_float("fuel");
+	if fuel<=0 then -- we need new fuel, check chest below
+		local fuellist = inv:get_list("fuel") 
+		local fueladd, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist}) 
+		if fueladd.time == 0 then -- no fuel inserted
+				-- No valid fuel in fuel list
+				meta:set_string("infotext", "Please insert fuel.");
+				return;
+		else
+			-- Take fuel from fuel list
+			inv:set_stack("fuel", 1, afterfuel.items[1])
+			fuel=fuel + fueladd.time*0.1
+			meta:set_float("fuel",fuel);
+			meta:set_string("infotext", "fuel status " .. fuel);
+		end 
+	end
+		
+	
 	local stack = inv:get_stack("src",1);
 		if stack:is_empty() then return end; -- nothing to do
-	--minetest.chat_send_all("listname " .. listname .. " item " ..stack:to_string());
+
 		-- look if we already handled this item
 		local known_recipe=true;
 		if stack:to_string()~=meta:get_string("node") then-- did we already handle this? if yes read from cache
@@ -65,7 +83,9 @@ local recycler_process = function(pos)
 		for i=1,size do
 			inv:set_stack("src", i, ItemStack(""));
 		end
-	
+		
+		fuel = fuel-1; -- burn fuel on succesful operation
+		meta:set_float("fuel",fuel); meta:set_string("infotext", "fuel status " .. fuel .. ", recycling " .. meta:get_string("node"));
 end
 
 
@@ -75,9 +95,10 @@ local recycler_update_meta = function(pos)
 		local form  = 
 		"size[8,8]" ..  -- width, height
 		--"size[6,10]" ..  -- width, height
-		"label[0,0;IN] label[1,0;OUT]"..
+		"label[0,0;IN] label[1,0;OUT] label[0,2;FUEL] "..
 		"list["..list_name..";src;0.,0.5;1,1;]".. 
 		"list["..list_name..";dst;1.,0.5;3,3;]"..
+		"list["..list_name..";fuel;0.,2.5;1,1;]".. 
 		"list[current_player;main;0,4;8,4;]"..
 		"field[4.5,0.75;2,1;recipe;select recipe: ;" .. (meta:get_int("recipe")) .. "]"..
 		"button[6.5,0.5;1,1;OK;OK]";
@@ -93,10 +114,11 @@ minetest.register_node("basic_machines:recycler", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext", "Recycler: put one item in it (src) and obtain 75% of raw materials (dst). To operate it must sit on top of working furnace.")
+		meta:set_string("infotext", "Recycler: put one item in it (src) and obtain 75% of raw materials (dst). To operate it must sit on top of chest with fuel.")
 		meta:set_string("owner", placer:get_player_name());
 		meta:set_int("recipe",1);
-		local inv = meta:get_inventory();inv:set_size("src", 1);inv:set_size("dst",9);
+		meta:set_float("fuel",0);
+		local inv = meta:get_inventory();inv:set_size("src", 1);inv:set_size("dst",9);inv:set_size("fuel",1);
 		--inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
 	end,
 	
@@ -108,7 +130,6 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		if listname ~= "src" then return 0 end
 		return 1
 	end,
 	
@@ -122,7 +143,7 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		return 0		
+		return 1
 	end,
 	
 	mesecons = {effector = { 
