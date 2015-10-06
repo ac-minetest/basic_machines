@@ -10,9 +10,15 @@ local recycler_process = function(pos)
 	
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
+	
+	
+	
 	if fuel<=0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
+		if not fuellist then return end -- safety check, prevents crash when using previous version recylcler without inventory
+		
 		local fueladd, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist}) 
+		
 		if fueladd.time == 0 then -- no fuel inserted
 				-- No valid fuel in fuel list
 				meta:set_string("infotext", "Please insert fuel.");
@@ -25,7 +31,9 @@ local recycler_process = function(pos)
 			meta:set_string("infotext", "fuel status " .. fuel);
 		end 
 	end
-		
+
+	
+	
 	-- RECYCLING: check out inserted items
 	local stack = inv:get_stack("src",1);
 		if stack:is_empty() then return end; -- nothing to do
