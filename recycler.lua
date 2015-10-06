@@ -8,6 +8,7 @@ local recycler_process = function(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name;
 	local meta = minetest.get_meta(pos);local inv = meta:get_inventory();
 	
+	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
 	if fuel<=0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
@@ -25,20 +26,23 @@ local recycler_process = function(pos)
 		end 
 	end
 		
-	
+	-- RECYCLING: check out inserted items
 	local stack = inv:get_stack("src",1);
 		if stack:is_empty() then return end; -- nothing to do
 
+		local src_item = stack:to_string();
+		local pos=string.find(src_item," "); if pos then src_item = string.sub(src_item,1,pos-1) end -- take first word to determine what item was 
+		
 		-- look if we already handled this item
 		local known_recipe=true;
-		if stack:to_string()~=meta:get_string("node") then-- did we already handle this? if yes read from cache
-			meta:set_string("node",stack:to_string());
+		if src_item~=meta:get_string("node") then-- did we already handle this? if yes read from cache
+			meta:set_string("node",src_item);
 			known_recipe=false;
 		end
 		
 		local itemlist;
 		if not known_recipe then
-			local recipe = minetest.get_all_craft_recipes( stack:to_string() );
+			local recipe = minetest.get_all_craft_recipes( src_item );
 			local recipe_id = tonumber(meta:get_int("recipe")) or 1;
 			
 			if not recipe then 
@@ -78,11 +82,8 @@ local recycler_process = function(pos)
 			end
 		end
 	
-		--empty src inventory
-		size = inv:get_size("src"); 
-		for i=1,size do
-			inv:set_stack("src", i, ItemStack(""));
-		end
+		--take 1 item from src inventory for each activation
+		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
 		fuel = fuel-1; -- burn fuel on succesful operation
 		meta:set_float("fuel",fuel); meta:set_string("infotext", "fuel status " .. fuel .. ", recycling " .. meta:get_string("node"));
@@ -130,11 +131,10 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		return 1
+		return stack:get_count();
 	end,
 	
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
-		if listname ~= "dst" then return 0 end
 		return stack:get_count();
 	end,
 	
@@ -143,7 +143,7 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		return 1
+		return 1;
 	end,
 	
 	mesecons = {effector = { 
