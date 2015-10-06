@@ -143,7 +143,7 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		return 1;
+		return 0;
 	end,
 	
 	mesecons = {effector = { 
