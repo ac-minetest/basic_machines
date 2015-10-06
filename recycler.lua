@@ -139,6 +139,7 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 	
 	on_metadata_inventory_put = function(pos, listname, index, stack, player) 
+		if listname == "fuel" or listname =="dst" then return end -- just put fuel in, nothing else
 		recycler_process(pos);
 	end,
 	
