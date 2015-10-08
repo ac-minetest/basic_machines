@@ -55,7 +55,10 @@ minetest.register_node("basic_machines:mover", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return end -- only owner can set up mover
+		local cant_build = minetest.is_protected(pos,player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+			return 
+		end -- only owner can set up mover, ppl sharing protection can only look
 		
 		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
@@ -83,7 +86,11 @@ minetest.register_node("basic_machines:mover", {
 		"label[0.,4.0;MODE: normal,dig,drop,reverse,object,inventory]"..
 		"list["..list_name..";mode;0.,4.5;4,2;]"--.. 
 		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
-		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
+		if meta:get_string("owner")==player:get_player_name() then
+			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
+		else
+			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_mover", form)
+		end
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -474,7 +481,10 @@ minetest.register_node("basic_machines:keypad", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup keypad
+		local cant_build = minetest.is_protected(pos,player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+			return 
+		end -- only owner can set up mover, ppl sharing protection can only look
 		local x0,y0,z0,x1,y1,z1,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
@@ -487,7 +497,11 @@ minetest.register_node("basic_machines:keypad", {
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]"..
 		"field[2.25,1.5;2,1;mode;ON/OFF/TOGGLE: ;"..mode.."]"
-		minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
+		if meta:get_string("owner")==player:get_player_name() then
+			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
+		else
+			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_keypad", form)
+		end
 	end
 })
 
@@ -536,7 +550,12 @@ minetest.register_node("basic_machines:detector", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup
+		
+		local cant_build = minetest.is_protected(pos,player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+			return 
+		end -- only owner can set up mover, ppl sharing protection can only look
+		
 		local x0,y0,z0,x1,y1,z1,r,node,NOT;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
@@ -553,10 +572,14 @@ minetest.register_node("basic_machines:detector", {
 		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 		"button[3.,3.25;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
 		"button[3.,0.25;1,1;help;help]"..
-		"label[0.,3.0;MODE: node,player,object,signal]"..	"list["..list_name..";mode_select;0.,3.5;3.5,1;]"..
+		"label[0.,3.0;MODE: node,player,object]"..	"list["..list_name..";mode_select;0.,3.5;3.5,1;]"..
 		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
 		
-		minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
+		if meta:get_string("owner")==player:get_player_name() then
+			minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
+		else
+			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_detector", form)
+		end
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -773,7 +796,10 @@ minetest.register_node("basic_machines:distributor", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~= player:get_player_name() and not privs.privs then return end -- only owner can setup 
+		local cant_build = minetest.is_protected(pos,player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+			return 
+		end -- only owner can set up mover, ppl sharing protection can only look
 		local x1,y1,z1,x2,y2,z2,active1,active2
 		
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");active1=meta:get_int("active1");
@@ -790,8 +816,11 @@ minetest.register_node("basic_machines:distributor", {
 		"field[0.25,0.5;1,1;x1;;"..x1.."] field[1.25,0.5;1,1;y1;;"..y1.."] field[2.25,0.5;1,1;z1;;"..z1.."] field [ 3.25,0.5;1,1;active1;;" .. active1 .. "]"..
 		"field[0.25,1.5;1,1;x2;target2;"..x2.."] field[1.25,1.5;1,1;y2;;"..y2.."] field[2.25,1.5;1,1;z2;;"..z2.."] field [ 3.25,1.5;1,1;active2;;" .. active2 .. "]"..
 		"button[3.,2;1,1;OK;OK]";
-		
-		minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
+		if meta:get_string("owner")==player:get_player_name() then
+			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
+		else
+			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_distributor", form)
+		end
 	end,
 	}
 )
@@ -860,7 +889,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			-- if not puncher:get_player_control().sneak then
 				-- return
 			-- end
-			minetest.chat_send_player(name, "MOVER: Now punch starting and end position to set up mover.")
+			minetest.chat_send_player(name, "MOVER: Now punch source1, source2, end position to set up mover.")
 			punchset[name].node = node.name;punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
 			punchset[name].state = 1 
 			return
@@ -883,11 +912,35 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			
 			punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};punchset[name].state = 2;
 			machines.pos1[name] = punchset[name].pos1;machines.mark_pos1(name) -- mark position
-			minetest.chat_send_player(name, "MOVER: Start position for mover set. Punch again to set end position.")
+			minetest.chat_send_player(name, "MOVER: Source1 position for mover set. Punch again to set source2 position.")
 			return
 		end
 		
+		
 		if punchset[name].state == 2 then 
+			local privs = minetest.get_player_privs(puncher:get_player_name());
+			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range) then
+					minetest.chat_send_player(name, "MOVER: Punch closer to mover. reseting.")
+					punchset[name].state = 0; return
+			end
+			
+			if punchset[name].pos.x==pos.x and punchset[name].pos.y==pos.y and punchset[name].pos.z==pos.z then 
+				minetest.chat_send_player(name, "MOVER: Punch something else. aborting.")
+				punchset[name].state = 0;
+				return 
+			end
+			
+			punchset[name].pos11 = {x=pos.x,y=pos.y,z=pos.z};punchset[name].state = 3;
+			machines.pos11[name] = {x=pos.x,y=pos.y,z=pos.z};
+			machines.mark_pos11(name) -- mark pos11
+			minetest.chat_send_player(name, "MOVER: Source2 position for mover set. Punch again to set target position.")
+			return
+		end
+		
+		
+		
+		
+		if punchset[name].state == 3 then 
 			if punchset[name].node~="basic_machines:mover" then punchset[name].state = 0 return end
 			local privs = minetest.get_player_privs(puncher:get_player_name());
 			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range) then
@@ -899,16 +952,23 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			machines.pos2[name] = punchset[name].pos2;machines.mark_pos2(name) -- mark pos2
 			
 			minetest.chat_send_player(name, "MOVER: End position for mover set.")
+			
 			local x = punchset[name].pos1.x-punchset[name].pos.x;
 			local y = punchset[name].pos1.y-punchset[name].pos.y;
 			local z = punchset[name].pos1.z-punchset[name].pos.z;
 			local meta = minetest.get_meta(punchset[name].pos);
 			meta:set_int("x0",x);meta:set_int("y0",y);meta:set_int("z0",z);
+			
+			x = punchset[name].pos11.x-punchset[name].pos.x;
+			y = punchset[name].pos11.y-punchset[name].pos.y;
+			z = punchset[name].pos11.z-punchset[name].pos.z;
 			meta:set_int("x1",x);meta:set_int("y1",y);meta:set_int("z1",z);
+			
 			x = punchset[name].pos2.x-punchset[name].pos.x;
 			y = punchset[name].pos2.y-punchset[name].pos.y;
 			z = punchset[name].pos2.z-punchset[name].pos.z;
 			meta:set_int("x2",x);meta:set_int("y2",y);meta:set_int("z2",z);
+			
 			meta:set_int("pc",0); meta:set_int("dim",1);
 			return
 		end

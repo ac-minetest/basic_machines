@@ -45,8 +45,10 @@ local recycler_process = function(pos)
 		local known_recipe=true;
 		if src_item~=meta:get_string("node") then-- did we already handle this? if yes read from cache
 			meta:set_string("node",src_item);
+			meta:set_string("itemlist","{}");
 			known_recipe=false;
 		end
+		
 		
 		local itemlist;
 		if not known_recipe then
@@ -140,12 +142,14 @@ minetest.register_node("basic_machines:recycler", {
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
 		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
 		return stack:get_count();
 	end,
 	
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
 		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
 		return stack:get_count();
 	end,
@@ -182,16 +186,4 @@ minetest.register_node("basic_machines:recycler", {
 		recycler_update_meta(pos);
 	end,
 
-})
-
-
--- CRAFTS
-
-minetest.register_craft({
-	output = "basic_machines:recycler",
-	recipe = {
-		{"default:mese_crystal", "default:mese_crystal","default:mese_crystal"},
-		{"default:mese_crystal", "default:diamondblock","default:mese_crystal"},
-		{"default:mese_crystal", "default:mese_crystal","default:mese_crystal"}
-	}
 })
