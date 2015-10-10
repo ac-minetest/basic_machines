@@ -188,7 +188,7 @@ minetest.register_node("basic_machines:mover", {
 					meta:set_float("fuel", fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel);
 					fuel = fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel;
 					meta:set_string("infotext", "Mover block refueled. Fuel "..MOVER_FUEL_STORAGE_CAPACITY);
-				else meta:set_string("infotext", "Mover block. Out of fuel. Put fuel chest so that it touches mover.");return
+				else meta:set_string("infotext", "Mover block. Out of fuel. Put fuel chest near mover.");return
 				end
 				--check fuel
 				if fuel == 0 then return  end
@@ -266,23 +266,9 @@ minetest.register_node("basic_machines:mover", {
 		end
 		--if prefer:find() then end
 		
-		-- filtering
-		if prefer~="" then -- prefered node set
-			if prefer~=node1.name and not source_chest and mode ~= "inventory"  then return end -- only take prefered node or from chests/inventories
-			if source_chest then -- take stuff from chest
-				--minetest.chat_send_all(" source chest detected")
-				local cmeta = minetest.get_meta(pos1);
-				local inv = cmeta:get_inventory();
-				local stack = ItemStack(prefer);
-				
-				if inv:contains_item("main", stack) then
-					inv:remove_item("main", stack);
-					else return -- item not found in chest
-				end
-			
-			else
-			
-				if mode == "inventory" then
+		-- inventory mode
+		if mode == "inventory" then
+					if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
 					local meta1 = minetest.get_meta(pos1); local inv1 = meta1:get_inventory();
 					local stack = ItemStack(prefer);
 					if inv1:contains_item(invName1, stack) then
@@ -300,13 +286,26 @@ minetest.register_node("basic_machines:mover", {
 					minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 					return
 				end
-			
+		
+		-- filtering
+		if prefer~="" then -- prefered node set
+			if prefer~=node1.name and not source_chest and mode ~= "inventory"  then return end -- only take prefered node or from chests/inventories
+			if source_chest then -- take stuff from chest
+				--minetest.chat_send_all(" source chest detected")
+				local cmeta = minetest.get_meta(pos1);
+				local inv = cmeta:get_inventory();
+				local stack = ItemStack(prefer);
+				
+				if inv:contains_item("main", stack) then
+					inv:remove_item("main", stack);
+					else return -- item not found in chest
+				end
 			end
 
 			node1 = {}; node1.name = prefer; 
 		end
 		
-		if (prefer == "" and (source_chest or mode=="inventory")) then return end -- doesnt know what to take out of chest/inventory
+		if (prefer == "" and source_chest) then return end -- doesnt know what to take out of chest/inventory
 		
 		
 		-- if target chest put in chest
