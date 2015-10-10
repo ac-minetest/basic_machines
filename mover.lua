@@ -46,8 +46,7 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_int("x2",0);meta:set_int("y2",1);meta:set_int("z2",0);
 		meta:set_float("fuel",0)
 		meta:set_string("prefer", "");
-		local inv = meta:get_inventory();inv:set_size("mode", 6) 
-		inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
+		meta:set_string("mode", "normal");
 		
 		local name = placer:get_player_name(); punchset[name].state = 0
 	end,
@@ -73,19 +72,49 @@ minetest.register_node("basic_machines:mover", {
 		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};
 		machines.mark_pos2(player:get_player_name()) -- mark pos2
 		
-		prefer = meta:get_string("prefer");mode = meta:get_string("mode");
+		prefer = meta:get_string("prefer");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
+		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3,["reverse"]=4, ["object"]=5, ["inventory"]=6};
+		local mode = mode_list[meta:get_string("mode")] or "";
+		
+		local meta1 = minetest.get_meta({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0});
+		local meta2 = minetest.get_meta({x=pos.x+x2,y=pos.y+y2,z=pos.z+z2});
+		
+		
+		local inv1=1; local inv2=1;
+		local inv1m = meta:get_string("inv1");local inv2m = meta:get_string("inv2");
+		
+		local list1 = meta1:get_inventory():get_lists(); local inv_list1 = ""; local j;
+		j=1; -- stupid dropdown requires item index but returns string on receive so we have to find index.. grrr
+		for i in pairs( list1) do 
+			inv_list1 = inv_list1 .. i .. ","; 
+			if i == inv1m then inv1=j end; j=j+1;
+		end
+		local list2 = meta2:get_inventory():get_lists(); local inv_list2 = "";
+		j=1;
+		for i in pairs( list2) do 
+			inv_list2 = inv_list2 .. i .. ",";
+			if i == inv2m then inv2=j; end; j=j+1; 
+		end
+		
 		local form  = 
-		"size[4.5,6]" ..  -- width, height
+		"size[4.5,5]" ..  -- width, height
 		--"size[6,10]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+		"dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
 		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 		"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-		"button_exit[3,3.25;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter/inventory name;"..prefer.."]"..
-		"button[3,2.25;1,1;help;help]"..
-		"label[0.,4.0;MODE: normal,dig,drop,reverse,object,inventory]"..
-		"list["..list_name..";mode;0.,4.5;4,2;]"--.. 
+		"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
+		"button_exit[3,3.25;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter;"..prefer.."]"..
+		"button[3,4.4;1,1;help;help]"..
+		"label[0.,4.0;MODE selection]"..
+		"dropdown[0,4.5;3,1;mode;normal,dig,drop,reverse,object,inventory;".. mode .."]";
+		--"list["..list_name..";mode;0.,4.5;4,2;]"--.. 
 		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
+		
+		-- TO DO: select inventories with inv:get_lists(), use dropdown list instead of cobble, ... dropdown[X,Y;W,H;name;item1,item2,item3...;selected_id]
+	
+		
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 		else
@@ -99,23 +128,6 @@ minetest.register_node("basic_machines:mover", {
 	
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
 		return 0
-	end,
-	
-	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		--minetest.chat_send_all("mover inventory: moved from pos ".. from_index .. " to pos " .. to_index )
-		local meta = minetest.get_meta(pos);
-		local mode = "";
-		if to_index == 1 then 
-			meta:set_string("mode","")
-			elseif to_index==2 then mode = "dig"
-			elseif to_index==3 then mode = "drop"
-			elseif to_index==4 then mode = "reverse"
-			elseif to_index==5 then mode = "object"
-			elseif to_index==6 then mode = "inventory"
-		end
-		meta:set_string("mode",mode)
-		if mode == "" then mode = "normal" end;	minetest.chat_send_player(player:get_player_name(), "MOVER: Mode of operation set  to: "..mode)
-		return count
 	end,
 	
 	mesecons = {effector = {
@@ -162,7 +174,7 @@ minetest.register_node("basic_machines:mover", {
 				if not fpos then return end -- no chest found
 				local cmeta = minetest.get_meta(fpos);
 				local inv = cmeta:get_inventory();
-				--fuels and their caloric value: 1 = 5 uses
+				--fuels and their caloric value: 1 = 5 uses, TODO; add unknown fuels from minetest fuels
 				local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
 				local stack;
 				for i,v in pairs(fuels) do
@@ -247,10 +259,9 @@ minetest.register_node("basic_machines:mover", {
 		end
 		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" then return end -- do nothing if target nonempty and not chest
 		
-		local invName="";
+		local invName1="";local invName2="";
 		if mode == "inventory" then 
-			local i = prefer:find("%s"); if not i then return end
-			invName = prefer:sub(1,i-1); prefer = prefer:sub(i+1);
+			invName1 = meta:get_string("inv1");invName2 = meta:get_string("inv2");
 			--minetest.chat_send_all(" invname ".. invName .. " prefer "..prefer);
 		end
 		--if prefer:find() then end
@@ -272,14 +283,22 @@ minetest.register_node("basic_machines:mover", {
 			else
 			
 				if mode == "inventory" then
-					local cmeta = minetest.get_meta(pos1);
-					local inv = cmeta:get_inventory();
+					local meta1 = minetest.get_meta(pos1); local inv1 = meta1:get_inventory();
 					local stack = ItemStack(prefer);
-					if inv:contains_item(invName, stack) then
-						inv:remove_item(invName, stack);
-						else
+					if inv1:contains_item(invName1, stack) then
+						inv1:remove_item(invName1, stack);
+					else
 						return
 					end
+					
+					local meta2 = minetest.get_meta(pos2); local inv2 = meta2:get_inventory();
+					if inv2:room_for_item(invName2, stack) then
+						inv2:add_item(invName2, stack);
+					else
+						return
+					end
+					minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+					return
 				end
 			
 			end
@@ -345,33 +364,27 @@ minetest.register_node("basic_machines:mover", {
 			else -- if not dig just put it in
 			inv:add_item("main",node1.name);
 			end
-		else
-			if mode == "inventory" then
-				local cmeta = minetest.get_meta(pos2);
-				local inv = cmeta:get_inventory();
-				inv:add_item(invName,node1.name);
-			end
 		end	
 		
-		if mode == "inventory" then
-			minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
-		else
-			minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
-		end
 		
-		if not(target_chest and source_chest) and not(mode=="inventory") then -- chest to chest transport/inventory transport is free
+			
+		
+		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
+		
+		
+		if not(target_chest and source_chest) then -- chest to chest transpor is free
 			fuel = fuel -1;	meta:set_float("fuel", fuel); -- burn fuel
 		end
 		meta:set_string("infotext", "Mover block. Fuel "..fuel);
 		
 		
-		if not(target_chest) and not(mode=="inventory") then
+		if not(target_chest) then
 			if not drop then minetest.set_node(pos2, {name = node1.name}); end
 			if drop then 
 				local stack = ItemStack(node1.name);minetest.add_item(pos2,stack) -- drops it
 			end
 		end 
-		if not(source_chest) and not(mode=="inventory") then
+		if not(source_chest) then
 			if dig then nodeupdate(pos1) end
 			minetest.set_node(pos1, {name = "air"});
 			end
@@ -1128,13 +1141,16 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(name);
 		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
-		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
+		
+		
+		
 		if fields.help == "help" then
-			local text = "SETUP: right click and define box where to dig from and where to put. Positions are defined by x y z coordinates (see top of mover). Mover has coordinates 0 0 0. If you prefer interactive setup "..
-			"punch the mover and then punch source and target node. Put chest with fuel right next to it. "..
+			local text = "SETUP: For interactive setup "..
+			"punch the mover and then punch source1, source2, target node (follow instructions). Put locked chest with fuel within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node), drop "..
 			"(drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
-			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between chests and other nodes inventories defined by inventory name - like 'fuel','dst', 'src' with furnaces. To add 4 coal into furnace for example use 'fuel default:coal_lump 4' To put cobble in furnace to smelt use 'src default:cobble'.To take smelted stone use 'dst default:stone'\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
+			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
+			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
 			local form = "size [5,5.5] textarea[0,0;5.5,6.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
 		end
@@ -1146,6 +1162,18 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
 			if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
+			end
+			
+			if fields.mode then
+				meta:set_string("mode",fields.mode);
+			end
+			
+			if fields.inv1 then
+				 meta:set_string("inv1",fields.inv1);
+			end
+			
+			if fields.inv2 then
+				 meta:set_string("inv2",fields.inv2);
 			end
 			
 			local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);

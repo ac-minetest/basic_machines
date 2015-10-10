@@ -187,3 +187,14 @@ minetest.register_node("basic_machines:recycler", {
 	end,
 
 })
+
+
+minetest.register_craft({
+	output = "basic_machines:recycler",
+	recipe = {
+		{"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
+		{"default:mese_crystal","default:diamondblock","default:mese_crystal"},
+		{"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
+		
+	}
+})
