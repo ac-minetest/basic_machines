@@ -33,7 +33,7 @@ MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - b
 
 minetest.register_node("basic_machines:mover", {
 	description = "Mover",
-	tiles = {"compass_top.png","default_furnace_top.png"},
+	tiles = {"compass_top.png","default_furnace_top.png", "basic_machine_side.png","basic_machine_side.png","basic_machine_side.png","basic_machine_side.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
