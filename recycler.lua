@@ -49,7 +49,6 @@ local recycler_process = function(pos)
 			known_recipe=false;
 		end
 		
-		
 		local itemlist;
 		if not known_recipe then
 			local recipe = minetest.get_all_craft_recipes( src_item );
@@ -65,7 +64,7 @@ local recycler_process = function(pos)
 			local output = recipe[recipe_id].output or "";
 			if string.find(output," ") then 
 				local par = string.find(output," ");
-				if (tonumber(string.sub(output, par)) or 0)>1 then itemlist = {stack:to_string()} end
+				if (tonumber(string.sub(output, par)) or 0)>1 then itemlist = {} end
 			end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
 			
 			meta:set_string("itemlist",minetest.serialize(itemlist)); -- read cached itemlist
