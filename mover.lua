@@ -697,6 +697,7 @@ minetest.register_abm({
 		if trigger then -- activate target node if succesful
 			meta:set_string("infotext", "detector: on");
 			if not effector.action_on then return end
+		
 			effector.action_on({x=x1,y=y1,z=z1},node,3); -- run
 			
 			else 
@@ -909,6 +910,13 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	end
 	
 	 if punchset[name].node == "basic_machines:mover" then -- mover code
+		
+		if minetest.is_protected(pos,name) then
+			minetest.chat_send_player(name, "MOVER: Punched position is protected. aborting.")
+			punchset[name].state = 0; return
+		end
+
+		
 		if punchset[name].state == 1 then 
 			local privs = minetest.get_player_privs(puncher:get_player_name());
 			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range) then
@@ -1003,6 +1011,12 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	end
 	
 	if punchset[name].node=="basic_machines:keypad" then -- keypad setup code
+
+		if minetest.is_protected(pos,name) then
+			minetest.chat_send_player(name, "KEYPAD: Punched position is protected. aborting.")
+			punchset[name].state = 0; return
+		end
+
 		if punchset[name].state == 1 then 
 			local meta = minetest.get_meta(punchset[name].pos);
 			local x = pos.x-punchset[name].pos.x;
@@ -1038,6 +1052,12 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	end
 	
 	if punchset[name].node == "basic_machines:detector" then
+			
+			if minetest.is_protected(pos,name) then
+				minetest.chat_send_player(name, "DETECTOR: Punched position is protected. aborting.")
+				punchset[name].state = 0; return
+			end
+			
 			if punchset[name].state == 1 then 
 				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
@@ -1050,11 +1070,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				return
 			end
 			
-			if minetest.is_protected(pos,name) then
-				minetest.chat_send_player(name, "DETECTOR: Target position is protected. aborting.")
-				punchset[name].state = 0; return
-			end
-				
+			
 			if punchset[name].state == 2 then 
 				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DETECTOR: Punch closer to detector. aborting.")
@@ -1179,6 +1195,15 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
 			local z = z0; z0 = math.min(z,z1); z1 = math.max(z,z1);
 			
+			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
+				minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
+				return
+			end
+
+			if minetest.is_protected({x=pos.x+x1,y=pos.y+y1,z=pos.z+z1},name) then
+				minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
+				return
+			end
 			
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
@@ -1204,6 +1229,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local x0,y0,z0,pass,mode;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
 			pass = fields.pass or ""; mode = fields.mode or 1;
+			
+			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
+				minetest.chat_send_player(name, "KEYPAD: position is protected. aborting.")
+				return
+			end
 			
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
@@ -1261,12 +1291,24 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		end
 		
 		if fields.OK == "OK" then
+			
+			
 			local x0,y0,z0,x1,y1,z1,r,node,NOT;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 0;z0=tonumber(fields.z0) or 0
 			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or 0;z1=tonumber(fields.z1) or 0
 			r=tonumber(fields.r) or 1;
 			NOT = tonumber(fields.NOT)
 			
+			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
+				minetest.chat_send_player(name, "DETECTOR: position is protected. aborting.")
+				return
+			end
+
+			if minetest.is_protected({x=pos.x+x1,y=pos.y+y1,z=pos.z+z1},name) then
+				minetest.chat_send_player(name, "DETECTOR: position is protected. aborting.")
+				return
+			end
+
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
