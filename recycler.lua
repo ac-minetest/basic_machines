@@ -29,6 +29,7 @@ local recycler_process = function(pos)
 			fuel=fuel + fueladd.time*0.1
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "fuel status " .. fuel);
+			if fuel<=0 then return end
 		end 
 	end
 
