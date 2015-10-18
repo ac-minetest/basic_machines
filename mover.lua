@@ -239,7 +239,13 @@ minetest.register_node("basic_machines:mover", {
 			
 			
 			for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
-				obj:moveto(pos2, false) 	
+				if obj:is_player() then
+					if not minetest.is_protected(obj:getpos(), owner) then -- move player only from owners land
+						obj:moveto(pos2, false)
+					end
+				else
+					obj:moveto(pos2, false)
+				end
 			end
 			
 			--meta:set_float("fuel", fuel - 1);
@@ -672,8 +678,14 @@ minetest.register_abm({
 			local player_near=false;
 			for _,obj in pairs(objects) do
 				if mode == "player" then
-					if obj:is_player() then player_near = true end;
-					if obj:is_player() and (node=="" or obj:get_player_name()==node) then trigger = true break end
+					if obj:is_player() then 
+
+						player_near = true
+						if (node=="" or obj:get_player_name()==node) then 
+							trigger = true break 
+						end
+						
+					end;
 				elseif mode == "object" and not obj:is_player() then
 					if node=="" then trigger = true break end
 					if obj:get_luaentity() then
@@ -1308,6 +1320,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				minetest.chat_send_player(name, "DETECTOR: position is protected. aborting.")
 				return
 			end
+
+			
+			
 
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
