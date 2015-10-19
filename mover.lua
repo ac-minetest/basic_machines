@@ -179,7 +179,7 @@ minetest.register_node("basic_machines:mover", {
 						fuel = fuel + MOVER_FUEL_STORAGE_CAPACITY; -- adds as much fuel as 1 coal lump
 						meta:set_string("infotext", "Mover block refueled from an outlet. fuel ".. fuel);
 					else
-						meta:set_string("infotext", "Mover block. Put fuel chest near mover or place outlet below mover.");
+						meta:set_string("infotext", "Mover block. Put fuel chest near mover or place outlet with at least 500 supply below mover.");
 					end
 					
 				else -- look in chest for fuel
