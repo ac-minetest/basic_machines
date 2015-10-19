@@ -1,7 +1,7 @@
 -- rnd 2015, power outlet
 -- used to power basic_machines using remaining available power from technic:switching_station. Just place it below mover but within 10 block distance of technich switching station. Each power outlet adds 500 to the power demand. If switching station has not enough unused power ( after technic machines demand), it wont supply power to mover.
 
-local outlet_power_demand = 500;
+local outlet_power_demand = 300;
 
 
 minetest.register_node("basic_machines:outlet", {
