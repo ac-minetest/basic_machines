@@ -27,9 +27,11 @@ end
 local max_range = 10; -- machines range of operation
 local machines_timer = 5 -- timestep
 local machines_TTL = 4; -- time to live for signals
-
-
 MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - base unit
+basic_machines.fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:jungletree"]=1,["default:pinetree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
+
+
+
 
 minetest.register_node("basic_machines:mover", {
 	description = "Mover",
@@ -187,9 +189,9 @@ minetest.register_node("basic_machines:mover", {
 					local cmeta = minetest.get_meta(fpos);
 					local inv = cmeta:get_inventory();
 					--fuels and their caloric value: 1 = 5 uses, TODO; add unknown fuels from minetest fuels
-					local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
+					
 					local stack;
-					for i,v in pairs(fuels) do
+					for i,v in pairs(basic_machines.fuels) do
 						stack = ItemStack({name=i})
 						if inv:contains_item("main", stack) then found_fuel = v;inv:remove_item("main", stack) break end
 					end

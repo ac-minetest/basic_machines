@@ -55,11 +55,11 @@ function basic_machines.check_power(pos) -- mover checks power source
 	
 	local meta = minetest.get_meta({x=pos.x,y=pos.y-1,z=pos.z});
 	local p = minetest.string_to_pos(meta:get_string("station")); if not p then return end
-	local smeta =  minetest.get_meta(p);
+	local smeta =  minetest.get_meta(p); if not smeta then return end
 	local infot = smeta:get_string("infotext");
 	--local infot = "Switching Station. Supply: 516 Demand: 0";	
-	local i = string.find(infot,"Supply");
-	local j = string.find(infot,"Demand");
+	local i = string.find(infot,"Supply") or 1;
+	local j = string.find(infot,"Demand") or 1;
 	local supply = tonumber(string.sub(infot,i+8,j-1)) or 0;
 	local demand = tonumber(string.sub(infot, j+8)) or 0;
 	supply= supply-demand-(smeta:get_int("bdemand") or 999999);
