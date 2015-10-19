@@ -171,28 +171,44 @@ minetest.register_node("basic_machines:mover", {
 					end
 				end
 				
-				if not fpos then return end -- no chest found
-				local cmeta = minetest.get_meta(fpos);
-				local inv = cmeta:get_inventory();
-				--fuels and their caloric value: 1 = 5 uses, TODO; add unknown fuels from minetest fuels
-				local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
-				local stack;
-				for i,v in pairs(fuels) do
-					stack = ItemStack({name=i})
-					if inv:contains_item("main", stack) then found_fuel = v break end
+				if not fpos then  -- no chest, check for alternative technic power sources
+			
+					local supply = basic_machines.check_power(pos) or 0;
+					--minetest.chat_send_all(" checking outlet. supply " .. supply)
+					if supply>0 then
+						fuel = fuel + MOVER_FUEL_STORAGE_CAPACITY; -- adds as much fuel as 1 coal lump
+						meta:set_string("infotext", "Mover block refueled from an outlet. fuel ".. fuel);
+					else
+						meta:set_string("infotext", "Mover block. Put fuel chest near mover or place outlet below mover.");
+					end
+					
+				else -- look in chest for fuel
+								
+					local cmeta = minetest.get_meta(fpos);
+					local inv = cmeta:get_inventory();
+					--fuels and their caloric value: 1 = 5 uses, TODO; add unknown fuels from minetest fuels
+					local fuels = {["default:coal_lump"]=1,["default:cactus"]=0.75,["default:tree"]=1,["default:coalblock"]=10,["default:lava_source"]=40};
+					local stack;
+					for i,v in pairs(fuels) do
+						stack = ItemStack({name=i})
+						if inv:contains_item("main", stack) then found_fuel = v;inv:remove_item("main", stack) break end
+					end
+					 -- check for this fuel
+					 
 				end
-				 -- check for this fuel
+				
 				if found_fuel~=nil then
 					--minetest.chat_send_all(" refueled ")
-					inv:remove_item("main", stack)
+					
 					meta:set_float("fuel", fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel);
 					fuel = fuel+MOVER_FUEL_STORAGE_CAPACITY*found_fuel;
 					meta:set_string("infotext", "Mover block refueled. Fuel "..MOVER_FUEL_STORAGE_CAPACITY);
-				else meta:set_string("infotext", "Mover block. Out of fuel. Put fuel chest near mover.");return
+				
 				end
-				--check fuel
-				if fuel == 0 then return  end
+				
 			end 
+			
+			if fuel <= 0 then meta:set_string("infotext", "Mover block. Out of fuel. Put fuel chest near mover or place outlet below it."); return  end
 
 		local owner = meta:get_string("owner");
 
