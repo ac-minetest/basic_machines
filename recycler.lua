@@ -19,13 +19,20 @@ local recycler_process = function(pos)
 		
 		local fueladd, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist}) 
 		
-		if fueladd.time == 0 then -- no fuel inserted
+		local supply=0;
+		if fueladd.time == 0 then -- no fuel inserted, try look for outlet
 				-- No valid fuel in fuel list
-				meta:set_string("infotext", "Please insert fuel.");
-				return;
+				supply = basic_machines.check_power(pos) or 0;
+				if supply>0 then 
+					fueladd.time = 30
+				else
+					meta:set_string("infotext", "Please insert fuel.");
+					return;
+				end
 		else
-			-- Take fuel from fuel list
-			inv:set_stack("fuel", 1, afterfuel.items[1])
+			if supply==0 then -- Take fuel from fuel list if no supply available
+				inv:set_stack("fuel", 1, afterfuel.items[1])
+			end
 			fuel=fuel + fueladd.time*0.1
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "fuel status " .. fuel);
