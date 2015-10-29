@@ -222,9 +222,6 @@ minetest.register_node("basic_machines:mover", {
 			local upgrade =  meta:get_float("upgrade") or 1;fuel_cost = fuel_cost/upgrade; -- upgrade decreases fuel cost
 			
 			
-			
-	
-		
 		
 			-- FUEL OPERATIONS
 			if fuel<fuel_cost then -- needs fuel to operate, find nearby open chest with fuel within radius 1
@@ -418,13 +415,21 @@ minetest.register_node("basic_machines:mover", {
 				
 				if not source_chest and dig_up_table[node1.name] then dig_up = true end
 							
-				if dig_up == true then -- dig up to height 10, break sooner if needed
-					for i=0,10 do
-						local pos3 = {x=pos1.x,y=pos1.y+i,z=pos1.z};
-						local dname= minetest.get_node(pos3).name;
-						if dname ~=node1.name then break end
+				if dig_up == true then -- dig up to 10 nodes
+					
+					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
+					
+					local positions = minetest.find_nodes_in_area( --
+					{x=pos1.x-r, y=pos1.y, z=pos1.z-r},
+					{x=pos1.x+r, y=pos1.y+10, z=pos1.z+r},
+					node1.name)
+					
+					for _, pos3 in ipairs(positions) do
+						-- dont take coal from source or target location to avoid chest/fuel confusion isssues
+						if count>10 then break end
 						minetest.set_node(pos3,{name="air"}); count = count+1;
 					end
+					
 					inv:add_item("main", node1.name .. " " .. count-1);-- if tree or cactus was digged up
 				end
 				
