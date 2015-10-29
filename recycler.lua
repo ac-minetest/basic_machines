@@ -24,7 +24,7 @@ local recycler_process = function(pos)
 				-- No valid fuel in fuel list
 				supply = basic_machines.check_power(pos) or 0;
 				if supply>0 then 
-					fueladd.time = 30
+					fueladd.time = 40 -- same as 1 coal
 				else
 					meta:set_string("infotext", "Please insert fuel.");
 					return;
@@ -35,7 +35,7 @@ local recycler_process = function(pos)
 			end
 			fuel=fuel + fueladd.time*0.1
 			meta:set_float("fuel",fuel);
-			meta:set_string("infotext", "fuel status " .. fuel);
+			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 			if fuel<=0 then return end
 		end 
 	end
@@ -137,7 +137,6 @@ minetest.register_node("basic_machines:recycler", {
 		meta:set_int("recipe",1);
 		meta:set_float("fuel",0);
 		local inv = meta:get_inventory();inv:set_size("src", 1);inv:set_size("dst",9);inv:set_size("fuel",1);
-		--inv:set_stack("mode", 1, ItemStack("default:coal_lump"))
 	end,
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
