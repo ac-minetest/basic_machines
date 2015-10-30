@@ -210,6 +210,8 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
+			--minetest.chat_send_all(" pos1 " .. pos1.x .. " " .. pos1.y .. " " .. pos1.z .. " pos2 " .. pos2.x .. " " .. pos2.y .. " " .. pos2.z );
+			
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
 			local fuel_cost = basic_machines.hardness[node1.name] or 1;
@@ -220,7 +222,6 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			local upgrade =  meta:get_float("upgrade") or 1;fuel_cost = fuel_cost/upgrade; -- upgrade decreases fuel cost
-			
 			
 		
 			-- FUEL OPERATIONS
@@ -249,7 +250,7 @@ minetest.register_node("basic_machines:mover", {
 					end
 					
 				else -- look in chest for fuel
-								
+					
 					local cmeta = minetest.get_meta(fpos);
 					local inv = cmeta:get_inventory();
 					
@@ -263,7 +264,6 @@ minetest.register_node("basic_machines:mover", {
 				end
 				
 				if found_fuel~=0 then
-					--minetest.chat_send_all(" refueled ")
 					fuel = fuel+found_fuel;
 					meta:set_float("fuel", fuel);
 					meta:set_string("infotext", "Mover block refueled. Fuel ".. fuel);
@@ -274,9 +274,7 @@ minetest.register_node("basic_machines:mover", {
 			
 			if fuel < fuel_cost then meta:set_string("infotext", "Mover block. Fuel ".. fuel ..", needed fuel " .. fuel_cost .. ". Put fuel chest near mover or place outlet below it."); return  end
 		
-			
-		
-		
+	
 		local prefer = meta:get_string("prefer"); 
 		
 				
@@ -341,10 +339,11 @@ minetest.register_node("basic_machines:mover", {
 		local dig=false; if mode == "dig" then dig = true; end -- digs at target location
 		local drop = false; if mode == "drop" then drop = true; end -- drops node instead of placing it
 		
+		
 		-- decide what to do if source or target are chests
 		local source_chest=false; if string.find(node1.name,"default:chest") then source_chest=true end
 		if node1.name == "air" then return end -- nothing to move
-
+		
 		local target_chest = false
 		if node2.name == "default:chest" or node2.name == "default:chest_locked" then
 			target_chest = true
@@ -415,6 +414,7 @@ minetest.register_node("basic_machines:mover", {
 				
 				if not source_chest and dig_up_table[node1.name] then dig_up = true end
 							
+				
 				if dig_up == true then -- dig up to 10 nodes
 					
 					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
@@ -523,8 +523,7 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 	x0=pos.x+x0;y0=pos.y+y0;z0=pos.z+z0;
 	mode = meta:get_int("mode");
-	--minetest.chat_send_all("KEYPAD USED. TARGET ".. x0 .. " " .. y0 .. " " .. z0);
-	
+
 	-- pass the signal on to target, depending on mode
 	
 	local tpos = {x=x0,y=y0,z=z0};
@@ -549,7 +548,6 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 		if not effector.action_off then return end
 		effector.action_off(tpos,node,ttl-1); -- run
 	end
-	--minetest.chat_send_all("MESECONS RUN")
 			
 end
 
@@ -706,7 +704,6 @@ minetest.register_node("basic_machines:detector", {
 	end,
 	
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		--minetest.chat_send_all("mover inventory: moved from pos ".. from_index .. " to pos " .. to_index )
 		local meta = minetest.get_meta(pos);
 		local mode = "node";
 		if to_index == 2 then 
@@ -1098,7 +1095,10 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			z = punchset[name].pos2.z-punchset[name].pos.z;
 			meta:set_int("x2",x);meta:set_int("y2",y);meta:set_int("z2",z);
 			
-			meta:set_int("pc",0); meta:set_int("dim",1);
+			local x0,y0,z0,x1,y1,z1;
+			x0 = meta:get_int("x0");y0 = meta:get_int("y0");z0 = meta:get_int("z0");
+			x1 = meta:get_int("x1");y1 = meta:get_int("y1");z1 = meta:get_int("z1");
+			meta:set_int("pc",0); meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			return
 		end
 	end
