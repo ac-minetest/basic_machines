@@ -11,8 +11,6 @@ local recycler_process = function(pos)
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
 	
-	
-	
 	if fuel<=0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
 		if not fuellist then return end -- safety check, prevents crash when using previous version recylcler without inventory
@@ -36,8 +34,8 @@ local recycler_process = function(pos)
 			fuel=fuel + fueladd.time*0.1
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
-			if fuel<=0 then return end
 		end 
+		if fuel<=0 then return end
 	end
 
 	
@@ -132,7 +130,7 @@ minetest.register_node("basic_machines:recycler", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext", "Recycler: put one item in it (src) and obtain 75% of raw materials (dst). To operate it must sit on top of chest with fuel.")
+		meta:set_string("infotext", "Recycler: put one item in it (src) and obtain 75% of raw materials (dst). To operate it insert fuel, then insert item to recycle or use keypad to activate it.")
 		meta:set_string("owner", placer:get_player_name());
 		meta:set_int("recipe",1);
 		meta:set_float("fuel",0);

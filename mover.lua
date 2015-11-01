@@ -210,11 +210,15 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
+			local prefer = meta:get_string("prefer"); 
 			--minetest.chat_send_all(" pos1 " .. pos1.x .. " " .. pos1.y .. " " .. pos1.z .. " pos2 " .. pos2.x .. " " .. pos2.y .. " " .. pos2.z );
 			
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
 			local fuel_cost = basic_machines.hardness[node1.name] or 1;
+			
+			if node1.name == "default:chest_locked" or mode == "inventory" then fuel_cost = basic_machines.hardness[prefer] or 1 end;
+			
 			fuel_cost=fuel_cost*dist;
 			if mode == "object" 
 				then fuel_cost=fuel_cost*0.1; 
@@ -273,9 +277,6 @@ minetest.register_node("basic_machines:mover", {
 			end 
 			
 			if fuel < fuel_cost then meta:set_string("infotext", "Mover block. Fuel ".. fuel ..", needed fuel " .. fuel_cost .. ". Put fuel chest near mover or place outlet below it."); return  end
-		
-	
-		local prefer = meta:get_string("prefer"); 
 		
 				
 		if mode == "object" then -- teleport objects and return
