@@ -607,10 +607,10 @@ minetest.register_node("basic_machines:keypad", {
 		
 		pass = meta:get_string("pass");
 		local form  = 
-		"size[4,2.75]" ..  -- width, height
+		"size[4.25,2.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[1.25,2.5;2,1;iter;Repeat;".. iter .."]"..
-		"field[2.25,1.5;2,1;mode;ON/OFF/TOGGLE: ;"..mode.."]"
+		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[2.25,2.5;2.5,1;iter;Repeat how many times;".. iter .."]"..
+		"field[2.25,1.5;2.5,1;mode;0=OFF/1=ON/2=TOGGLE;"..mode.."]"
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 		else
