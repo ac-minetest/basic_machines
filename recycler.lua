@@ -1,7 +1,7 @@
 -- rnd 2015:
 
 -- this node works as a reverse of crafting process with a 25% loss of items (aka recycling). You can select which recipe to use when recycling.
--- There is a certain fuel cost to recycle as a working furnace is needed for operation.
+-- There is a fuel cost to recycle
 
 local recycler_process = function(pos) 
 	

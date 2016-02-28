@@ -27,10 +27,19 @@ local MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lum
 basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
 
 -- how hard it is to move blocks, default factor 1
-basic_machines.hardness = {["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,["default:lava_source"]=20,["default:obsidian"]=20};
+basic_machines.hardness = {["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,["default:lava_source"]=1000,["default:obsidian"]=20};
 -- farming operations are much cheaper
 basic_machines.hardness["farming:wheat_8"]=0.1;basic_machines.hardness["farming:cotton_8"]=0.1;
 basic_machines.hardness["farming:seed_wheat"]=0.05;basic_machines.hardness["farming:seed_cotton"]=0.05;
+
+
+-- define which nodes are dug up completely, like a tree
+basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,
+["default:acacia_tree"]=true,["default:papyrus"]=true};
+				
+-- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
+basic_machines.harvest_table = {["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 4"}};
+
 
 --  *** END OF SETTINGS *** --
 
@@ -54,7 +63,7 @@ minetest.register_node("basic_machines:mover", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
-		meta:set_string("infotext", "Mover block. Right click to set it up. Or set positions by punching it.")
+		meta:set_string("infotext", "Mover block. Set it up by punching or right click. Activate it by keypad signal.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		meta:set_int("x0",0);meta:set_int("y0",-1);meta:set_int("z0",0); -- source1
 		meta:set_int("x1",0);meta:set_int("y1",-1);meta:set_int("z1",0); -- source2: defines cube
@@ -158,7 +167,7 @@ minetest.register_node("basic_machines:mover", {
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		return 1
+		return stack:get_count();
 	end,
 	
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
@@ -408,12 +417,19 @@ minetest.register_node("basic_machines:mover", {
 						
 			-- dig tree or cactus
 			local count = 0;-- check for cactus or tree
-			local dig_up = false;
+			local dig_up = false; -- digs up node as a tree
+			local harvest = false; -- harvest mode for special nodes: mese crystals
 			if dig then 
-				-- define which nodes are dug up completely, like a tree
-				local dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,["default:acacia_tree"]=true,["default:papyrus"]=true};
 				
-				if not source_chest and dig_up_table[node1.name] then dig_up = true end
+				
+				if not source_chest and basic_machines.dig_up_table[node1.name] then dig_up = true end
+				if not source_chest and basic_machines.harvest_table[node1.name]~=nil then 
+					harvest = true 
+					local remains = basic_machines.harvest_table[node1.name][1];
+					local result = basic_machines.harvest_table[node1.name][2];
+					minetest.set_node(pos1,{name=remains});
+					inv:add_item("main",result);
+				end
 							
 				
 				if dig_up == true then -- dig up to 10 nodes
@@ -436,33 +452,36 @@ minetest.register_node("basic_machines:mover", {
 				
 				
 				-- minetest drop code emulation
-				local table = minetest.registered_items[node1.name];
-				if table~=nil then --put in chest
-					if table.drop~= nil then -- drop handling 
-						if table.drop.items then
-						--handle drops better, emulation of drop code
-						local max_items = table.drop.max_items or 0;
-							if max_items==0 then -- just drop all the items (taking the rarity into consideration)
-								max_items = #table.drop.items or 0;
-							end
-							local drop = table.drop;
-							local i = 0;
-							for k,v in pairs(drop.items) do
-								if i > max_items then break end; i=i+1;								
-								local rare = v.rarity or 1;
-								if math.random(1, rare)==1 then
-									node1={};node1.name = v.items[math.random(1,#v.items)]; -- pick item randomly from list
-									inv:add_item("main",node1.name);
-									--minetest.chat_send_all("added " .. node1.name);
+				if not harvest then
+					local table = minetest.registered_items[node1.name];
+					if table~=nil then --put in chest
+						if table.drop~= nil then -- drop handling 
+							if table.drop.items then
+							--handle drops better, emulation of drop code
+							local max_items = table.drop.max_items or 0;
+								if max_items==0 then -- just drop all the items (taking the rarity into consideration)
+									max_items = #table.drop.items or 0;
 								end
-							end
+								local drop = table.drop;
+								local i = 0;
+								for k,v in pairs(drop.items) do
+									if i > max_items then break end; i=i+1;								
+									local rare = v.rarity or 1;
+									if math.random(1, rare)==1 then
+										node1={};node1.name = v.items[math.random(1,#v.items)]; -- pick item randomly from list
+										inv:add_item("main",node1.name);
+										--minetest.chat_send_all("added " .. node1.name);
+									end
+								end
+							else
+								inv:add_item("main",table.drop);
+							end	
 						else
-							inv:add_item("main",table.drop);
-						end	
-					else
-						inv:add_item("main",node1.name);
+							inv:add_item("main",node1.name);
+						end
 					end
 				end
+			
 			else -- if not dig just put it in
 			inv:add_item("main",node1.name);
 			end
@@ -1271,7 +1290,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields.help == "help" then
 			local text = "SETUP: For interactive setup "..
 			"punch the mover and then punch source1, source2, target node (follow instructions). Put locked chest with fuel within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
-			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node), drop "..
+			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
 			"(drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..

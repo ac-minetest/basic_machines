@@ -4,8 +4,9 @@ dofile(minetest.get_modpath("basic_machines").."/mark.lua") -- used for markings
 dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic power for mover
 dofile(minetest.get_modpath("basic_machines").."/mover.lua")
 dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
+dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 
-dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed from pipeworks mod
+dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
 
 
 minetest.after(1, function() -- if you want keypad to open doors, also adds auto close
