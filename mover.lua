@@ -183,7 +183,6 @@ minetest.register_node("basic_machines:mover", {
 			local meta = minetest.get_meta(pos);
 			local fuel = meta:get_float("fuel");
 			
-			--minetest.chat_send_all("mover mesecons: runnning with pos " .. pos.x .. " " .. pos.y .. " " .. pos.z)
 			
 			local x0=meta:get_int("x0"); local y0=meta:get_int("y0"); local z0=meta:get_int("z0");
 			
@@ -257,7 +256,7 @@ minetest.register_node("basic_machines:mover", {
 				if not fpos then  -- no chest, check for alternative technic power sources
 			
 					local supply = basic_machines.check_power(pos) or 0;
-					--minetest.chat_send_all(" checking outlet. supply " .. supply)
+					
 					if supply>0 then
 						found_fuel = basic_machines.fuels["default:coal_lump"] or 30;
 						found_fuel=found_fuel*0.25;
@@ -395,7 +394,7 @@ minetest.register_node("basic_machines:mover", {
 		if prefer~="" then -- prefered node set
 			if prefer~=node1.name and not source_chest and mode ~= "inventory"  then return end -- only take prefered node or from chests/inventories
 			if source_chest then -- take stuff from chest
-				--minetest.chat_send_all(" source chest detected")
+				
 				local cmeta = minetest.get_meta(pos1);
 				local inv = cmeta:get_inventory();
 				local stack = ItemStack(prefer);
@@ -471,7 +470,7 @@ minetest.register_node("basic_machines:mover", {
 									if math.random(1, rare)==1 then
 										node1={};node1.name = v.items[math.random(1,#v.items)]; -- pick item randomly from list
 										inv:add_item("main",node1.name);
-										--minetest.chat_send_all("added " .. node1.name);
+										
 									end
 								end
 							else
@@ -1011,7 +1010,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		return
 	end
 
-	--minetest.chat_send_all("debug: PUNCH, state: " .. punchset[name].state .. " set node " .. punchset[name].node)
 	
 	-- check for known node names in case of first punch
 	if punchset[name].state == 0 and not punchset.known_nodes[node.name] then return end

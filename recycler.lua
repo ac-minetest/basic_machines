@@ -90,7 +90,6 @@ local recycler_process = function(pos)
 			if math.random(1, 4)<=3 then -- probability 3/4 = 75%
 				if not string.find(v,"group") then -- dont add if item described with group
 					local par = string.find(v,"\"") or 0;
-					--minetest.chat_send_all(" par location at " .. par .. " item ".. v);
 					if inv:room_for_item("dst", ItemStack(v)) then -- can item be put in
 						inv:add_item("dst",ItemStack(v));
 					else return
@@ -179,7 +178,6 @@ minetest.register_node("basic_machines:recycler", {
 	},
 	
 	on_receive_fields = function(pos, formname, fields, sender) 
-		--	minetest.chat_send_all("Player "..sender:get_player_name().." submitted fields "..dump(fields))
 		if fields.quit then return end
 		local meta = minetest.get_meta(pos);
 		local recipe=1;
