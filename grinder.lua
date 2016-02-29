@@ -165,7 +165,7 @@ minetest.register_craft({
 
 
 local function register_dust(name,input_node_name,ingot,cooktime)
-	local lname = string.lower(name)
+	
 	minetest.register_craftitem("basic_machines:"..name.."_dust", {
 		description = name.. " dust",
 		inventory_image = "basic_machines_"..name.."_dust.png",

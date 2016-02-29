@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------------------------------------------
 -- BASIC MACHINES MOD by rnd
--- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer, no other lag causing background processing.
+-- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer (detector), no other lag causing background processing.
 ------------------------------------------------------------------------------------------------------------------------------------
 
 -- MOVER: universal moving machine, requires coal in nearby chest to operate
