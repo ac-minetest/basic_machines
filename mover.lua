@@ -260,6 +260,7 @@ minetest.register_node("basic_machines:mover", {
 					--minetest.chat_send_all(" checking outlet. supply " .. supply)
 					if supply>0 then
 						found_fuel = basic_machines.fuels["default:coal_lump"] or 30;
+						found_fuel=found_fuel*0.25;
 					end
 					
 				else -- look in chest for fuel

@@ -5,20 +5,34 @@ local outlet_power_demand = 300;
 
 
 minetest.register_node("basic_machines:outlet", {
-	description = "Power outlet",
+	description = "Power outlet - generates power for machines",
 	tiles = {"outlet.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext", "Outlet: put it below mover and near (10 blocks) technic switching station. If switching station has at least 300 free supply it will be used to power mover")
+		meta:set_string("infotext","outlet: energy production error. please have lava and water bucket in your inventory when placing it or place it near technic switching station with at least 300 free supply(within 10 blocks distance)"); 
+	
+		-- check player inventory for water and lava bucket xxx
+		
+		if not placer:is_player() then return end; local inv = placer:get_inventory();
+		
+		if inv:contains_item("main",ItemStack("bucket:bucket_water")) and inv:contains_item("main",ItemStack("bucket:bucket_lava")) then
+			meta:set_int("supply",1); -- will generate power for machines
+			inv:remove_item("main", ItemStack("bucket:bucket_water"))
+			inv:remove_item("main", ItemStack("bucket:bucket_lava"))
+			meta:set_string("infotext","outlet generating power using builtin geothermal generator");
+			return;
+		end
+		
+		
 		local r = 10;
 		local positions = minetest.find_nodes_in_area(
 		{x=pos.x-r, y=pos.y-r, z=pos.z-r},
 		{x=pos.x+r, y=pos.y+r, z=pos.z+r},
 		"technic:switching_station")
 		if not positions then 
-			meta:set_string("infotext","outlet: error. please place it near technic switching station (within 10 blocks distance)"); return 
+			return 
 		end
 		
 		local p = positions[1]; if not p then return end
@@ -54,13 +68,16 @@ function basic_machines.check_power(pos) -- mover checks power source
 	end
 	
 	local meta = minetest.get_meta({x=pos.x,y=pos.y-1,z=pos.z});
+	local supply = meta:get_int("supply"); -- check if outlet itself is generator
+	if supply>0 then return supply end
+	
 	local p = minetest.string_to_pos(meta:get_string("station")); if not p then return end
 	local smeta =  minetest.get_meta(p); if not smeta then return end
 	local infot = smeta:get_string("infotext");
 	--local infot = "Switching Station. Supply: 516 Demand: 0";	
 	local i = string.find(infot,"Supply") or 1;
 	local j = string.find(infot,"Demand") or 1;
-	local supply = tonumber(string.sub(infot,i+8,j-1)) or 0;
+	supply = tonumber(string.sub(infot,i+8,j-1)) or 0;
 	local demand = tonumber(string.sub(infot, j+8)) or 0;
 	supply= supply-demand-(smeta:get_int("bdemand") or 999999);
 	if supply>0 then 
