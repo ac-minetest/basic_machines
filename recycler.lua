@@ -21,7 +21,6 @@ local recycler_process = function(pos)
 		if fueladd.time == 0 then -- no fuel inserted, try look for outlet
 				-- No valid fuel in fuel list
 				supply = basic_machines.check_power({x=pos.x,y=pos.y,z=pos.z}) or 0;
-				minetest.chat_send_all("supply "..supply);
 				if supply>0 then 
 					fueladd.time = 40 -- same as 10 coal
 				else
