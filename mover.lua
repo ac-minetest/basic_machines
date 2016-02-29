@@ -348,6 +348,7 @@ minetest.register_node("basic_machines:mover", {
 		
 		local dig=false; if mode == "dig" then dig = true; end -- digs at target location
 		local drop = false; if mode == "drop" then drop = true; end -- drops node instead of placing it
+		local harvest = false; -- harvest mode for special nodes: mese crystals
 		
 		
 		-- decide what to do if source or target are chests
@@ -418,7 +419,6 @@ minetest.register_node("basic_machines:mover", {
 			-- dig tree or cactus
 			local count = 0;-- check for cactus or tree
 			local dig_up = false; -- digs up node as a tree
-			local harvest = false; -- harvest mode for special nodes: mese crystals
 			if dig then 
 				
 				
@@ -506,7 +506,7 @@ minetest.register_node("basic_machines:mover", {
 				local stack = ItemStack(node1.name);minetest.add_item(pos2,stack) -- drops it
 			end
 		end 
-		if not(source_chest) then
+		if not(source_chest) and not(harvest) then
 			if dig then nodeupdate(pos1) end
 			minetest.set_node(pos1, {name = "air"});
 			end
