@@ -58,7 +58,27 @@ minetest.register_node("basic_machines:outlet", {
 		local bdemand = smeta:get_int("bdemand") or 0;
 		bdemand = math.max(bdemand - outlet_power_demand,0); smeta:set_int("bdemand", bdemand);
 		--minetest.chat_send_all("demand "..bdemand);
-	end
+	end,
+	
+	mesecons = {effector = { 
+		action_on = function (pos, node,ttl) 
+			if type(ttl)~="number" then ttl = 1 end
+			if ttl<0 then return end -- machines_TTL prevents infinite recursion
+			-- provide power to furnace on top of it..
+			
+			local supply = basic_machines.check_power({x=pos.x,y=pos.y+1,z=pos.z});
+			if supply<=0 then return end -- need power!
+			
+			pos.y=pos.y+1;	
+			local node = minetest.get_node(pos).name;
+			if node~= "default:furnace" and node~="default:furnace_active" then return end
+			local meta = minetest.get_meta(pos);
+			local fuel_totaltime = meta:get_float("fuel_totaltime") or 0;
+			if fuel_totaltime<=60 then
+				meta:set_float("fuel_totaltime",60);meta:set_float("fuel_time",0) -- add 60 second burn time to furnace
+			end
+		end
+		}}
 	
 })
 
