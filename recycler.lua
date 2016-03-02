@@ -47,7 +47,7 @@ local recycler_process = function(pos)
 		if stack:is_empty() then return end; -- nothing to do
 
 		local src_item = stack:to_string();
-		local pos=string.find(src_item," "); if pos then src_item = string.sub(src_item,1,pos-1) end -- take first word to determine what item was 
+		local p=string.find(src_item," "); if p then src_item = string.sub(src_item,1,p-1) end -- take first word to determine what item was 
 		
 		-- look if we already handled this item
 		local known_recipe=true;
