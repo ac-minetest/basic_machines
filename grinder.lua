@@ -33,7 +33,7 @@ local grinder_process = function(pos)
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
 	fuel = fuel-def[1]; -- burn fuel
-	meta:set_float("fuel",fuel);
+	
 	
 	if fuel<0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
@@ -76,7 +76,7 @@ local grinder_process = function(pos)
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
-		
+		meta:set_float("fuel",fuel);
 		meta:set_string("infotext", "fuel status " .. fuel);
 		 
 end
