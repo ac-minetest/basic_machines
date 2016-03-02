@@ -837,6 +837,13 @@ minetest.register_abm({
 
 -- DISTRIBUTOR: spreads one signal to two outputs
 
+-- TO DO: make up to 10? outputs, add button to add new outputs
+-- gui looks like: x y z active SETUP DISPLAY REMOVE
+-- SETUP would start punch setup for that target, display would display target in world
+-- put somewhere add new target button
+-- targets should be saved in a table with entries {x,y,z,active}
+
+
 minetest.register_node("basic_machines:distributor", {
 	description = "Distributor",
 	tiles = {"distributor.png"},
@@ -846,8 +853,12 @@ minetest.register_node("basic_machines:distributor", {
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("infotext", "Distributor. Right click/punch to set it up.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
-		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z0",0);meta:set_int("active1",1) -- target1
-		meta:set_int("x2",0);meta:set_int("y2",0);meta:set_int("z2",0);meta:set_int("active2",0) -- target2
+		for i=1,10 do
+			meta:set_int("x"..i,0);meta:set_int("y"..i,0);meta:set_int("z"..i,0);meta:set_int("active"..i,1) -- target i
+		end
+		meta:set_int("n",2); -- how many targets initially
+		
+		
 		meta:set_int("public",0); -- can other ppl set it up?
 		local name = placer:get_player_name();punchset[name] =  {}; punchset[name].node = "";	punchset[name].state = 0
 	end,
@@ -857,78 +868,61 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
-			local x1,y1,z1,x2,y2,z2,active1,active2
-			x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;active1=meta:get_int("active1");
-			x2=meta:get_int("x2")+pos.x;y2=meta:get_int("y2")+pos.y;z2=meta:get_int("z2")+pos.z;active2=meta:get_int("active2");
-
+			local posf = {}; local active = {};
+			local n = meta:get_int("n");
+			for i =1,n do
+				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
+				active[i]=meta:get_int("active"..i);
+			end
+			
 			local node, table
 			
-			if active1~=0 then
-				node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
-				table = minetest.registered_nodes[node.name];
-				if not table then return end -- error
-				if not table.mesecons then return end -- error
-				if not table.mesecons.effector then return end -- error
-				local effector=table.mesecons.effector;
-				
-				if active1 == 1 and effector.action_on then effector.action_on({x=x1,y=y1,z=z1},node,ttl-1); 
-					elseif active1 == -1 and effector.action_off then effector.action_off({x=x1,y=y1,z=z1},node,ttl-1); 
+			for i=1,n do
+				if active[i]~=0 then
+					node = minetest.get_node(posf[i]);if not node.name then return end -- error
+					table = minetest.registered_nodes[node.name];
+					if not table then return end -- error
+					if not table.mesecons then return end -- error
+					if not table.mesecons.effector then return end -- error
+					local effector=table.mesecons.effector;
+					
+					if active[i] == 1 and effector.action_on then effector.action_on(posf[i],node,ttl-1); 
+						elseif active[i] == -1 and effector.action_off then effector.action_off(posf[i],node,ttl-1); 
+					end
 				end
-				
 			end
 			
-			if active2~=0 then
-				node = minetest.get_node({x=x2,y=y2,z=z2});if not node.name then return end -- error
-				table = minetest.registered_nodes[node.name];
-				if not table then return end -- error
-				if not table.mesecons then return end -- error
-				if not table.mesecons.effector then return end -- error
-				local effector=table.mesecons.effector;
-				
-				if active2 == 1 and effector.action_on then effector.action_on({x=x2,y=y2,z=z2},node,ttl-1); 
-					elseif active2 == -1 and effector.action_off then effector.action_off({x=x2,y=y2,z=z2},node,ttl-1); 
-				end
-			end
 	end,
 	
 	action_off = function (pos, node,ttl) 
 			
 			if type(ttl)~="number" then ttl = 1 end
-			if ttl<0 then return end			
+			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
-			local x1,y1,z1,x2,y2,z2,active1,active2
-			x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;active1=meta:get_int("active1");
-			x2=meta:get_int("x2")+pos.x;y2=meta:get_int("y2")+pos.y;z2=meta:get_int("z2")+pos.z;active2=meta:get_int("active2");
-
+			local posf = {}; local active = {};
+			local n = meta:get_int("n");
+			for i =1,n do
+				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
+				active[i]=meta:get_int("active"..i);
+			end
+			
 			local node, table
-			node = nil;
 			
-			if active1~=0 then
-				node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
-				table = minetest.registered_nodes[node.name];
-				if not table then return end -- error
-				if not table.mesecons then return end -- error
-				if not table.mesecons.effector then return end -- error
-				local effector=table.mesecons.effector;
-				
-				if active1 == 1 and effector.action_off then effector.action_off({x=x1,y=y1,z=z1},node,ttl-1); 
-					elseif active1 == -1 and effector.action_on then effector.action_on({x=x1,y=y1,z=z1},node,ttl-1); 
-				end
-				
-			end
-			
-			if active2~=0 then
-				node = minetest.get_node({x=x2,y=y2,z=z2});if not node.name then return end -- error
-				table = minetest.registered_nodes[node.name];
-				if not table then return end -- error
-				if not table.mesecons then return end -- error
-				if not table.mesecons.effector then return end -- error
-				local effector=table.mesecons.effector;
-				
-				if active2 == 1 and effector.action_off then effector.action_off({x=x2,y=y2,z=z2},node,ttl-1); 
-					elseif active2 == -1 and effector.action_on then effector.action_on({x=x2,y=y2,z=z2},node,ttl-1); 
+			for i=1,n do
+				if active[i]~=0 then
+					node = minetest.get_node(posf[i]);if not node.name then return end -- error
+					table = minetest.registered_nodes[node.name];
+					if not table then return end -- error
+					if not table.mesecons then return end -- error
+					if not table.mesecons.effector then return end -- error
+					local effector=table.mesecons.effector;
+					
+					if active[i] == 1 and effector.action_off then effector.action_off(posf[i],node,ttl-1); 
+						elseif active[i] == -1 and effector.action_on then effector.action_on(posf[i],node,ttl-1); 
+					end
 				end
 			end
+			
 	end
 	}
 	},
@@ -939,22 +933,27 @@ minetest.register_node("basic_machines:distributor", {
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
 			return 
 		end -- only owner can set up mover, ppl sharing protection can only look
-		local x1,y1,z1,x2,y2,z2,active1,active2
 		
-		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");active1=meta:get_int("active1");
-		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");active2=meta:get_int("active2");
-						
-		machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
-		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
-
+		local p = {}; local active = {};
+		local n = meta:get_int("n");
+		for i =1,n do
+			p[i]={x=meta:get_int("x"..i),y=meta:get_int("y"..i),z=meta:get_int("z"..i)};
+			active[i]=meta:get_int("active"..i);
+		end
+		
+		-- machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
+		-- machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
 				
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
-		"size[4,2.5]" ..  -- width, height
-		"label[0,-0.25;target1: x y z, Active -1/0/1]"..
-		"field[0.25,0.5;1,1;x1;;"..x1.."] field[1.25,0.5;1,1;y1;;"..y1.."] field[2.25,0.5;1,1;z1;;"..z1.."] field [ 3.25,0.5;1,1;active1;;" .. active1 .. "]"..
-		"field[0.25,1.5;1,1;x2;target2;"..x2.."] field[1.25,1.5;1,1;y2;;"..y2.."] field[2.25,1.5;1,1;z2;;"..z2.."] field [ 3.25,1.5;1,1;active2;;" .. active2 .. "]"..
-		"button[3.,2;1,1;OK;OK]";
+		"size[7,"..(2.5+n-2).."]" ..  -- width, height
+		"label[0,-0.25;target: x y z, Active -1/0/1]";
+		for i =1,n do
+			form = form.."field[0.25,"..(0.5+i-1)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+i-1)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+i-1)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+i-1)..";1,1;active"..i..";;" .. active[i] .. "]"
+			form = form .. "button[4.25,"..(0.25+i-1)..";1.25,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+i-1)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+i-1)..";1,1;X"..i..";X]"
+		end
+		
+		form=form.."button_exit[4.25,"..(2+n-2)..";1,1;ADD;ADD]".."button_exit[3.,"..(2+n-2)..";1,1;OK;OK]";
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
 		else
@@ -996,7 +995,7 @@ minetest.register_node("basic_machines:light_on", {
 
 
 
-punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true,["basic_machines:detector"]=true,["basic_machines:distributor"]=true};
+punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true,["basic_machines:detector"]=true};
 
 -- handles set up punches
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
@@ -1218,57 +1217,38 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			end
 	end
 	
-	-- Distributor "basic_machines:distributor"
-	if node.name == "basic_machines:distributor" then -- distributor init code
-		local meta = minetest.get_meta(pos);
-			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "DISTRIBUTOR: Only owner can set up distributor.") return end
-			if punchset[name].state == 0 then 
-				minetest.chat_send_player(name, "DISTRIBUTOR: Now punch target1 machine.")
-				punchset[name].node = node.name;
-				punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
-				punchset[name].state = 1 
-				return
-			end
-	end
 	
 	if punchset[name].node == "basic_machines:distributor" then
-			if punchset[name].state == 1 then 
-				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
-					minetest.chat_send_player(name, "DISTRIBUTOR: Punch closer to distributor. aborting.")
-					punchset[name].state = 0; return
-				end
-				minetest.chat_send_player(name, "DISTRIBUTOR: Now punch target2 machine.")
-				punchset[name].pos1 = {x=pos.x,y=pos.y,z=pos.z};
-				machines.pos1[name] = pos;machines.mark_pos1(name) -- mark pos1
-				punchset[name].state = 2 
-				return
-			end
 			
 			if minetest.is_protected(pos,name) then
-				minetest.chat_send_player(name, "DISTRIBUTOR: Target position is protected. aborting.")
+				minetest.chat_send_player(name, "DISTRIBUTOR: Punched position is protected. aborting.")
 				punchset[name].state = 0; return
 			end
-				
-			if punchset[name].state == 2 then 
+			
+			-- TO DO: when called set punchset[name].pos.x,... to be node position
+			
+			if punchset[name].state > 0 then 
 				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DISTRIBUTOR: Punch closer to distributor. aborting.")
 					punchset[name].state = 0; return
 				end
-				minetest.chat_send_player(name, "DISTRIBUTOR: Setup complete.")
-				machines.pos2[name] = pos;machines.mark_pos2(name) -- mark pos2
-				local x = punchset[name].pos1.x-punchset[name].pos.x;
-				local y = punchset[name].pos1.y-punchset[name].pos.y;
-				local z = punchset[name].pos1.z-punchset[name].pos.z;
+				minetest.chat_send_player(name, "DETECTOR: target set.")
 				local meta = minetest.get_meta(punchset[name].pos);
-				meta:set_int("x1",x);meta:set_int("y1",y);meta:set_int("z1",z);
-				x=pos.x-punchset[name].pos.x;y=pos.y-punchset[name].pos.y;z=pos.z-punchset[name].pos.z;
-				meta:set_int("x2",x);meta:set_int("y2",y);meta:set_int("z2",z);
-				punchset[name].state = 0 
+				local x = pos.x-punchset[name].pos.x;
+				local y = pos.y-punchset[name].pos.y;
+				local z = pos.z-punchset[name].pos.z;
+				local j = punchset[name].state;
+				
+				meta:set_int("x"..j,x);meta:set_int("y"..j,y);meta:set_int("z"..j,z);
+				
+				machines.pos1[name] = pos;machines.mark_pos1(name) -- mark pos1
+				punchset[name].state = 0; 
 				return
 			end
+		
 	end
-
-
+	
+	
 	
 end)
 
@@ -1466,22 +1446,73 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		
 		if fields.OK == "OK" then
-			local x1,y1,z1,x2,y2,z2,active1,active2
-			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or 0;z1=tonumber(fields.z1) or 0
-			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 0; z2=tonumber(fields.z2) or 0
-			active1=tonumber(fields.active1) or 0;active2=tonumber(fields.active2) or 0
-	
-			if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
-				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
-			end
+			
+			local posf = {}; local active = {};
+			local n = meta:get_int("n");
+			for i = 1,n do
+				posf[i]={x=tonumber(fields["x"..i]) or 0,y=tonumber(fields["y"..i]) or 0,z=tonumber(fields["z"..i]) or 0};
+				active[i]=tonumber(fields["active"..i]) or 0;
+			
+				if (not (privs.privs) and math.abs(posf[i].x)>max_range or math.abs(posf[i].y)>max_range or math.abs(posf[i].z)>max_range) then
+					minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); 
+					return
+				end
+			
+				meta:set_int("x"..i,posf[i].x);meta:set_int("y"..i,posf[i].y);meta:set_int("z"..i,posf[i].z);
+				meta:set_int("active"..i,active[i]);
 		
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
-			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
-			meta:set_int("active1",active1);meta:set_int("active2",active2);
+			end
 		end
-		return
+		
+		if fields["ADD"] then
+			local n = meta:get_int("n");
+			if n<10 then meta:set_int("n",n+1);	end
+			return
+		end
+		
+		-- SHOWING TARGET
+		local j=-1;local n = meta:get_int("n");
+		for i = 1,n do if fields["SHOW"..i] then j = i end end
+		--show j-th point
+		if j>0 then 
+			local posf={x=tonumber(fields["x"..j]) or 0,y=tonumber(fields["y"..j]) or 0,z=tonumber(fields["z"..j]) or 0};
+			machines.pos1[player:get_player_name()] = {x=posf.x+pos.x,y=posf.y+pos.y,z=posf.z+pos.z};
+			machines.mark_pos1(player:get_player_name())
+			return;
+		end
+		
+		--SETUP TARGET
+		j=-1;
+		for i = 1,n do if fields["SET"..i] then j = i end end
+		-- set up j-th point
+		if j>0 then 
+			punchset[name].node = "basic_machines:distributor";
+			punchset[name].state = j
+			punchset[name].pos = pos;
+			minetest.chat_send_player(name,"[DISTRIBUTOR] punch the position to set target "..j); 
+			return;
+		end
+		
+		-- REMOVE TARGET
+		if n>0 then
+			j=-1;
+			for i = 1,n do if fields["X"..i] then j = i end end
+			-- remove j-th point
+			if j>0 then 
+				for i=j,n-1 do
+					meta:set_int("x"..i, meta:get_int("x"..(i+1)))
+					meta:set_int("y"..i, meta:get_int("y"..(i+1)))
+					meta:set_int("z"..i, meta:get_int("z"..(i+1)))
+					meta:set_int("active"..i, meta:get_int("active"..(i+1)))
+				end
+				
+				meta:set_int("n",n-1);
+				return;
+			end
+		end
+		
+		
 	end
-	
 	
 	
 end)

@@ -16,10 +16,26 @@ local grinder_process = function(pos)
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name;
 	local meta = minetest.get_meta(pos);local inv = meta:get_inventory();
 	
+	
+	-- PROCESS: check out inserted items
+	local stack = inv:get_stack("src",1);
+	if stack:is_empty() then return end; -- nothing to do
+
+	local src_item = stack:to_string();
+	local pos=string.find(src_item," "); if pos then src_item = string.sub(src_item,1,pos-1) end -- take first word to determine what item was 
+	
+	local def = basic_machines.grinder_recipes[src_item];
+	if not def then 
+		meta:set_string("infotext", "please insert valid materials"); return
+	end-- unknown node
+	
+	
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
+	fuel = fuel-def[1]; -- burn fuel
+	meta:set_float("fuel",fuel);
 	
-	if fuel<=0 then -- we need new fuel, check chest below
+	if fuel<0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
 		if not fuellist then return end
 		
@@ -45,32 +61,24 @@ local grinder_process = function(pos)
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 		end
-		if fuel<=0 then return end
+		if fuel<0 then 
+			meta:set_string("infotext", "need at least " .. -fuel .. " fuel to complete operation ");  return 
+		end
+		
 	end
 
 	
 	
-	-- PROCESS: check out inserted items
-	local stack = inv:get_stack("src",1);
-		if stack:is_empty() then return end; -- nothing to do
-
-		local src_item = stack:to_string();
-		local pos=string.find(src_item," "); if pos then src_item = string.sub(src_item,1,pos-1) end -- take first word to determine what item was 
-		
-		local def = basic_machines.grinder_recipes[src_item];
-		if not def then 
-			meta:set_string("infotext", "please insert valid materials"); return
-		end-- unknown node
-		
-		fuel = fuel-def[1]; -- burn fuel
-		if fuel<0 then meta:set_string("infotext", "need at least " .. def[1] .. " fuel to complete operation "); return end
-		
+	-- process items
+	
 		inv:add_item("dst",ItemStack(def[2]));
 	
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
-		meta:set_float("fuel",fuel); meta:set_string("infotext", "fuel status " .. fuel);
+		
+		meta:set_string("infotext", "fuel status " .. fuel);
+		 
 end
 
 
@@ -189,4 +197,4 @@ end
 register_dust("iron","default:iron_lump","default:steel_ingot",10)
 register_dust("copper","default:copper_lump","default:copper_ingot",10)
 register_dust("gold","default:gold_lump","default:gold_ingot",10)
-register_dust("diamond","default:diamond","default:diamond",3600) -- 1hr cooking time (rougly 100 coal) to make diamond!
+register_dust("diamond","default:diamond","default:diamond",1000) -- 0.3hr cooking time to make diamond!
