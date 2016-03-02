@@ -432,18 +432,18 @@ minetest.register_node("basic_machines:mover", {
 				end
 							
 				
-				if dig_up == true then -- dig up to 10 nodes
+				if dig_up == true then -- dig up to 15 nodes
 					
 					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
 					
 					local positions = minetest.find_nodes_in_area( --
 					{x=pos1.x-r, y=pos1.y, z=pos1.z-r},
-					{x=pos1.x+r, y=pos1.y+10, z=pos1.z+r},
+					{x=pos1.x+r, y=pos1.y+15, z=pos1.z+r},
 					node1.name)
 					
 					for _, pos3 in ipairs(positions) do
 						-- dont take coal from source or target location to avoid chest/fuel confusion isssues
-						if count>10 then break end
+						if count>15 then break end
 						minetest.set_node(pos3,{name="air"}); count = count+1;
 					end
 					
@@ -775,7 +775,6 @@ minetest.register_abm({
 		
 		local trigger = false
 
-		
 		if mode == "node" then
 			local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name; -- read node at source position
 			
