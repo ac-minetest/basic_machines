@@ -20,7 +20,7 @@
 
 local max_range = 10; -- machines normal range of operation
 local machines_timer = 5 -- timestep
-local machines_TTL = 5; -- time to live for signals
+local machines_TTL = 16; -- time to live for signals
 local MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - base unit
 
 
@@ -555,18 +555,18 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	if not table.mesecons.effector then return end -- error
 	local effector=table.mesecons.effector;
 	
-	if mode == 2 then -- keypad in toggle mode
+	if mode == 3 then -- keypad in toggle mode
 		local state = meta:get_int("state") or 0;state = 1-state; meta:set_int("state",state);
-		if state == 0 then mode = 0 else mode = 1 end
+		if state == 0 then mode = 1 else mode = 2 end
 	end
 	
 	-- pass the signal on to target
-	if mode == 1 then
+	if mode == 2 then -- on
 		if not effector.action_on then return end
-		effector.action_on(tpos,node,ttl-1); -- run
-	else
+		effector.action_on(tpos,node,ttl); -- run
+	elseif mode == 1 then -- off
 		if not effector.action_off then return end
-		effector.action_off(tpos,node,ttl-1); -- run
+		effector.action_off(tpos,node,ttl); -- run
 	end
 			
 end
@@ -574,8 +574,9 @@ end
 local function check_keypad(pos,name,ttl) -- called only when manually activated via punch
 	local meta = minetest.get_meta(pos);
 	local pass =  meta:get_string("pass");
+	local delay = meta:get_float("delay");
 	if pass == "" then 
-		meta:set_int("count",meta:get_int("iter")); use_keypad(pos,machines_TTL)  -- time to live is 3 when punched
+		meta:set_int("count",meta:get_int("iter")); minetest.after(delay, function() use_keypad(pos,machines_TTL) end)  -- time to live set when punched
 		return 
 	end
 	if name == "" then return end
@@ -597,8 +598,9 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_string("infotext", "Keypad. Right click to set it up or punch it.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
+		meta:set_float("delay",0);
 	
-		meta:set_string("pass", "");meta:set_int("mode",1); -- pasword, mode of operation
+		meta:set_string("pass", "");meta:set_int("mode",2); -- pasword, mode of operation
 		meta:set_int("iter",1);meta:set_int("count",0); -- max repeats, repeat count
 		local name = placer:get_player_name();punchset[name] =  {};punchset[name].state = 0
 	end,
@@ -607,7 +609,10 @@ minetest.register_node("basic_machines:keypad", {
 		action_on = function (pos, node,ttl) 
 		if type(ttl)~="number" then ttl = 1 end
 		if ttl<0 then return end -- machines_TTL prevents infinite recursion
-		use_keypad(pos,ttl-1);
+		-- add delay
+		local meta = minetest.env:get_meta(pos);
+		local delay = meta:get_float("delay");
+		minetest.after(delay, function () use_keypad(pos,ttl-1) end);
 	end
 	}
 	},
@@ -618,18 +623,20 @@ minetest.register_node("basic_machines:keypad", {
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
 			return 
 		end -- only owner can set up mover, ppl sharing protection can only look
-		local x0,y0,z0,x1,y1,z1,pass,iter,mode;
+		local x0,y0,z0,x1,y1,z1,pass,iter,mode,delay;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
+		delay=meta:get_float("delay");
 		
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
 		
 		pass = meta:get_string("pass");
 		local form  = 
-		"size[4.25,2.75]" ..  -- width, height
+		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[2.25,2.5;2.5,1;iter;Repeat how many times;".. iter .."]"..
-		"field[2.25,1.5;2.5,1;mode;0=OFF/1=ON/2=TOGGLE;"..mode.."]"
+		"field[2.25,1.5;2.5,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
+		"field[2.25,3.5;2.5,1;delay;delay;"..delay.."]"
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 		else
@@ -982,7 +989,6 @@ minetest.register_node("basic_machines:light_off", {
 	groups = {oddly_breakable_by_hand=2},
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-			if type(ttl)~="number" then ttl = 1 end
 			minetest.set_node(pos,{name = "basic_machines:light_on"});		
 		end
 				}
@@ -1347,9 +1353,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
 		
 		if fields.OK == "OK" then
-			local x0,y0,z0,pass,mode;
+			local x0,y0,z0,pass,mode,delay;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
 			pass = fields.pass or ""; mode = fields.mode or 1;
+			delay = fields.delay or 0;
 			
 			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
 				minetest.chat_send_player(name, "KEYPAD: position is protected. aborting.")
@@ -1361,6 +1368,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);meta:set_string("pass",pass);
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
+			meta:set_float("delay",delay);
 			meta:set_string("infotext", "Punch keypad to use it.");
 			if pass~="" then meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); end
 		end
@@ -1383,7 +1391,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		minetest.chat_send_player(name,"ACCESS GRANTED.")
 		
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
-			meta:set_int("count",meta:get_int("iter")); use_keypad(pos,machines_TTL) 
+			meta:set_int("count",meta:get_int("iter")); 
+			local delay = meta:get_float("delay"); minetest.after(delay, function() use_keypad(pos,machines_TTL) end)
 			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
 		end
 		
@@ -1451,7 +1460,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		end
 		return
 	end
-		
+	
+	
+	-- DISTRIBUTOR
 	local fname = "basic_machines:distributor_"
 	if string.sub(formname,0,string.len(fname)) == fname then
 		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
@@ -1482,7 +1493,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if fields["ADD"] then
 			local n = meta:get_int("n");
-			if n<10 then meta:set_int("n",n+1);	end
+			if n<16 then meta:set_int("n",n+1);	end -- max 16 outputs
 			return
 		end
 		
