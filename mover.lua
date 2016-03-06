@@ -589,7 +589,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
-		"button[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter Password: ;".."".."]";
+		"button_exit[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter Password: ;".."".."]";
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
 
 end
