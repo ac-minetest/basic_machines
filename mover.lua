@@ -1375,7 +1375,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			
 			if fields.pass then
-				if string.len(fields.pass)<=16 then -- dont replace password with hash which is longer - 27 chars
+				if fields.pass~="" and string.len(fields.pass)<=16 then -- dont replace password with hash which is longer - 27 chars
 					pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
 					meta:set_string("pass",pass); 
 				end
@@ -1399,6 +1399,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local pass;
 			pass = fields.pass or "";
 			pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
+			
 			if pass~=meta:get_string("pass") then
 				minetest.chat_send_player(name,"ACCESS DENIED. WRONG PASSWORD.")
 				return
