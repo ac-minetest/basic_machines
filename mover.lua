@@ -522,7 +522,8 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	local meta = minetest.get_meta(pos);	
 	local name =  meta:get_string("owner");
 	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
-	local count = meta:get_int("count") or 0;
+	local count = meta:get_int("count") or 0; -- counts how many repeats left
+	local active_repeats = meta:get_int("active_repeats") or 0;
 		
 	if count<=0 and ttl<0 then return end;
 	
@@ -535,9 +536,14 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	end
 		
 	if count>0 then -- only trigger repeat if count on
-		minetest.after(machines_timer, function() use_keypad(pos,machines_TTL) end )  -- repeat operation as many times as set with "iter"
+		if active_repeats == 0 then -- cant add new repeats quickly to prevent abuse
+			meta:set_int("active_repeats",1);
+			minetest.after(machines_timer, function() 
+				meta:set_int("active_repeats",0);
+				use_keypad(pos,machines_TTL) 
+			end )  -- repeat operation as many times as set with "iter"
+		end
 	end
-	
 	
 	local x0,y0,z0,mode;
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
@@ -601,7 +607,7 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_float("delay",0);
 	
 		meta:set_string("pass", "");meta:set_int("mode",2); -- pasword, mode of operation
-		meta:set_int("iter",1);meta:set_int("count",0); -- max repeats, repeat count
+		meta:set_int("iter",1);meta:set_int("count",0); -- how many repeats to do, current repeat count
 		local name = placer:get_player_name();punchset[name] =  {};punchset[name].state = 0
 	end,
 		
@@ -634,9 +640,9 @@ minetest.register_node("basic_machines:keypad", {
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[0.,2.25;1,1;OK;OK] field[0.25,1.5;2,1;pass;Password: ;"..pass.."]" .. "field[2.25,2.5;2.5,1;iter;Repeat how many times;".. iter .."]"..
-		"field[2.25,1.5;2.5,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
-		"field[2.25,3.5;2.5,1;delay;delay;"..delay.."]"
+		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;3.25,1;iter;Repeat how many times;".. iter .."]"..
+		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
+		"field[3.5,2.5;1.,1;delay;delay;"..delay.."]"
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 		else
@@ -963,14 +969,14 @@ minetest.register_node("basic_machines:distributor", {
 				
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
-		"size[7,"..(2.5+n-2).."]" ..  -- width, height
+		"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
 		"label[0,-0.25;target: x y z, Active -1/0/1]";
 		for i =1,n do
-			form = form.."field[0.25,"..(0.5+i-1)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+i-1)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+i-1)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+i-1)..";1,1;active"..i..";;" .. active[i] .. "]"
-			form = form .. "button[4.25,"..(0.25+i-1)..";1.25,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+i-1)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+i-1)..";1,1;X"..i..";X]"
+			form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
+			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
 		end
 		
-		form=form.."button_exit[4.25,"..(2+n-2)..";1,1;ADD;ADD]".."button_exit[3.,"..(2+n-2)..";1,1;OK;OK]";
+		form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]";
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
 		else
@@ -1366,7 +1372,15 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range) then
 				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
-			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);meta:set_string("pass",pass);
+			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
+			
+			if fields.pass then
+				if string.len(fields.pass)<=16 then -- dont replace password with hash which is longer - 27 chars
+					pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
+					meta:set_string("pass",pass); 
+				end
+			end
+			
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
 			meta:set_float("delay",delay);
 			meta:set_string("infotext", "Punch keypad to use it.");
@@ -1383,7 +1397,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 	
 		if fields.OK == "OK" then
 			local pass;
-			pass = fields.pass or "";			
+			pass = fields.pass or "";
+			pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
 			if pass~=meta:get_string("pass") then
 				minetest.chat_send_player(name,"ACCESS DENIED. WRONG PASSWORD.")
 				return
