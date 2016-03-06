@@ -75,13 +75,13 @@ minetest.register_node("basic_machines:outlet", {
 			local meta = minetest.get_meta(pos);
 			local fuel_totaltime = meta:get_float("fuel_totaltime") or 0;
 			local fuel_time = meta:get_float("fuel_time") or 0;
-			if fuel_totaltime<=60 then
-				meta:set_float("fuel_totaltime",60);meta:set_float("fuel_time",0) -- add 60 second burn time to furnace
-				local src_time = meta:get_float("src_time") or 0
-				if fuel_time>4 then -- must burn for at least 4 secs before it can be accelerated again
-					meta:set_float("src_time",src_time+5); -- twice as fast cooking
-				end
+			
+			meta:set_float("fuel_totaltime",60);meta:set_float("fuel_time",0) -- add 60 second burn time to furnace
+			local src_time = meta:get_float("src_time") or 0
+			if fuel_time>4 then -- must burn for at least 4 secs before it can be accelerated again
+				meta:set_float("src_time",src_time+5); -- twice as fast cooking
 			end
+			
 		end
 		}}
 	
