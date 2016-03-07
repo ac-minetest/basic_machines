@@ -580,9 +580,8 @@ end
 local function check_keypad(pos,name,ttl) -- called only when manually activated via punch
 	local meta = minetest.get_meta(pos);
 	local pass =  meta:get_string("pass");
-	local delay = meta:get_float("delay");
 	if pass == "" then 
-		meta:set_int("count",meta:get_int("iter")); minetest.after(delay, function() use_keypad(pos,machines_TTL) end)  -- time to live set when punched
+		meta:set_int("count",meta:get_int("iter")); use_keypad(pos,machines_TTL) -- time to live set when punched
 		return 
 	end
 	if name == "" then return end
@@ -604,7 +603,6 @@ minetest.register_node("basic_machines:keypad", {
 		meta:set_string("infotext", "Keypad. Right click to set it up or punch it.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
-		meta:set_float("delay",0);
 	
 		meta:set_string("pass", "");meta:set_int("mode",2); -- pasword, mode of operation
 		meta:set_int("iter",1);meta:set_int("count",0); -- how many repeats to do, current repeat count
@@ -615,10 +613,7 @@ minetest.register_node("basic_machines:keypad", {
 		action_on = function (pos, node,ttl) 
 		if type(ttl)~="number" then ttl = 1 end
 		if ttl<0 then return end -- machines_TTL prevents infinite recursion
-		-- add delay
-		local meta = minetest.env:get_meta(pos);
-		local delay = meta:get_float("delay");
-		minetest.after(delay, function () use_keypad(pos,ttl-1) end);
+		use_keypad(pos,ttl-1)
 	end
 	}
 	},
@@ -629,10 +624,9 @@ minetest.register_node("basic_machines:keypad", {
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
 			return 
 		end -- only owner can set up mover, ppl sharing protection can only look
-		local x0,y0,z0,x1,y1,z1,pass,iter,mode,delay;
+		local x0,y0,z0,x1,y1,z1,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
-		delay=meta:get_float("delay");
 		
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
 		
@@ -641,8 +635,7 @@ minetest.register_node("basic_machines:keypad", {
 		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;3.25,1;iter;Repeat how many times;".. iter .."]"..
-		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
-		"field[3.5,2.5;1.,1;delay;delay;"..delay.."]"
+		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]";
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 		else
@@ -860,11 +853,7 @@ minetest.register_abm({
 
 -- DISTRIBUTOR: spreads one signal to two outputs
 
--- TO DO: make up to 10? outputs, add button to add new outputs
--- gui looks like: x y z active SETUP DISPLAY REMOVE
--- SETUP would start punch setup for that target, display would display target in world
--- put somewhere add new target button
--- targets should be saved in a table with entries {x,y,z,active}
+-- TO DO: add delay option
 
 
 minetest.register_node("basic_machines:distributor", {
@@ -880,6 +869,7 @@ minetest.register_node("basic_machines:distributor", {
 			meta:set_int("x"..i,0);meta:set_int("y"..i,0);meta:set_int("z"..i,0);meta:set_int("active"..i,1) -- target i
 		end
 		meta:set_int("n",2); -- how many targets initially
+		meta:set_float("delay",0); -- delay when transmitting signal
 		
 		
 		meta:set_int("public",0); -- can other ppl set it up?
@@ -892,7 +882,7 @@ minetest.register_node("basic_machines:distributor", {
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
 			local posf = {}; local active = {};
-			local n = meta:get_int("n");
+			local n = meta:get_int("n");local delay = meta:get_float("delay");
 			for i =1,n do
 				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
 				active[i]=meta:get_int("active"..i);
@@ -908,9 +898,20 @@ minetest.register_node("basic_machines:distributor", {
 					if not table.mesecons then return end -- error
 					if not table.mesecons.effector then return end -- error
 					local effector=table.mesecons.effector;
-					
-					if active[i] == 1 and effector.action_on then effector.action_on(posf[i],node,ttl-1); 
-						elseif active[i] == -1 and effector.action_off then effector.action_off(posf[i],node,ttl-1); 
+					local delay = minetest.get_meta(pos):get_float("delay");
+				
+					if active[i] == 1 and effector.action_on then 
+							if delay>0 then
+								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
+							else
+								effector.action_on(posf[i],node,ttl-1); 
+							end
+					elseif active[i] == -1 and effector.action_off then 
+						if delay>0 then
+							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
+						else
+							effector.action_off(posf[i],node,ttl-1)
+						end
 					end
 				end
 			end
@@ -939,9 +940,19 @@ minetest.register_node("basic_machines:distributor", {
 					if not table.mesecons then return end -- error
 					if not table.mesecons.effector then return end -- error
 					local effector=table.mesecons.effector;
-					
-					if active[i] == 1 and effector.action_off then effector.action_off(posf[i],node,ttl-1); 
-						elseif active[i] == -1 and effector.action_on then effector.action_on(posf[i],node,ttl-1); 
+					local delay = minetest.get_meta(pos):get_float("delay");
+					if active[i] == 1 and effector.action_off then 
+						if delay>0 then
+							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
+						else
+							effector.action_off(posf[i],node,ttl-1); 
+						end
+					elseif active[i] == -1 and effector.action_on then 
+						if delay>0 then
+							minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end);
+						else
+							effector.action_on(posf[i],node,ttl-1); 
+						end
 					end
 				end
 			end
@@ -959,6 +970,7 @@ minetest.register_node("basic_machines:distributor", {
 		
 		local p = {}; local active = {};
 		local n = meta:get_int("n");
+		local delay = meta:get_float("delay");
 		for i =1,n do
 			p[i]={x=meta:get_int("x"..i),y=meta:get_int("y"..i),z=meta:get_int("z"..i)};
 			active[i]=meta:get_int("active"..i);
@@ -976,7 +988,7 @@ minetest.register_node("basic_machines:distributor", {
 			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
 		end
 		
-		form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]";
+		form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
 		else
@@ -1247,8 +1259,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				punchset[name].state = 0; return
 			end
 			
-			-- TO DO: when called set punchset[name].pos.x,... to be node position
-			
 			if punchset[name].state > 0 then 
 				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
 					minetest.chat_send_player(name, "DISTRIBUTOR: Punch closer to distributor. aborting.")
@@ -1359,10 +1369,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
 		
 		if fields.OK == "OK" then
-			local x0,y0,z0,pass,mode,delay;
+			local x0,y0,z0,pass,mode;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
 			pass = fields.pass or ""; mode = fields.mode or 1;
-			delay = fields.delay or 0;
 			
 			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
 				minetest.chat_send_player(name, "KEYPAD: position is protected. aborting.")
@@ -1382,7 +1391,6 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 			
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
-			meta:set_float("delay",delay);
 			meta:set_string("infotext", "Punch keypad to use it.");
 			if pass~="" then meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); end
 		end
@@ -1408,7 +1416,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
 			meta:set_int("count",meta:get_int("iter")); 
-			local delay = meta:get_float("delay"); minetest.after(delay, function() use_keypad(pos,machines_TTL) end)
+			use_keypad(pos,machines_TTL)
 			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
 		end
 		
@@ -1503,7 +1511,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 				meta:set_int("x"..i,posf[i].x);meta:set_int("y"..i,posf[i].y);meta:set_int("z"..i,posf[i].z);
 				meta:set_int("active"..i,active[i]);
-		
+				if fields.delay then
+					meta:set_float("delay", fields.delay);
+				end
 			end
 		end
 		

@@ -8,13 +8,15 @@ dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
 
-
-minetest.after(1, function() -- if you want keypad to open doors, also adds auto close
+minetest.after(0, function() -- if you want keypad to open/close doors
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua")
 end)
 
--- machines fuel related recipes
 
+
+print("[basic machines] loaded")
+
+-- machines fuel related recipes
 
 minetest.register_craftitem("basic_machines:charcoal", {
 	description = "Wood charcoal",

@@ -63,10 +63,6 @@ function doors:register_door(name, def)
 
 	local function on_mesecons_signal_open (pos, node)
 		on_rightclick(pos, 1, name.."_t_1", name.."_b_2", name.."_t_2", {1,2,3,0})
-		minetest.after(5, function() -- rnd: auto close after 5 seconds
-		on_rightclick(pos, 1, name.."_t_2", name.."_b_1", name.."_t_1", {3,0,1,2})
-		end
-		)
 	end
 
 	local function on_mesecons_signal_close (pos, node)
@@ -170,4 +166,47 @@ doors:register_door("doors:door_steel", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-print("[basic machines] loaded")
+
+-- make trapdoor open close and when open make it unwalkable
+
+ local function trapdoor_open_overwrite()
+	local name = "protector:trapdoor_open";
+	local table = minetest.registered_nodes[name]; if not table then return end
+	local table2 = {}
+	for i,v in pairs(table) do
+		table2[i] = v
+	end
+	table2.walkable = false; -- opened trapdoor cant be walked on
+	
+	table2.mesecons = {effector = {
+		action_off  =  function (pos,node,ttl)
+			if ttl<0 then return end
+				minetest.swap_node(pos, {name = "protector:trapdoor", param1 = node.param1, param2 = node.param2})
+			end
+		}
+	};
+	minetest.register_node(":"..name, table2)
+end 
+
+minetest.after(0,trapdoor_open_overwrite);
+
+ local function trapdoor_close_overwrite()
+	local name = "protector:trapdoor";
+	local table = minetest.registered_nodes[name]; if not table then return end
+	local table2 = {}
+	for i,v in pairs(table) do
+		table2[i] = v
+	end
+	table2.walkable = false; -- opened trapdoor cant be walked on
+	
+	table2.mesecons = {effector = {
+		action_on  =  function (pos,node,ttl)
+			if ttl<0 then return end
+				minetest.swap_node(pos, {name = "protector:trapdoor_open", param1 = node.param1, param2 = node.param2})
+			end
+		}
+	};
+	minetest.register_node(":"..name, table2)
+end 
+
+minetest.after(0,trapdoor_close_overwrite);
