@@ -840,12 +840,12 @@ minetest.register_abm({
 			meta:set_string("infotext", "detector: on");
 			if not effector.action_on then return end
 		
-			effector.action_on({x=x1,y=y1,z=z1},node,3); -- run
+			effector.action_on({x=x1,y=y1,z=z1},node,machines_TTL); -- run
 			
 			else 
 			meta:set_string("infotext", "detector: idle");
 			if not effector.action_off then return end
-			effector.action_off({x=x1,y=y1,z=z1},node,3); -- run
+			effector.action_off({x=x1,y=y1,z=z1},node,machines_TTL); -- run
 		end
 			
 	end,
