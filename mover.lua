@@ -28,6 +28,7 @@ basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:
 
 -- how hard it is to move blocks, default factor 1
 basic_machines.hardness = {["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,["default:lava_source"]=1000,["default:obsidian"]=20};
+basic_machines.hardness["basic_machines:mover"]=0.;
 -- farming operations are much cheaper
 basic_machines.hardness["farming:wheat_8"]=0.1;basic_machines.hardness["farming:cotton_8"]=0.1;
 basic_machines.hardness["farming:seed_wheat"]=0.05;basic_machines.hardness["farming:seed_cotton"]=0.05;
@@ -105,7 +106,7 @@ minetest.register_node("basic_machines:mover", {
 		
 		prefer = meta:get_string("prefer");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
-		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3,["reverse"]=4, ["object"]=5, ["inventory"]=6};
+		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3,["reverse"]=4, ["object"]=5, ["inventory"]=6, ["transport"]=7};
 		--local inv_mode_list = {[1]=["normal"],[2]="dig", [3]="drop",[4]="reverse", [5]="object", [6]="inventory"};
 		
 		local mode = mode_list[meta:get_string("mode")] or "";
@@ -153,7 +154,7 @@ minetest.register_node("basic_machines:mover", {
 		"button_exit[4,4.4;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter;"..prefer.."]"..
 		"button[3,4.4;1,1;help;help]"..
 		"label[0.,4.0;MODE selection]"..
-		"dropdown[0,4.5;3,1;mode;normal,dig,drop,reverse,object,inventory;".. mode .."]"..
+		"dropdown[0,4.5;3,1;mode;normal,dig,drop,reverse,object,inventory,transport;".. mode .."]"..
 		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;3,3.3;1,1;]"..
 		"label[3,2.9;upgrade]";
 		
@@ -200,7 +201,17 @@ minetest.register_node("basic_machines:mover", {
 			pos1.z = z0 + pc;
 			pos1.x = pos.x+pos1.x;pos1.y = pos.y+pos1.y;pos1.z = pos.z+pos1.z;
 			
-
+			-- special modes that use its own source/target positions:
+			if mode == "transport" then
+				pos2 = {x=meta:get_int("x2")-x0+pos1.x,y=meta:get_int("y2")-y0+pos1.y,z=meta:get_int("z2")-z0+pos1.z}; -- translation from pos1
+			end
+			
+			if mode == "reverse" then -- reverse pos1, pos2
+				local post = {x=pos1.x,y=pos1.y,z=pos1.z};
+				pos1 = {x=pos2.x,y=pos2.y,z=pos2.z};
+				pos2 = {x=post.x,y=post.y,z=post.z};
+			end
+			
 
 			-- PROTECTION CHECK
 			local owner = meta:get_string("owner");
@@ -208,14 +219,6 @@ minetest.register_node("basic_machines:mover", {
 				meta:set_float("fuel", -1);
 				meta:set_string("infotext", "Mover block. Protection fail. Deactivated.")
 			return end
-		
-		
-		
-			if mode == "reverse" then -- reverse pos1, pos2
-				local post = {x=pos1.x,y=pos1.y,z=pos1.z};
-				pos1 = {x=pos2.x,y=pos2.y,z=pos2.z};
-				pos2 = {x=post.x,y=post.y,z=post.z};
-			end
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 			local prefer = meta:get_string("prefer"); 
@@ -359,7 +362,7 @@ minetest.register_node("basic_machines:mover", {
 		if node2.name == "default:chest" or node2.name == "default:chest_locked" then
 			target_chest = true
 		end
-		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" then return end -- do nothing if target nonempty and not chest
+		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" and not(mode=="transport") then return end -- do nothing if target nonempty and not chest
 		
 		local invName1="";local invName2="";
 		if mode == "inventory" then 
@@ -491,15 +494,23 @@ minetest.register_node("basic_machines:mover", {
 		
 		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 		
-		
 		if target_chest and source_chest then -- chest to chest transport has lower cost, *0.1
 			fuel_cost=fuel_cost*0.1;
 		end
 		
 		fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
 		meta:set_string("infotext", "Mover block. Fuel "..fuel);
+
+	
+		if mode == "transport" then -- transport nodes parallel as defined by source1 and target, clone with complete metadata
+			local meta1 = minetest.get_meta(pos1):to_table();
+			minetest.set_node(pos2, minetest.get_node(pos1));
+			minetest.get_meta(pos2):from_table(meta1);
+			minetest.set_node(pos1,{name="air"});minetest.get_meta(pos1):from_table(nil)
+			return;
+		end
 		
-		
+		-- REMOVE DIGGED NODE
 		if not(target_chest) then
 			if not drop then minetest.set_node(pos2, {name = node1.name}); end
 			if drop then 
