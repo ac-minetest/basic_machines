@@ -197,7 +197,6 @@ minetest.after(0,trapdoor_open_overwrite);
 	for i,v in pairs(table) do
 		table2[i] = v
 	end
-	table2.walkable = false; -- opened trapdoor cant be walked on
 	
 	table2.mesecons = {effector = {
 		action_on  =  function (pos,node,ttl)
