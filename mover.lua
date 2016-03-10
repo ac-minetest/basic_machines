@@ -864,9 +864,6 @@ minetest.register_abm({
 
 -- DISTRIBUTOR: spreads one signal to two outputs
 
--- TO DO: add delay option
-
-
 minetest.register_node("basic_machines:distributor", {
 	description = "Distributor",
 	tiles = {"distributor.png"},
@@ -877,7 +874,7 @@ minetest.register_node("basic_machines:distributor", {
 		meta:set_string("infotext", "Distributor. Right click/punch to set it up.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		for i=1,10 do
-			meta:set_int("x"..i,0);meta:set_int("y"..i,0);meta:set_int("z"..i,0);meta:set_int("active"..i,1) -- target i
+			meta:set_int("x"..i,0);meta:set_int("y"..i,1);meta:set_int("z"..i,0);meta:set_int("active"..i,1) -- target i
 		end
 		meta:set_int("n",2); -- how many targets initially
 		meta:set_float("delay",0); -- delay when transmitting signal
@@ -926,7 +923,6 @@ minetest.register_node("basic_machines:distributor", {
 					end
 				end
 			end
-			
 	end,
 	
 	action_off = function (pos, node,ttl) 
@@ -1275,7 +1271,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 					minetest.chat_send_player(name, "DISTRIBUTOR: Punch closer to distributor. aborting.")
 					punchset[name].state = 0; return
 				end
-				minetest.chat_send_player(name, "DETECTOR: target set.")
+				minetest.chat_send_player(name, "DISTRIBUTOR: target set.")
 				local meta = minetest.get_meta(punchset[name].pos);
 				local x = pos.x-punchset[name].pos.x;
 				local y = pos.y-punchset[name].pos.y;
@@ -1283,7 +1279,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				local j = punchset[name].state;
 				
 				meta:set_int("x"..j,x);meta:set_int("y"..j,y);meta:set_int("z"..j,z);
-				
+				if x==0 and y==0 and z==0 then meta:set_int("active"..j,0) end
 				machines.pos1[name] = pos;machines.mark_pos1(name) -- mark pos1
 				punchset[name].state = 0; 
 				return
@@ -1521,7 +1517,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				end
 			
 				meta:set_int("x"..i,posf[i].x);meta:set_int("y"..i,posf[i].y);meta:set_int("z"..i,posf[i].z);
-				meta:set_int("active"..i,active[i]);
+				if posf[i].x==0 and posf[i].y==0 and posf[i].z==0 then
+					meta:set_int("active"..i,0); -- no point in activating itself
+					else
+					meta:set_int("active"..i,active[i]);
+				end
 				if fields.delay then
 					meta:set_float("delay", fields.delay);
 				end

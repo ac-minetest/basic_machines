@@ -5,6 +5,7 @@ dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic 
 dofile(minetest.get_modpath("basic_machines").."/mover.lua")
 dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
 dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
+--dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
 
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
 
