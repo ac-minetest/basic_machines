@@ -530,14 +530,15 @@ minetest.register_node("basic_machines:mover", {
 
 local function use_keypad(pos,ttl) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion )
 	
+	if ttl<0 then return end;
 	local meta = minetest.get_meta(pos);	
 	local name =  meta:get_string("owner");
 	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
 	local count = meta:get_int("count") or 0; -- counts how many repeats left
 	local active_repeats = meta:get_int("active_repeats") or 0;
 		
-	if count<=0 and ttl<0 then return end;
 	
+	if count < 0 then return end
 	count = count - 1; meta:set_int("count",count); 
 	
 	if count>=0 then
@@ -873,8 +874,6 @@ minetest.register_node("basic_machines:distributor", {
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("infotext", "Distributor. Right click/punch to set it up.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
-		meta:set_int("act_time",0); -- last time of activation
-		meta:set_int("act_temp",0); -- operational temperature, if too high distributor wont be operational
 		for i=1,10 do
 			meta:set_int("x"..i,0);meta:set_int("y"..i,1);meta:set_int("z"..i,0);meta:set_int("active"..i,1) -- target i
 		end
@@ -888,22 +887,13 @@ minetest.register_node("basic_machines:distributor", {
 		
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
-
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");local delay = meta:get_float("delay");
-			if n == 0 then return end
-			
 			for i =1,n do
 				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
-				if posf[i].x==pos.x and posf[i].y==pos.y and posf[i].z==pos.z then
-					meta:set_string("infotext", "Distributor burned out, please set it again"); 
-					meta:set_int("n",0);
-					return;
-				end
 				active[i]=meta:get_int("active"..i);
 			end
 			
@@ -920,11 +910,11 @@ minetest.register_node("basic_machines:distributor", {
 					local delay = minetest.get_meta(pos):get_float("delay");
 				
 					if active[i] == 1 and effector.action_on then 
-						if delay>0 then
-							minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
-						else
-							effector.action_on(posf[i],node,ttl-1); 
-						end
+							if delay>0 then
+								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
+							else
+								effector.action_on(posf[i],node,ttl-1); 
+							end
 					elseif active[i] == -1 and effector.action_off then 
 						if delay>0 then
 							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
@@ -941,18 +931,10 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
-			
 			local posf = {}; local active = {};
-			local n = meta:get_int("n");local delay = meta:get_float("delay");
-			if n == 0 then return end
-			
+			local n = meta:get_int("n");
 			for i =1,n do
 				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
-				if posf[i].x==pos.x and posf[i].y==pos.y and posf[i].z==pos.z then
-					meta:set_string("infotext", "Distributor burned out, please set it again"); 
-					meta:set_int("n",0);
-					return;
-				end
 				active[i]=meta:get_int("active"..i);
 			end
 			
@@ -966,6 +948,7 @@ minetest.register_node("basic_machines:distributor", {
 					if not table.mesecons then return end -- error
 					if not table.mesecons.effector then return end -- error
 					local effector=table.mesecons.effector;
+					local delay = minetest.get_meta(pos):get_float("delay");
 					if active[i] == 1 and effector.action_off then 
 						if delay>0 then
 							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);

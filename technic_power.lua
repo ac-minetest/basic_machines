@@ -66,7 +66,7 @@ minetest.register_node("basic_machines:outlet", {
 			if ttl<0 then return end -- machines_TTL prevents infinite recursion
 			-- provide power to furnace on top of it..
 			
-			local supply = basic_machines.check_power({x=pos.x,y=pos.y+1,z=pos.z});
+			local supply = basic_machines.check_power({x=pos.x,y=pos.y+1,z=pos.z}); -- do we have enough power
 			if supply<=0 then return end -- need power!
 			
 			pos.y=pos.y+1;	
@@ -93,7 +93,7 @@ function basic_machines.check_power(pos) -- mover checks power source
 	end
 	
 	local meta = minetest.get_meta({x=pos.x,y=pos.y-1,z=pos.z});
-	local supply = meta:get_int("supply"); -- check if outlet itself is generator
+	local supply = meta:get_int("supply") or 0; -- check if outlet itself is generator
 	if supply>0 then return supply end
 	
 	local p = minetest.string_to_pos(meta:get_string("station")); if not p then return end
