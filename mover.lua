@@ -897,6 +897,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = minetest.get_gametime(); 
 			if t0<=t1 then 
 				local delay = machines_timer+1;
+				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); return 
 			elseif meta:get_string("infotext")~="" then 
 					meta:set_string("infotext","")
@@ -947,6 +948,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
 				local delay = machines_timer+1;
+				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); return 
 			elseif meta:get_string("infotext")~="" then 
 					meta:set_string("infotext","")
