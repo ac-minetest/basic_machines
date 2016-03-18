@@ -593,7 +593,10 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 	local meta = minetest.get_meta(pos);
 	local pass =  meta:get_string("pass");
 	if pass == "" then 
-		meta:set_int("count",meta:get_int("iter")); use_keypad(pos,machines_TTL) -- time to live set when punched
+		local iter = meta:get_int("iter");
+		local count = meta:get_int("count");
+		if count<iter-1 or iter<2 then meta:set_int("active_repeats",0) end -- so that keypad can work again, at least one operation must have occured though
+		meta:set_int("count",iter); use_keypad(pos,machines_TTL) -- time to live set when punched
 		return 
 	end
 	if name == "" then return end
@@ -893,7 +896,8 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = meta:get_int("t");
 			local t0 = minetest.get_gametime(); 
 			if t0<=t1 then 
-				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait 2s for cooldown."); meta:set_int("t",t1+2); return 
+				local delay = machines_timer+1;
+				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); return 
 			elseif meta:get_string("infotext")~="" then 
 					meta:set_string("infotext","")
 			end
@@ -942,7 +946,8 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait 2s for cooldown."); meta:set_int("t",t1+2); return 
+				local delay = machines_timer+1;
+				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); return 
 			elseif meta:get_string("infotext")~="" then 
 					meta:set_string("infotext","")
 			end
@@ -1440,6 +1445,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
 			meta:set_int("count",meta:get_int("iter")); 
+			meta:set_int("active_repeats",0);
 			use_keypad(pos,machines_TTL)
 			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
 		end
