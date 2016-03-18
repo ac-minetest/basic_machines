@@ -890,6 +890,14 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
+			local t1 = meta:get_int("t");
+			local t0 = minetest.get_gametime(); 
+			if t0<=t1 then 
+				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait 2s for cooldown."); meta:set_int("t",t1+2); return 
+			elseif meta:get_string("infotext")~="" then 
+					meta:set_string("infotext","")
+			end
+			meta:set_int("t",t1); -- update last activation time
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");local delay = meta:get_float("delay");
 			for i =1,n do
@@ -931,6 +939,14 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
+			local t0 = meta:get_int("t");
+			local t1 = minetest.get_gametime(); 
+			if t1<=t0 then 
+				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait 2s for cooldown."); meta:set_int("t",t1+2); return 
+			elseif meta:get_string("infotext")~="" then 
+					meta:set_string("infotext","")
+			end
+			meta:set_int("t",t1); -- update last activation time
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");
 			for i =1,n do

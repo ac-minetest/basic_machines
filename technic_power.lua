@@ -93,7 +93,7 @@ function basic_machines.check_power(pos) -- mover checks power source
 	end
 	
 	local meta = minetest.get_meta({x=pos.x,y=pos.y-1,z=pos.z});
-	local supply = meta:get_int("supply") or 0; -- check if outlet itself is generator
+	local supply = meta:get_int("supply") or 0; 
 	if supply>0 then return supply end
 	
 	local p = minetest.string_to_pos(meta:get_string("station")); if not p then return end
