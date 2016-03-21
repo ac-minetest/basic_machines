@@ -41,6 +41,15 @@ basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["d
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 4"}};
 
+-- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = {plant_name}
+basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1",
+["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
+["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
+["farming:seed_cotton"]="farming:cotton_1",["farming:cucumber"]="farming:cucumber_1",["farming:grapes"]="farming:grapes_1",
+["farming:melon_slice"]="farming:melon_1",["farming:potato"]="farming:potato_1",["farming:pumpkin_slice"]="farming:pumpkin_1",
+["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
+["farming:seed_wheat"]="farming:wheat_1"}
+
 
 --  *** END OF SETTINGS *** --
 
@@ -424,15 +433,18 @@ minetest.register_node("basic_machines:mover", {
 			local dig_up = false; -- digs up node as a tree
 			if dig then 
 				
-				
 				if not source_chest and basic_machines.dig_up_table[node1.name] then dig_up = true end
-				if not source_chest and basic_machines.harvest_table[node1.name]~=nil then 
-					harvest = true 
-					local remains = basic_machines.harvest_table[node1.name][1];
-					local result = basic_machines.harvest_table[node1.name][2];
-					minetest.set_node(pos1,{name=remains});
-					inv:add_item("main",result);
+				-- do we harvest the node?
+				if not source_chest then 
+					if basic_machines.harvest_table[node1.name]~=nil then
+						harvest = true 
+						local remains = basic_machines.harvest_table[node1.name][1];
+						local result = basic_machines.harvest_table[node1.name][2];
+						minetest.set_node(pos1,{name=remains});
+						inv:add_item("main",result);
+					end
 				end
+				
 							
 				
 				if dig_up == true then -- dig up to 15 nodes
@@ -487,6 +499,15 @@ minetest.register_node("basic_machines:mover", {
 			
 			else -- if not dig just put it in
 			inv:add_item("main",node1.name);
+			end
+		
+		else -- not target chest
+		
+			-- is the node in plant table and are we taking from chest to be planted in dig mode?
+			if source_chest and dig then
+				if basic_machines.plant_table[prefer]~=nil then
+					 node1.name = basic_machines.plant_table[prefer];
+				end
 			end
 		end	
 		
@@ -1102,6 +1123,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		
 		if minetest.is_protected(pos,name) then
 			minetest.chat_send_player(name, "MOVER: Punched position is protected. aborting.")
+			punchset[name].node = "";
 			punchset[name].state = 0; return
 		end
 
@@ -1206,6 +1228,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 
 		if minetest.is_protected(pos,name) then
 			minetest.chat_send_player(name, "KEYPAD: Punched position is protected. aborting.")
+			punchset[name].node = "";
 			punchset[name].state = 0; return
 		end
 
@@ -1247,6 +1270,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			
 			if minetest.is_protected(pos,name) then
 				minetest.chat_send_player(name, "DETECTOR: Punched position is protected. aborting.")
+				punchset[name].node = "";
 				punchset[name].state = 0; return
 			end
 			
@@ -1287,6 +1311,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			
 			if minetest.is_protected(pos,name) then
 				minetest.chat_send_player(name, "DISTRIBUTOR: Punched position is protected. aborting.")
+				punchset[name].node = "";
 				punchset[name].state = 0; return
 			end
 			
