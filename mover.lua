@@ -41,7 +41,7 @@ basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["d
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 4"}};
 
--- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = {plant_name}
+-- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = plant_name
 basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1",
 ["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
 ["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
@@ -233,6 +233,8 @@ minetest.register_node("basic_machines:mover", {
 			local prefer = meta:get_string("prefer"); 
 			--minetest.chat_send_all(" pos1 " .. pos1.x .. " " .. pos1.y .. " " .. pos1.z .. " pos2 " .. pos2.x .. " " .. pos2.y .. " " .. pos2.z );
 			
+
+			
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
 			local fuel_cost = basic_machines.hardness[node1.name] or 1;
@@ -415,6 +417,13 @@ minetest.register_node("basic_machines:mover", {
 					inv:remove_item("main", stack);
 					else return -- item not found in chest
 				end
+				
+				if mode == "reverse" then -- planting mode: check if transform seed->plant is needed
+				if basic_machines.plant_table[prefer]~=nil then
+					prefer = basic_machines.plant_table[prefer];
+					minetest.chat_send_all(" will plant " .. prefer .. " at " .. minetest.pos_to_string(pos2))
+				end
+			end
 			end
 
 			node1 = {}; node1.name = prefer; 
@@ -445,15 +454,14 @@ minetest.register_node("basic_machines:mover", {
 					end
 				end
 				
-							
 				
-				if dig_up == true then -- dig up to 15 nodes
+				if dig_up == true then -- dig up to 16 nodes
 					
 					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
 					
 					local positions = minetest.find_nodes_in_area( --
 					{x=pos1.x-r, y=pos1.y, z=pos1.z-r},
-					{x=pos1.x+r, y=pos1.y+15, z=pos1.z+r},
+					{x=pos1.x+r, y=pos1.y+16, z=pos1.z+r},
 					node1.name)
 					
 					for _, pos3 in ipairs(positions) do
@@ -500,15 +508,7 @@ minetest.register_node("basic_machines:mover", {
 			else -- if not dig just put it in
 			inv:add_item("main",node1.name);
 			end
-		
-		else -- not target chest
-		
-			-- is the node in plant table and are we taking from chest to be planted in dig mode?
-			if source_chest and dig then
-				if basic_machines.plant_table[prefer]~=nil then
-					 node1.name = basic_machines.plant_table[prefer];
-				end
-			end
+			
 		end	
 		
 			
