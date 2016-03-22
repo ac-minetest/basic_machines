@@ -421,7 +421,6 @@ minetest.register_node("basic_machines:mover", {
 				if mode == "reverse" then -- planting mode: check if transform seed->plant is needed
 				if basic_machines.plant_table[prefer]~=nil then
 					prefer = basic_machines.plant_table[prefer];
-					minetest.chat_send_all(" will plant " .. prefer .. " at " .. minetest.pos_to_string(pos2))
 				end
 			end
 			end
