@@ -11,7 +11,7 @@ local recycler_process = function(pos)
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
 	
-	if fuel<=0 then -- we need new fuel, check chest below
+	if fuel-1<0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
 		if not fuellist then return end
 		
@@ -37,7 +37,7 @@ local recycler_process = function(pos)
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 		end
-		if fuel<=0 then return end
+		if fuel-1<0 then return end
 	end
 
 	

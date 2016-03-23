@@ -8,6 +8,10 @@ basic_machines.grinder_recipes = {
 	["default:stone"] = {4,"default:sand"},
 	["default:cobble"] = {4,"default:gravel"},
 	["default:gravel"] = {1,"default:dirt"},
+	["es:aikerum_crystal"] ={4,"es:aikerum_dust"}, -- added for es mod
+	["es:ruby_crystal"] = {4,"es:ruby_dust"},
+	["es:emerald_crystal"] = {4,"es:emerald_dust"},
+	["es:purpellium_lump"] = {4,"es:purpellium_dust"},
 };
 
 
@@ -32,10 +36,9 @@ local grinder_process = function(pos)
 	
 	-- FUEL CHECK
 	local fuel = meta:get_float("fuel");
-	fuel = fuel-def[1]; -- burn fuel
+
 	
-	
-	if fuel<0 then -- we need new fuel, check chest below
+	if fuel-def[1]<0 then -- we need new fuel, check chest below
 		local fuellist = inv:get_list("fuel") 
 		if not fuellist then return end
 		
@@ -61,13 +64,14 @@ local grinder_process = function(pos)
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 		end
-		if fuel<0 then 
+		if fuel-def[1]<0 then 
 			meta:set_string("infotext", "need at least " .. -fuel .. " fuel to complete operation ");  return 
 		end
 		
 	end
 
 	
+	fuel = fuel-def[1]; -- burn fuel
 	
 	-- process items
 	
