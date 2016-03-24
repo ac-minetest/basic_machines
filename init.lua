@@ -19,10 +19,15 @@ print("[basic machines] loaded")
 
 -- machines fuel related recipes
 
+
+-- CHARCOAL
+
+
 minetest.register_craftitem("basic_machines:charcoal", {
 	description = "Wood charcoal",
 	inventory_image = "default_coal_lump.png",
 })
+
 
 minetest.register_craft({
 	type = 'cooking',

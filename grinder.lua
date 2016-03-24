@@ -47,9 +47,9 @@ local grinder_process = function(pos)
 		local supply=0;
 		if fueladd.time == 0 then -- no fuel inserted, try look for outlet
 				-- No valid fuel in fuel list
-				supply = basic_machines.check_power({x=pos.x,y=pos.y,z=pos.z}) or 0;
+				supply = basic_machines.check_power({x=pos.x,y=pos.y-1,z=pos.z},1) or 0;
 				if supply>0 then 
-					fueladd.time = 40 -- same as 10 coal
+					fueladd.time = 4*supply -- same as 10 coal
 				else
 					meta:set_string("infotext", "Please insert fuel.");
 					return;
@@ -57,10 +57,11 @@ local grinder_process = function(pos)
 		else
 			if supply==0 then -- Take fuel from fuel list if no supply available
 				inv:set_stack("fuel", 1, afterfuel.items[1])
+				fueladd.time=fueladd.time*0.1 -- thats 4 for coal
 			end
 		end 
 		if fueladd.time>0 then 
-			fuel=fuel + fueladd.time*0.1
+			fuel=fuel + fueladd.time
 			meta:set_float("fuel",fuel);
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 		end

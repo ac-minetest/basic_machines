@@ -3,31 +3,25 @@
 -- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer (detector), no other lag causing background processing.
 ------------------------------------------------------------------------------------------------------------------------------------
 
--- MOVER: universal moving machine, requires coal in nearby chest to operate
--- can take item from chest and place it in chest or as a node outside at ranges -5,+5
--- it can be used for filtering by setting "filter". if set to "object" it will teleport all objects at start location.
--- if set to "drop" it will drop node at target location, if set to "dig" it will dig out nodes and return appropriate drops.
 
--- input is: where to take and where to put
--- to operate mese power is needed
-
--- KEYPAD: can serve as a button to activate machines ( partially mesecons compatible ). Can be password protected. Can serve as a
--- replacement for mesecons blinky plant, limited to max 100 operations.
--- As a simple example it can be used to open doors, which close automatically after 5 seconds.
 
 --  *** SETTINGS *** --
 
 
 local max_range = 10; -- machines normal range of operation
-local machines_timer = 5 -- timestep
+local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
+local machines_timer = 5 -- main timestep
 local machines_TTL = 16; -- time to live for signals
 local MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - base unit
 
 
+--DEPRECATED: fuels used to power mover, now battery is used
 basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
 
 -- how hard it is to move blocks, default factor 1
-basic_machines.hardness = {["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,["default:lava_source"]=1000,["default:obsidian"]=20};
+basic_machines.hardness = {
+["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,
+["default:lava_source"]=1000,["default:water_source"]=1000,["default:obsidian"]=20,["bedrock2:bedrock"]=10000};
 basic_machines.hardness["basic_machines:mover"]=0.;
 -- farming operations are much cheaper
 basic_machines.hardness["farming:wheat_8"]=0.1;basic_machines.hardness["farming:cotton_8"]=0.1;
@@ -237,11 +231,11 @@ minetest.register_node("basic_machines:mover", {
 			
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
-			local fuel_cost = basic_machines.hardness[node1.name] or 1;
+			local fuel_cost = (basic_machines.hardness[node1.name] or 1);
 			
 			if node1.name == "default:chest_locked" or mode == "inventory" then fuel_cost = basic_machines.hardness[prefer] or 1 end;
 			
-			fuel_cost=fuel_cost*dist;
+			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
 			if mode == "object" 
 				then fuel_cost=fuel_cost*0.1; 
 				elseif mode == "inventory" then fuel_cost=fuel_cost*0.1;
@@ -255,39 +249,25 @@ minetest.register_node("basic_machines:mover", {
 				
 				local found_fuel = 0;
 				
-				local r = 1;local positions = minetest.find_nodes_in_area( --find furnace with fuel
+				local r = 1;local positions = minetest.find_nodes_in_area( --find battery
 				{x=pos.x-r, y=pos.y-r, z=pos.z-r},
 				{x=pos.x+r, y=pos.y+r, z=pos.z+r},
-				"default:chest_locked")
+				"basic_machines:battery")
 				local fpos = nil;
-				for _, p in ipairs(positions) do
-					-- dont take coal from source or target location to avoid chest/fuel confusion isssues
-					if (p.x ~= pos1.x or p.y~=pos1.y or p.z ~= pos1.z) and (p.x ~= pos2.x or p.y~=pos2.y or p.z ~= pos2.z) then
-						fpos = p;
-					end
-				end
+				if #positions>0 then fpos = positions[1] end -- pick first battery we found
 				
-				if not fpos then  -- no chest, check for alternative technic power sources
+				--minetest.chat_send_all(" mover checking for power, found " .. #positions .. " nearby batteries");
+				
+				if fpos then  -- check battery for power
 			
-					local supply = basic_machines.check_power(pos) or 0;
+					local power_draw = fuel_cost;
+					if power_draw<1 then power_draw = 1 end -- at least 10 one block operations with 1 refuel
+					local supply = basic_machines.check_power(fpos, power_draw) or 0; 
 					
 					if supply>0 then
-						found_fuel = basic_machines.fuels["default:coal_lump"] or 30;
-						found_fuel=found_fuel*0.25;
+						found_fuel=supply;
 					end
 					
-				else -- look in chest for fuel
-					
-					local cmeta = minetest.get_meta(fpos);
-					local inv = cmeta:get_inventory();
-					
-					local stack;
-					for i,v in pairs(basic_machines.fuels) do
-						stack = ItemStack({name=i})
-						if inv:contains_item("main", stack) then found_fuel = v;inv:remove_item("main", stack) break end -- found_fuel = fuel caloric value
-					end
-					 -- check for this fuel
-					 
 				end
 				
 				if found_fuel~=0 then
@@ -299,7 +279,7 @@ minetest.register_node("basic_machines:mover", {
 				
 			end 
 			
-			if fuel < fuel_cost then meta:set_string("infotext", "Mover block. Fuel ".. fuel ..", needed fuel " .. fuel_cost .. ". Put fuel chest near mover or place outlet below it."); return  end
+			if fuel < fuel_cost then meta:set_string("infotext", "Mover block. Energy ".. fuel ..", needed energy " .. fuel_cost .. ". Put nonempty battery next to mover."); return  end
 		
 				
 		if mode == "object" then -- teleport objects and return
