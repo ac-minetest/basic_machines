@@ -1,173 +1,100 @@
-doors = {}
-
--- Registers a door - REDEFINITION ONLY | DOORS MOD MUST HAVE BEEN LOADED BEFORE
---  name: The name of the door
---  def: a table with the folowing fields:
---    description
---    inventory_image
---    groups
---    tiles_bottom: the tiles of the bottom part of the door {front, side}
---    tiles_top: the tiles of the bottom part of the door {front, side}
---    If the following fields are not defined the default values are used
---    node_box_bottom
---    node_box_top
---    selection_box_bottom
---    selection_box_top
---    only_placer_can_open: if true only the player who placed the door can
---                          open it
-
-function doors:register_door(name, def)
-	def.groups.not_in_creative_inventory = 1
-	
-	local box = {{-0.5, -0.5, -0.5,   0.5, 0.5, -0.5+1.5/16}}
-	
-	if not def.node_box_bottom then
-		def.node_box_bottom = box
-	end
-	if not def.node_box_top then
-		def.node_box_top = box
-	end
-	if not def.selection_box_bottom then
-		def.selection_box_bottom= box
-	end
-	if not def.selection_box_top then
-		def.selection_box_top = box
+-- make doors open/close with signal
+local function door_signal_overwrite(name)
+	local table = minetest.registered_nodes[name]; if not table then return end
+	local table2 = {}
+	for i,v in pairs(table) do
+		table2[i] = v
 	end
 	
-	local tt = def.tiles_top
-	local tb = def.tiles_bottom
-	
-	local function after_dig_node(pos, name)
-		if minetest.get_node(pos).name == name then
-			minetest.remove_node(pos)
+	-- this will make door toggle whenever its used
+	table2.mesecons = {effector = {
+		action_on  =  function (pos,node,ttl)
+			if ttl<0 then return end
+			local meta = minetest.get_meta(pos);local name = meta:get_string("doors_owner");
+			-- create virtual player
+			local clicker = {}; 
+			function clicker:get_player_name() return name end; -- define method get_player_name() returning owner name so that we can call on_rightclick function in door
+			table.on_rightclick(pos, node, clicker)
+			--minetest.swap_node(pos, {name = "protector:trapdoor", param1 = node.param1, param2 = node.param2})
 		end
-	end
-
-	local function on_rightclick(pos, dir, check_name, replace, replace_dir, params)
-		pos.y = pos.y+dir
-		if not minetest.get_node(pos).name == check_name then
-			return
-		end
-		local p2 = minetest.get_node(pos).param2
-		p2 = params[p2+1]
-		
-		local meta = minetest.get_meta(pos):to_table()
-		minetest.set_node(pos, {name=replace_dir, param2=p2})
-		minetest.get_meta(pos):from_table(meta)
-		
-		pos.y = pos.y-dir
-		meta = minetest.get_meta(pos):to_table()
-		minetest.set_node(pos, {name=replace, param2=p2})
-		minetest.get_meta(pos):from_table(meta)
-	end
-
-	local function on_mesecons_signal_open (pos, node)
-		on_rightclick(pos, 1, name.."_t_1", name.."_b_2", name.."_t_2", {1,2,3,0})
-	end
-
-	local function on_mesecons_signal_close (pos, node)
-		on_rightclick(pos, 1, name.."_t_2", name.."_b_1", name.."_t_1", {3,0,1,2})
-	end
+		}
+	};
 	
-	local function check_player_priv(pos, player)
-		if not def.only_placer_can_open then
-			return true
-		end
-		local meta = minetest.get_meta(pos)
-		local pn = player:get_player_name()
-		return meta:get_string("doors_owner") == pn
-	end
+	 minetest.register_node(":"..name, table2)
+end 
+
+minetest.after(0,function()
+	door_signal_overwrite("doors:door_wood_a");door_signal_overwrite("doors:door_wood_b");
+	door_signal_overwrite("doors:door_steel_a");door_signal_overwrite("doors:door_steel_b");
+	door_signal_overwrite("doors:trapdoor");door_signal_overwrite("doors:trapdoor_open");
+	door_signal_overwrite("doors:trapdoor_steel");door_signal_overwrite("doors:trapdoor_steel_open");
 	
-	minetest.register_node(":"..name.."_b_1", {
-		tiles = {tb[2], tb[2], tb[2], tb[2], tb[1], tb[1].."^[transformfx"},
-		paramtype = "light",
-		paramtype2 = "facedir",
-		drop = name,
-		drawtype = "nodebox",
-		node_box = {
-			type = "fixed",
-			fixed = def.node_box_bottom
-		},
-		selection_box = {
-			type = "fixed",
-			fixed = def.selection_box_bottom
-		},
-		groups = def.groups,
-		
-		after_dig_node = function(pos, oldnode, oldmetadata, digger)
-			pos.y = pos.y+1
-			after_dig_node(pos, name.."_t_1")
-		end,
-		
-		on_rightclick = function(pos, node, puncher)
-			if check_player_priv(pos, puncher) then
-				on_rightclick(pos, 1, name.."_t_1", name.."_b_2", name.."_t_2", {1,2,3,0})
+	end
+);
+
+local function make_it_noclip(name)
+	
+	local table = minetest.registered_nodes[name]; if not table then return end
+	local table2 = {}
+	for i,v in pairs(table) do
+		table2[i] = v
+	end
+	table2.walkable = false; -- cant be walked on
+	minetest.register_node(":"..name, table2)
+end 
+
+minetest.after(0,function()
+	make_it_noclip("doors:trapdoor_open");
+	make_it_noclip("doors:trapdoor_steel_open");
+end);
+
+
+
+local function make_it_nondiggable_but_removable(name, dropname)
+	
+	local table = minetest.registered_nodes[name]; if not table then return end
+	local table2 = {}
+	for i,v in pairs(table) do
+		table2[i] = v
+	end
+	table2.groups.level = 99; -- cant be digged, but it can be removed by owner or if not protected
+	table2.on_punch = function(pos, node, puncher, pointed_thing) -- remove node if owner repeatedly punches it 3x
+		local pname = puncher:get_player_name();
+		local meta = minetest.get_meta(pos);
+		local owner = meta:get_string("doors_owner")
+		if pname==owner or not minetest.is_protected(pos,pname) then -- can be dug by owner or if unprotected
+			local t0 = meta:get_int("punchtime");local count = meta:get_int("punchcount");
+			local t = minetest.get_gametime();
+			
+			if t-t0<2 then count = (count +1 ) % 3 else count =  0 end
+
+			if count == 1 then
+				minetest.chat_send_player(pname, "#steel door: punch me one more time to remove me");
 			end
-		end,
-
-		mesecons = {effector = {
-			action_on  = on_mesecons_signal_open
-		}},
-		
-		can_dig = check_player_priv,
-	})
-	
-	minetest.register_node(":"..name.."_b_2", {
-		tiles = {tb[2], tb[2], tb[2], tb[2], tb[1].."^[transformfx", tb[1]},
-		paramtype = "light",
-		paramtype2 = "facedir",
-		drop = name,
-		drawtype = "nodebox",
-		node_box = {
-			type = "fixed",
-			fixed = def.node_box_bottom
-		},
-		selection_box = {
-			type = "fixed",
-			fixed = def.selection_box_bottom
-		},
-		groups = def.groups,
-		
-		after_dig_node = function(pos, oldnode, oldmetadata, digger)
-			pos.y = pos.y+1
-			after_dig_node(pos, name.."_t_2")
-		end,
-		
-		on_rightclick = function(pos, node, puncher)
-			if check_player_priv(pos, puncher) then
-				on_rightclick(pos, 1, name.."_t_2", name.."_b_1", name.."_t_1", {3,0,1,2})
+			if count == 2 then -- remove steel door and drop it
+				minetest.set_node(pos, {name = "air"});
+				local stack = ItemStack(dropname);minetest.add_item(pos,stack)
 			end
-		end,
+			
+			meta:set_int("punchcount",count);meta:set_int("punchtime",t);
+			--minetest.chat_send_all("punch by "..name .. " count " .. count)
+		end
+	end
+	minetest.register_node(":"..name, table2)
+end 
 
-		mesecons = {effector = {
-			action_off = on_mesecons_signal_close
-		}},
-		
-		can_dig = check_player_priv,
-	})
-end
-
-doors:register_door("doors:door_wood", {
-	description = "Wooden Door",
-	inventory_image = "doors_wood.png",
-	groups = {snappy=1,choppy=2,oddly_breakable_by_hand=2,flammable=2,door=1},
-	tiles_bottom = {"doors_wood_b.png", "doors_brown.png"},
-	tiles_top = {"doors_wood_a.png", "doors_brown.png"},
-	sounds = default.node_sound_wood_defaults(),
-})
-
-doors:register_door("doors:door_steel", {
-	description = "Steel Door",
-	inventory_image = "doors_steel.png",
-	groups = {snappy=1,bendy=2,cracky=1,melty=2,level=2,door=1},
-	tiles_bottom = {"doors_steel_b.png", "doors_grey.png"},
-	tiles_top = {"doors_steel_a.png", "doors_grey.png"},
-	only_placer_can_open = true,
-	sounds = default.node_sound_stone_defaults(),
-})
+minetest.after(0,function()
+	make_it_nondiggable_but_removable("doors:door_steel_a","doors:door_steel");
+	make_it_nondiggable_but_removable("doors:door_steel_b","doors:door_steel");
+	
+	make_it_nondiggable_but_removable("doors:trapdoor_steel","doors:trapdoor_steel");
+	make_it_nondiggable_but_removable("doors:trapdoor_steel_open","doors:trapdoor_steel");
+end);
 
 
--- make trapdoor open close and when open make it unwalkable
+
+
+-- make protected trapdoor open close and when open make it unwalkable
 
  local function trapdoor_open_overwrite()
 	local name = "protector:trapdoor_open";

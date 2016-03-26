@@ -18,12 +18,12 @@ local battery_update_meta = function(pos)
 		local capacity = meta:get_float("capacity");
 		local energy = math.ceil(10*meta:get_float("energy"))/10;
 		local form  = 
-		"size[8,5.5]" ..  -- width, height
+		"size[8,6.5]" ..  -- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
 		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. (capacity*0.1) .."]"..
 		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (mese and diamond block)]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
-		"list[current_player;main;0,1.5;8,4;]"..
+		"list[current_player;main;0,2.5;8,4;]"..
 		"button[4.5,0.35;1.5,1;OK;REFRESH]";
 		meta:set_string("formspec", form);
 end
@@ -102,13 +102,13 @@ battery_upgrade = function(pos)
 end
 
 minetest.register_node("basic_machines:battery", {
-	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it",
+	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it. Its upgradeable.",
 	tiles = {"basic_machine_outlet.png","basic_machine_side.png","basic_machine_battery.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext","battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it when activated"); 
+		meta:set_string("infotext","battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it when activated by keypad"); 
 		meta:set_string("owner",placer:get_player_name());
 		local inv = meta:get_inventory();inv:set_size("fuel", 1*1); -- place to put crystals
 		inv:set_size("upgrade", 2*1); 
@@ -239,11 +239,11 @@ local generator_update_meta = function(pos)
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
 		
 		local form  = 
-		"size[8,5.5]" ..  -- width, height
+		"size[8,6.5]" ..  -- width, height
 		"label[0,0;POWER CRYSTALS] ".."label[6,0;UPGRADE] "..
 		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (gold and diamond block)]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
-		"list[current_player;main;0,1.5;8,4;]"..
+		"list[current_player;main;0,2.5;8,4;]"..
 		"button[4.5,0.35;1.5,1;OK;REFRESH]";
 		meta:set_string("formspec", form);
 end
@@ -268,7 +268,7 @@ generator_upgrade = function(pos)
 end
 
 minetest.register_node("basic_machines:generator", {
-	description = "generator - generates power crystals that provide power",
+	description = "Generator - very expensive, generates power crystals that provide power. Its upgradeable.",
 	tiles = {"basic_machine_side.png","basic_machine_side.png","basic_machine_generator.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
@@ -393,7 +393,7 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	
 	energy = energy-power_draw;
 	if energy<0 then 
-		meta:set_string("infotext", "try to use better fuel to accomodate power draw ".. power_draw);
+		meta:set_string("infotext", "used fuel provides too little power for current power draw ".. power_draw);
 		return 0 
 	end -- recharge wasnt enough, needs to be repeated manually, return 0 power available
 	meta:set_float("energy", energy);
@@ -417,11 +417,10 @@ minetest.register_craft({
 	}
 })
 
-
 minetest.register_craft({
 	output = "basic_machines:generator",
 	recipe = {
-		{"default:diamondblock","default:diamondblock","default:diamondblock"},
+		{"","",""},
 		{"default:diamondblock","basic_machines:battery","default:diamondblock"},
 		{"default:diamondblock","default:diamondblock","default:diamondblock"}
 		
@@ -429,47 +428,19 @@ minetest.register_craft({
 })
 
 minetest.register_craftitem("basic_machines:power_cell", {
-	description = "Power cell",
+	description = "Power cell - provides 1 power",
 	inventory_image = "power_cell.png",
-	stack_max = 999
+	stack_max = 25
 })
 
 minetest.register_craftitem("basic_machines:power_block", {
-	description = "Power block",
+	description = "Power block - provides 10 power",
 	inventory_image = "power_block.png",
-	stack_max = 999
+	stack_max = 25
 })
 
 minetest.register_craftitem("basic_machines:power_rod", {
-	description = "Power rod",
+	description = "Power rod - provides 100 power",
 	inventory_image = "power_rod.png",
-	stack_max = 999
+	stack_max = 25
 })
-
-
-
---OLD: for compatibility with outlets
-
-
-local outlet_power_demand = 300;
-minetest.register_node("basic_machines:outlet", {
-	description = "Power outlet - generates power for machines",
-	tiles = {"outlet.png"},
-	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
-	sounds = default.node_sound_wood_defaults(),
-})
-
-minetest.register_abm({ -- replace old outlets with batteries
-	nodenames = {"basic_machines:outlet"},
-	neighbors = {""},
-	interval = 5,
-	chance = 1,
-	action = function(pos, node, active_object_count, active_object_count_wider)
-		minetest.set_node(pos,{name="basic_machines:battery"});
-		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext","upgraded from outlet. please dig and place again.")
-	end
-	});
-
-
--- END OLD

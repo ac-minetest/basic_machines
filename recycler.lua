@@ -126,7 +126,7 @@ local recycler_update_meta = function(pos)
 end
 
 minetest.register_node("basic_machines:recycler", {
-	description = "Recycler",
+	description = "Recycler - use to get some ingredients back from crafted things",
 	tiles = {"recycler.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),

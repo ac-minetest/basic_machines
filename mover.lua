@@ -48,7 +48,6 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 --  *** END OF SETTINGS *** --
 
 
-
 local punchset = {}; 
 
 minetest.register_on_joinplayer(function(player) 
@@ -58,10 +57,9 @@ minetest.register_on_joinplayer(function(player)
 end
 )
 
-
-
+-- MOVER --
 minetest.register_node("basic_machines:mover", {
-	description = "Mover",
+	description = "Mover - universal digging/harvesting/teleporting/transporting machine, its upgradeable.",
 	tiles = {"compass_top.png","default_furnace_top.png", "basic_machine_side.png","basic_machine_side.png","basic_machine_side.png","basic_machine_side.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
@@ -99,7 +97,7 @@ minetest.register_node("basic_machines:mover", {
 			return 
 		end -- only owner can set up mover, ppl sharing protection can only look
 		
-		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode;
+		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode,mreverse;
 		
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
 
@@ -108,9 +106,9 @@ minetest.register_node("basic_machines:mover", {
 		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
 		
 		prefer = meta:get_string("prefer");
+		local mreverse = meta:get_int("reverse");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
-		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3,["reverse"]=4, ["object"]=5, ["inventory"]=6, ["transport"]=7};
-		--local inv_mode_list = {[1]=["normal"],[2]="dig", [3]="drop",[4]="reverse", [5]="object", [6]="inventory"};
+		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
 		
 		local mode = mode_list[meta:get_string("mode")] or "";
 		
@@ -155,11 +153,11 @@ minetest.register_node("basic_machines:mover", {
 		"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
 		"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
 		"button_exit[4,4.4;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter;"..prefer.."]"..
-		"button[3,4.4;1,1;help;help]"..
+		"button[4.,3.25;1,1;help;help]"..
 		"label[0.,4.0;MODE selection]"..
-		"dropdown[0,4.5;3,1;mode;normal,dig,drop,reverse,object,inventory,transport;".. mode .."]"..
-		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;3,3.3;1,1;]"..
-		"label[3,2.9;upgrade]";
+		"dropdown[0,4.5;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;3,4.3;1,1;]".."label[3,3.9;upgrade]" .. 
+		"field[3.25,3.5;1,1;reverse;reverse;"..mreverse.."]";
 		
 		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
 		
@@ -191,6 +189,7 @@ minetest.register_node("basic_machines:mover", {
 			local x0=meta:get_int("x0"); local y0=meta:get_int("y0"); local z0=meta:get_int("z0");
 			
 			local mode = meta:get_string("mode");
+			local mreverse = meta:get_int("reverse")
 			local pos1 = {x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}; -- where to take from
 			local pos2 = {x=meta:get_int("x2")+pos.x,y=meta:get_int("y2")+pos.y,z=meta:get_int("z2")+pos.z}; -- where to put
 
@@ -209,7 +208,7 @@ minetest.register_node("basic_machines:mover", {
 				pos2 = {x=meta:get_int("x2")-x0+pos1.x,y=meta:get_int("y2")-y0+pos1.y,z=meta:get_int("z2")-z0+pos1.z}; -- translation from pos1
 			end
 			
-			if mode == "reverse" then -- reverse pos1, pos2
+			if mreverse ~= 0 then -- reverse pos1, pos2
 				local post = {x=pos1.x,y=pos1.y,z=pos1.z};
 				pos1 = {x=pos2.x,y=pos2.y,z=pos2.z};
 				pos2 = {x=post.x,y=post.y,z=post.z};
@@ -398,7 +397,7 @@ minetest.register_node("basic_machines:mover", {
 					else return -- item not found in chest
 				end
 				
-				if mode == "reverse" then -- planting mode: check if transform seed->plant is needed
+				if mreverse ~= 0 then -- planting mode: check if transform seed->plant is needed
 				if basic_machines.plant_table[prefer]~=nil then
 					prefer = basic_machines.plant_table[prefer];
 				end
@@ -526,7 +525,7 @@ minetest.register_node("basic_machines:mover", {
 	}
 })
 
--- KEYPAD
+-- KEYPAD --
 
 local function use_keypad(pos,ttl) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion )
 	
@@ -609,7 +608,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 end
 
 minetest.register_node("basic_machines:keypad", {
-	description = "Keypad",
+	description = "Keypad - basic way to activated machines by signal it sends",
 	tiles = {"keypad.png"},
 	groups = {oddly_breakable_by_hand=2},
 	sounds = default.node_sound_wood_defaults(),
@@ -661,10 +660,10 @@ minetest.register_node("basic_machines:keypad", {
 
 
 
--- DETECTOR
+-- DETECTOR --
 
 minetest.register_node("basic_machines:detector", {
-	description = "Detector",
+	description = "Detector - can detect blocks/players/objects and activate machines",
 	tiles = {"detector.png"},
 	groups = {oddly_breakable_by_hand=2},
 	sounds = default.node_sound_wood_defaults(),
@@ -780,7 +779,6 @@ minetest.register_node("basic_machines:detector", {
 		
 })
 
-
 minetest.register_abm({ 
 	nodenames = {"basic_machines:detector"},
 	neighbors = {""},
@@ -866,10 +864,10 @@ minetest.register_abm({
 	end,
 }) 
 
--- DISTRIBUTOR: spreads one signal to two outputs
+-- DISTRIBUTOR --
 
 minetest.register_node("basic_machines:distributor", {
-	description = "Distributor",
+	description = "Distributor - can forward signal up to 16 different targets",
 	tiles = {"distributor.png"},
 	groups = {oddly_breakable_by_hand=2},
 	sounds = default.node_sound_wood_defaults(),
@@ -1030,7 +1028,7 @@ minetest.register_node("basic_machines:distributor", {
 )
 
 
--- LIGHT
+-- LIGHT --
 
 minetest.register_node("basic_machines:light_off", {
 	description = "Light off",
@@ -1062,7 +1060,7 @@ minetest.register_node("basic_machines:light_on", {
 
 punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=true,["basic_machines:detector"]=true};
 
--- handles set up punches
+-- SETUP BY PUNCHING
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	local name = puncher:get_player_name(); if name==nil then return end
@@ -1320,7 +1318,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 end)
 
 
--- handles forms processing for all machines
+-- FORM PROCESSING for all machines
 minetest.register_on_player_receive_fields(function(player,formname,fields)
 	
 	-- MOVER
@@ -1337,12 +1335,13 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local text = "SETUP: For interactive setup "..
 			"punch the mover and then punch source1, source2, target node (follow instructions). Put locked chest with fuel within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
-			"(drops node on ground), reverse(takes from target position, places on source positions - good for planting a farm), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
+			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
+			"\n You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting." ..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..
 			"\n\n UPGRADE mover by moving mese blocks in upgrade inventory. Each mese block increases mover range by 10, fuel consumption is divided by (number of mese blocks)+1 in upgrade. Max 10 blocks are used for upgrade. Dont forget to right click mover to refresh after upgrade. "..
 			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
-			local form = "size [5,7] textarea[0,0;5.5,8.5;help;MOVER HELP;".. text.."]"
+			local form = "size [6,7] textarea[0,0;6.5,8.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
 		end
 		
@@ -1359,6 +1358,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 			if fields.mode then
 				meta:set_string("mode",fields.mode);
+			end
+			
+			if fields.reverse then
+				meta:set_string("reverse",fields.reverse);
 			end
 			
 			if fields.inv1 then
@@ -1520,7 +1523,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		end
 		return
 	end
-	
+
 	
 	-- DISTRIBUTOR
 	local fname = "basic_machines:distributor_"
@@ -1610,7 +1613,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 	
 end)
 
--- CRAFTS
+
+
+-- CRAFTS --
 
 minetest.register_craft({
 	output = "basic_machines:mover",
