@@ -520,7 +520,18 @@ minetest.register_node("basic_machines:mover", {
 			if dig then nodeupdate(pos1) end
 			minetest.set_node(pos1, {name = "air"});
 			end
+		end,
+		
+	
+		action_off = function (pos, node,ttl) -- this toggles reverse option of mover
+			if type(ttl)~="number" then ttl = 1 end
+			local meta = minetest.get_meta(pos);
+			local mreverse = meta:get_int("reverse");
+			if mreverse ~= 0 then mreverse = 0 else mreverse = 1 end
+			meta:set_int("reverse",mreverse);			
 		end
+		
+		
 	}
 	}
 })
