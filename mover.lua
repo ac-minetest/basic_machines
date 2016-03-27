@@ -868,8 +868,8 @@ minetest.register_abm({
 			
 			else 
 			meta:set_string("infotext", "detector: idle");
-			if not effector.action_off then return end
-			effector.action_off({x=x1,y=y1,z=z1},node,machines_TTL); -- run
+			-- if not effector.action_off then return end
+			-- effector.action_off({x=x1,y=y1,z=z1},node,machines_TTL); -- run
 		end
 			
 	end,
@@ -931,7 +931,7 @@ minetest.register_node("basic_machines:distributor", {
 					local effector=table.mesecons.effector;
 					local delay = minetest.get_meta(pos):get_float("delay");
 				
-					if active[i] == 1 and effector.action_on then 
+					if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
 							if delay>0 then
 								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
 							else
@@ -981,13 +981,13 @@ minetest.register_node("basic_machines:distributor", {
 					if not table.mesecons.effector then return end -- error
 					local effector=table.mesecons.effector;
 					local delay = minetest.get_meta(pos):get_float("delay");
-					if active[i] == 1 and effector.action_off then 
+					if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
 						if delay>0 then
 							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
 						else
 							effector.action_off(posf[i],node,ttl-1); 
 						end
-					elseif active[i] == -1 and effector.action_on then 
+					elseif (active[i] == -1) and effector.action_on then 
 						if delay>0 then
 							minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end);
 						else
@@ -1022,7 +1022,7 @@ minetest.register_node("basic_machines:distributor", {
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
 		"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
-		"label[0,-0.25;target: x y z, Active -1/0/1]";
+		"label[0,-0.25;target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON]";
 		for i =1,n do
 			form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
 			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
