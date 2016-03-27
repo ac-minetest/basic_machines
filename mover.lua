@@ -23,8 +23,7 @@ basic_machines.hardness = {
 ["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,
 ["default:lava_source"]=10000,["default:water_source"]=10000,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
 basic_machines.hardness["basic_machines:mover"]=0.;
-basic_machines.hardness["es:toxic_water_source"]=10000.;
-basic_machines.hardness["es:toxic_water_flowing"]=1000.;
+basic_machines.hardness["es:toxic_water_source"]=10000.;basic_machines.hardness["es:toxic_water_flowing"]=1000.;
 -- farming operations are much cheaper
 basic_machines.hardness["farming:wheat_8"]=0.1;basic_machines.hardness["farming:cotton_8"]=0.1;
 basic_machines.hardness["farming:seed_wheat"]=0.05;basic_machines.hardness["farming:seed_cotton"]=0.05;
