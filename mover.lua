@@ -145,7 +145,7 @@ minetest.register_node("basic_machines:mover", {
 
 		
 		local form  = 
-		"size[5,5]" ..  -- width, height
+		"size[8,9.5]" ..  -- width, height
 		--"size[6,10]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
@@ -157,9 +157,9 @@ minetest.register_node("basic_machines:mover", {
 		"label[0.,4.0;MODE selection]"..
 		"dropdown[0,4.5;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
 		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;3,4.3;1,1;]".."label[3,3.9;upgrade]" .. 
-		"field[3.25,3.5;1,1;reverse;reverse;"..mreverse.."]";
+		"field[3.25,3.5;1,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
 		
-		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
+		
 		
 		if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
@@ -902,9 +902,9 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
-			local t1 = meta:get_int("t");
-			local t0 = minetest.get_gametime(); 
-			if t0<=t1 then 
+			local t0 = meta:get_int("t");
+			local t1 = minetest.get_gametime(); 
+			if t1<=t0 then 
 				local delay = machines_timer+1;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); return 
@@ -919,31 +919,34 @@ minetest.register_node("basic_machines:distributor", {
 				active[i]=meta:get_int("active"..i);
 			end
 			
-			local node, table
-			
+			local table,node;
 			for i=1,n do
-				if active[i]~=0 then
+				if active[i]~=0 then 
 					node = minetest.get_node(posf[i]);if not node.name then return end -- error
 					table = minetest.registered_nodes[node.name];
-					if not table then return end -- error
-					if not table.mesecons then return end -- error
-					if not table.mesecons.effector then return end -- error
-					local effector=table.mesecons.effector;
-					local delay = minetest.get_meta(pos):get_float("delay");
-				
-					if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
+					
+					if table and table.mesecons and table.mesecons.effector then -- check if all elements exist, safe cause it checks from left to right
+						-- alternative way: overkill
+						--ret = pcall(function() if not table.mesecons.effector then end end); -- exception handling to determine if structure exists
+													
+						local effector=table.mesecons.effector;
+						local delay = minetest.get_meta(pos):get_float("delay");
+						
+						if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
+								if delay>0 then
+									minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
+								else
+									effector.action_on(posf[i],node,ttl-1); 
+								end
+						elseif active[i] == -1 and effector.action_off then 
 							if delay>0 then
-								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
+								minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
 							else
-								effector.action_on(posf[i],node,ttl-1); 
+								effector.action_off(posf[i],node,ttl-1)
 							end
-					elseif active[i] == -1 and effector.action_off then 
-						if delay>0 then
-							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
-						else
-							effector.action_off(posf[i],node,ttl-1)
 						end
 					end
+					
 				end
 			end
 	end,
@@ -976,22 +979,23 @@ minetest.register_node("basic_machines:distributor", {
 				if active[i]~=0 then
 					node = minetest.get_node(posf[i]);if not node.name then return end -- error
 					table = minetest.registered_nodes[node.name];
-					if not table then return end -- error
-					if not table.mesecons then return end -- error
-					if not table.mesecons.effector then return end -- error
-					local effector=table.mesecons.effector;
-					local delay = minetest.get_meta(pos):get_float("delay");
-					if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
-						if delay>0 then
-							minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
-						else
-							effector.action_off(posf[i],node,ttl-1); 
-						end
-					elseif (active[i] == -1) and effector.action_on then 
-						if delay>0 then
-							minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end);
-						else
-							effector.action_on(posf[i],node,ttl-1); 
+					
+					if table and table.mesecons and table.mesecons.effector then 
+		
+						local effector=table.mesecons.effector;
+						local delay = minetest.get_meta(pos):get_float("delay");
+						if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
+							if delay>0 then
+								minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
+							else
+								effector.action_off(posf[i],node,ttl-1); 
+							end
+						elseif (active[i] == -1) and effector.action_on then 
+							if delay>0 then
+								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end);
+							else
+								effector.action_on(posf[i],node,ttl-1); 
+							end
 						end
 					end
 				end
