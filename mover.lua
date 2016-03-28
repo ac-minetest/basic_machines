@@ -78,7 +78,7 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_string("prefer", "");
 		meta:set_string("mode", "normal");
 		meta:set_float("upgrade", 1);
-		local inv = meta:get_inventory();inv:set_size("upgrade", 1*1) 
+		local inv = meta:get_inventory();inv:set_size("upgrade", 1*1);inv:set_size("filter", 1*1) 
 
 		
 		
@@ -155,12 +155,13 @@ minetest.register_node("basic_machines:mover", {
 		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 		"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
 		"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
-		"button_exit[4,4.4;1,1;OK;OK] field[0.25,3.5;3,1;prefer;filter;"..prefer.."]"..
-		"button[4.,3.25;1,1;help;help]"..
-		"label[0.,4.0;MODE selection]"..
-		"dropdown[0,4.5;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
-		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;3,4.3;1,1;]".."label[3,3.9;upgrade]" .. 
-		"field[3.25,3.5;1,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
+		"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+		"button[3,3.25;1,1;help;help]"..
+		"label[0.,3.0;MODE selection]"..
+		"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade]" .. 
+		"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
 		
 		
 		
@@ -172,6 +173,14 @@ minetest.register_node("basic_machines:mover", {
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
+		if listname == "filter" then
+			local meta = minetest.get_meta(pos);
+			local itemname = stack:get_name() or "";
+			meta:set_string("prefer",itemname);
+			-- local inv = meta:get_inventory();
+			-- inv:set_stack("filter",1, ItemStack({name=itemname})) 
+			return 1;
+		end
 		return stack:get_count();
 	end,
 	
