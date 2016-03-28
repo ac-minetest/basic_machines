@@ -12,21 +12,20 @@ local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_timer = 5 -- main timestep
 local machines_TTL = 16; -- time to live for signals
-local MOVER_FUEL_STORAGE_CAPACITY =  5; -- how many operations from one coal lump  - base unit
 
 
---DEPRECATED: fuels used to power mover, now battery is used
-basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
-
--- how hard it is to move blocks, default factor 1
+-- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
 ["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,
-["default:lava_source"]=10000,["default:water_source"]=10000,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
+["default:lava_source"]=21890,["default:water_source"]=11000,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
 basic_machines.hardness["basic_machines:mover"]=0.;
-basic_machines.hardness["es:toxic_water_source"]=10000.;basic_machines.hardness["es:toxic_water_flowing"]=1000.;
+
+basic_machines.hardness["es:toxic_water_source"]=21890.;basic_machines.hardness["es:toxic_water_flowing"]=11000;
+basic_machines.hardness["default:river_water_source"]=21890.;
+
 -- farming operations are much cheaper
-basic_machines.hardness["farming:wheat_8"]=0.1;basic_machines.hardness["farming:cotton_8"]=0.1;
-basic_machines.hardness["farming:seed_wheat"]=0.05;basic_machines.hardness["farming:seed_cotton"]=0.05;
+basic_machines.hardness["farming:wheat_8"]=1;basic_machines.hardness["farming:cotton_8"]=1;
+basic_machines.hardness["farming:seed_wheat"]=0.5;basic_machines.hardness["farming:seed_cotton"]=0.5;
 
 
 -- define which nodes are dug up completely, like a tree
@@ -44,6 +43,9 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 ["farming:melon_slice"]="farming:melon_1",["farming:potato"]="farming:potato_1",["farming:pumpkin_slice"]="farming:pumpkin_1",
 ["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
 ["farming:seed_wheat"]="farming:wheat_1"}
+
+--DEPRECATED: fuels used to power mover, now battery is used
+basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
 
 
 --  *** END OF SETTINGS *** --
@@ -445,7 +447,7 @@ minetest.register_node("basic_machines:mover", {
 					
 					for _, pos3 in ipairs(positions) do
 						-- dont take coal from source or target location to avoid chest/fuel confusion isssues
-						if count>15 then break end
+						if count>16 then break end
 						minetest.set_node(pos3,{name="air"}); count = count+1;
 					end
 					

@@ -16,11 +16,12 @@ local battery_update_meta = function(pos)
 		local meta = minetest.get_meta(pos);
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
 		local capacity = meta:get_float("capacity");
+		local maxpower = meta:get_float("maxpower");
 		local energy = math.ceil(10*meta:get_float("energy"))/10;
 		local form  = 
 		"size[8,6.5]" ..  -- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
-		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. (capacity*0.1) .."]"..
+		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. maxpower .."]"..
 		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (mese and diamond block)]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
@@ -94,10 +95,13 @@ battery_upgrade = function(pos)
 	meta:set_int("upgrade",count);
 	-- adjust capacity
 	local capacity = 10+20*count;
-	if count == 99 then capacity = 10000 end -- ultimate upgrade for ultimate capacity
+	--if count == 99 then capacity = 10000 end -- ultimate upgrade for ultimate capacity
+	local maxpower = capacity*0.1;
+	
 	capacity = math.ceil(capacity*10)/10;
 	local energy = 0;
 	meta:set_float("capacity",capacity)
+	meta:set_float("maxpower",maxpower)
 	meta:set_float("energy",0)	
 	meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 end
@@ -114,7 +118,7 @@ minetest.register_node("basic_machines:battery", {
 		local inv = meta:get_inventory();inv:set_size("fuel", 1*1); -- place to put crystals
 		inv:set_size("upgrade", 2*1); 
 		meta:set_int("upgrade",0); -- upgrade level determines energy storage capacity and max energy output
-		meta:set_float("capacity",10);
+		meta:set_float("capacity",10);meta:set_float("maxpower",1);
 		meta:set_float("energy",0);
 	end,
 	
@@ -383,8 +387,10 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	local meta = minetest.get_meta(pos);
 	local energy = meta:get_float("energy"); 
 	local capacity = meta:get_float("capacity"); 
-	if power_draw>capacity*0.1 then 
-		meta:set_string("infotext", "Power draw required : " .. power_draw .. " maximum power output " .. capacity*0.1 .. ". Please upgrade battery") 
+	local maxpower = meta:get_float("maxpower"); 
+	
+	if power_draw>maxpower then 
+		meta:set_string("infotext", "Power draw required : " .. power_draw .. " maximum power output " .. maxpower .. ". Please upgrade battery") 
 		return 0;
 	end
 	

@@ -12,6 +12,7 @@ basic_machines.grinder_recipes = {
 	["es:ruby_crystal"] = {4,"es:ruby_dust"},
 	["es:emerald_crystal"] = {4,"es:emerald_dust"},
 	["es:purpellium_lump"] = {4,"es:purpellium_dust"},
+	["default:obsidian_shard"] = {400,"default:lava_source"},
 };
 
 
@@ -47,11 +48,11 @@ local grinder_process = function(pos)
 		local supply=0;
 		if fueladd.time == 0 then -- no fuel inserted, try look for outlet
 				-- No valid fuel in fuel list
-				supply = basic_machines.check_power({x=pos.x,y=pos.y-1,z=pos.z},1) or 0;
+				supply = basic_machines.check_power({x=pos.x,y=pos.y-1,z=pos.z} , def[1]/4) or 0; -- tweaked so 1 coal = 1 energy
 				if supply>0 then 
 					fueladd.time = 4*supply -- same as 10 coal
 				else
-					meta:set_string("infotext", "Please insert fuel.");
+					meta:set_string("infotext", "Please insert fuel");
 					return;
 				end
 		else
@@ -66,7 +67,7 @@ local grinder_process = function(pos)
 			meta:set_string("infotext", "added fuel furnace burn time " .. fueladd.time .. ", fuel status " .. fuel);
 		end
 		if fuel-def[1]<0 then 
-			meta:set_string("infotext", "need at least " .. -fuel .. " fuel to complete operation ");  return 
+			meta:set_string("infotext", "need at least " .. def[1]-fuel .. " fuel to complete operation ");  return 
 		end
 		
 	end
