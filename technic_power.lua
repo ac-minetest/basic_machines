@@ -94,7 +94,7 @@ battery_upgrade = function(pos)
 	meta:set_int("upgrade",count);
 	-- adjust capacity
 	local capacity = 10+20*count;
-	if count = 99 then capacity = 10000 end -- ultimate upgrade for ultimate capacity
+	if count == 99 then capacity = 10000 end -- ultimate upgrade for ultimate capacity
 	capacity = math.ceil(capacity*10)/10;
 	local energy = 0;
 	meta:set_float("capacity",capacity)
