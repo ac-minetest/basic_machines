@@ -96,9 +96,9 @@ minetest.register_node("basic_machines:mover", {
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
 		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+		if not privs.privs  and cant_build then 
 			return 
-		end -- only owner can set up mover, ppl sharing protection can only look
+		end -- only ppl sharing protection can setup
 		
 		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode,mreverse;
 		
@@ -165,11 +165,11 @@ minetest.register_node("basic_machines:mover", {
 		
 		
 		
-		if meta:get_string("owner")==player:get_player_name() then
+		-- if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
-		else
-			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_mover", form)
-		end
+		-- else
+			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_mover", form)
+		-- end
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -658,9 +658,10 @@ minetest.register_node("basic_machines:keypad", {
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
 		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+		--meta:get_string("owner")~=player:get_player_name() and 
+		if not privs.privs and cant_build then 
 			return 
-		end -- only owner can set up mover, ppl sharing protection can only look
+		end -- only  ppl sharing protection can set up keypad
 		local x0,y0,z0,x1,y1,z1,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
 		mode = meta:get_int("mode") or 1;
@@ -673,11 +674,11 @@ minetest.register_node("basic_machines:keypad", {
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;3.25,1;iter;Repeat how many times;".. iter .."]"..
 		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]";
-		if meta:get_string("owner")==player:get_player_name() then
+		-- if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
-		else
-			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_keypad", form)
-		end
+		-- else
+			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_keypad", form)
+		-- end
 	end
 })
 
@@ -729,19 +730,25 @@ minetest.register_node("basic_machines:detector", {
 		local privs = minetest.get_player_privs(player:get_player_name());
 		
 		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+		--meta:get_string("owner")~=player:get_player_name() and
+		if not privs.privs  and cant_build then 
 			return 
-		end -- only owner can set up mover, ppl sharing protection can only look
+		end 
 		
-		local x0,y0,z0,x1,y1,z1,r,node,NOT,mode;
+		local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
-		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");r=meta:get_int("r");
-		mode=meta:get_string("mode");
+		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
+		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");r=meta:get_int("r");
+		mode=meta:get_string("mode"); local op = meta:get_string("op");
 		local mode_list = {["node"]=1,["player"]=2,["object"]=3,["inventory"]=4};
 		mode = mode_list[mode] or 1;
+		local op_list = {[""]=1,["AND"]=2,["OR"]=3};
+		local op = op_list[op] or 1;
+		
 
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
-		machines.pos2[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos2(player:get_player_name()) -- mark pos2
+		machines.pos11[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos11(player:get_player_name()) -- mark pos11
+		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
 
 		local inv1=1;
 		local inv1m = meta:get_string("inv1");
@@ -758,22 +765,24 @@ minetest.register_node("basic_machines:detector", {
 		NOT=meta:get_int("NOT");
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 		local form  = 
-		"size[4,5.25]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;source;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]".. 
-		"field[0.25,1.5;1,1;x1;target;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-		"button[3.,3.4;1,1;OK;OK] field[0.25,2.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,1.5;1,1;r;radius;"..r.."]"..
-		"button[3.,0.25;1,1;help;help]"..
-		"dropdown[0,3.5;3,1;mode;node,player,object,inventory;".. mode .."]"..
-		"dropdown[0,4.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
-		"label[0.,3.0;MODE selection]"..
-		"label[0.,4.2;inventory selection]"..
-		"field[3.25,2.5;1,1;NOT;NOT 0/1;"..NOT.."]"
+		"size[4,6.25]" ..  -- width, height
+		"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]".. 
+		"dropdown[3,0.25;1,1;op; ,AND,OR;".. op .."]"..
+		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]".. 
+		"field[0.25,2.5;1,1;x2;target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
+		"field[0.25,3.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,2.5;1,1;r;radius;"..r.."]"..
+		"dropdown[0,4.5;3,1;mode;node,player,object,inventory;".. mode .."]"..
+		"dropdown[0,5.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
+		"label[0.,4.0;MODE selection]"..
+		"label[0.,5.2;inventory selection]"..
+		"field[3.25,3.5;1,1;NOT;NOT 0/1;"..NOT.."]"..
+		"button[3.,4.4;1,1;help;help] button_exit[3.,5.4;1,1;OK;OK] "
 		
-		if meta:get_string("owner")==player:get_player_name() then
+		--if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:detector_"..minetest.pos_to_string(pos), form)
-		else
-			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_detector", form)
-		end
+		-- else
+			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_detector", form)
+		-- end
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -809,11 +818,12 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
-		local x0,y0,z0,x1,y1,z1,r,node,NOT,mode;
+		local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT,mode,op;
 		x0=meta:get_int("x0")+pos.x;y0=meta:get_int("y0")+pos.y;z0=meta:get_int("z0")+pos.z;
-		x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;
+		x2=meta:get_int("x2")+pos.x;y2=meta:get_int("y2")+pos.y;z2=meta:get_int("z2")+pos.z;
+		
 		r = meta:get_int("r") or 0; NOT = meta:get_int("NOT")
-		node=meta:get_string("node") or ""; mode=meta:get_string("mode") or ""; 
+		node=meta:get_string("node") or ""; mode=meta:get_string("mode") or ""; op = meta:get_string("op") or "";
 		
 		local trigger = false
 
@@ -832,6 +842,33 @@ minetest.register_abm({
 					if node ~= "" and found_node then trigger = true end
 				end
 			end
+			
+			-- operation: AND, OR... look at other source position too
+			if op~= "" then 
+				local trigger1 = false;
+				x1=meta:get_int("x1")+pos.x;y1=meta:get_int("y1")+pos.y;z1=meta:get_int("z1")+pos.z;
+				tnode = minetest.get_node({x=x1,y=y1,z=z1}).name; -- read node at source position
+			
+				if node~="" and string.find(tnode,"default:chest") then -- it source is chest, look inside chest for items
+					local cmeta = minetest.get_meta({x=x1,y=y1,z=z1});
+					local inv = cmeta:get_inventory();
+					local stack = ItemStack(node)
+					if inv:contains_item("main", stack) then trigger1 = true end
+				else -- source not a chest
+					if (node=="" and tnode~="air") or node == tnode then trigger1 = true end
+					if r>0 and node~="" then
+						local found_node = minetest.find_node_near({x=x0, y=y0, z=z0}, r, {node})
+						if node ~= "" and found_node then trigger1 = true end
+					end
+				end
+				if op == "AND" then 
+					trigger = trigger and trigger1;
+				elseif "op" == "OR" then
+					trigger = trigger or trigger1;
+				end
+			end
+			
+			
 			if NOT ==  1 then trigger = not trigger end
 		elseif mode=="inventory" then
 			local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
@@ -865,7 +902,7 @@ minetest.register_abm({
 			end
 		end
 		
-		local node = minetest.get_node({x=x1,y=y1,z=z1});if not node.name then return end -- error
+		local node = minetest.get_node({x=x2,y=y2,z=z2});if not node.name then return end -- error
 		local table = minetest.registered_nodes[node.name];
 		if not table then return end -- error
 		if not table.mesecons then return end -- error
@@ -876,7 +913,7 @@ minetest.register_abm({
 			meta:set_string("infotext", "detector: on");
 			if not effector.action_on then return end
 		
-			effector.action_on({x=x1,y=y1,z=z1},node,machines_TTL); -- run
+			effector.action_on({x=x2,y=y2,z=z2},node,machines_TTL); -- run
 			
 			else 
 			meta:set_string("infotext", "detector: idle");
@@ -1020,9 +1057,10 @@ minetest.register_node("basic_machines:distributor", {
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
 		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs  and cant_build then 
+		--meta:get_string("owner")~=player:get_player_name() and 
+		if not privs.privs and cant_build then 
 			return 
-		end -- only owner can set up mover, ppl sharing protection can only look
+		end 
 		
 		local p = {}; local active = {};
 		local n = meta:get_int("n");
@@ -1045,11 +1083,11 @@ minetest.register_node("basic_machines:distributor", {
 		end
 		
 		form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
-		if meta:get_string("owner")==player:get_player_name() then
+		--if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
-		else
-			minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_distributor", form)
-		end
+		-- else
+			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_distributor", form)
+		--end
 	end,
 	}
 )
@@ -1063,9 +1101,23 @@ minetest.register_node("basic_machines:light_off", {
 	groups = {oddly_breakable_by_hand=2},
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
-			minetest.set_node(pos,{name = "basic_machines:light_on"});		
-		end
-				}
+			minetest.swap_node(pos,{name = "basic_machines:light_on"});		
+			local meta = minetest.get_meta(pos);
+			local deactivate = meta:get_int("deactivate");
+			--minetest.chat_send_all("deactivate ".. deactivate)
+			if deactivate > 0 then 
+					meta:set_int("active",0);
+					minetest.after(deactivate, 
+						function()
+							if meta:get_int("active") ~= 1 then -- was not activated again, so turn it off
+								minetest.swap_node(pos,{name = "basic_machines:light_off"}); -- turn off again
+								meta:set_int("active",0);
+							end
+						end
+					)
+			end
+			end
+			}
 	},
 })
 
@@ -1075,12 +1127,36 @@ minetest.register_node("basic_machines:light_on", {
 	tiles = {"light.png"},
 	groups = {oddly_breakable_by_hand=2},
 	light_source = LIGHT_MAX,
+	after_place_node = function(pos, placer)
+		local meta = minetest.get_meta(pos);
+		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+		local deactivate = meta:get_int("deactivate");
+		local form  = "size[2,2] field[0.25,0.5;2,1;deactivate;deactivate after ;"..deactivate.."]".."button_exit[0.,1;1,1;OK;OK]";
+		meta:set_string("formspec", form);
+	end,	
+	on_receive_fields = function(pos, formname, fields, player)
+        if fields.deactivate then
+			local meta = minetest.get_meta(pos);
+			local deactivate = tonumber(fields.deactivate) or 0;
+			if deactivate <0 or deactivate > 600 then deactivate = 0 end
+			meta:set_int("deactivate",deactivate);
+			local form  = "size[2,2] field[0.25,0.5;2,1;deactivate;deactivate after ;"..deactivate.."]".."button_exit[0.,1;1,1;OK;OK]";
+			meta:set_string("formspec", form);
+		end
+        
+    end,
+	
 	mesecons = {effector = {
 		action_off = function (pos, node,ttl) 
-			minetest.set_node(pos,{name = "basic_machines:light_off"});		
+			minetest.swap_node(pos,{name = "basic_machines:light_off"});		
+		end,
+		action_on = function (pos, node,ttl) 
+			local meta = minetest.get_meta(pos);
+			meta:set_int("active",1); -- remember being activated
 		end
 				}
 	},
+	
 })
 
 
@@ -1105,10 +1181,11 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	-- from now on only punches with mover/keypad/... or setup punches
 	
 	if punchset.known_nodes[node.name] then  -- check if owner of machine is punching or if machine public
-			local meta = minetest.get_meta(pos);
-			if not (meta:get_int("public") == 1) then
-				if meta:get_string("owner")~= name then return end
-			end
+			if minetest.is_protected(pos, name) then return end
+			-- local meta = minetest.get_meta(pos);
+			-- if not (meta:get_int("public") == 1) then
+				-- if meta:get_string("owner")~= name then return end
+			-- end
 	end
 	
 	if node.name == "basic_machines:mover" then -- mover init code
@@ -1218,7 +1295,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		if not (meta:get_int("x0")==0 and meta:get_int("y0")==0 and meta:get_int("z0")==0) then -- already configured
 			check_keypad(pos,name)-- not setup, just standard operation
 		else
-			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "KEYPAD: Only owner can set up keypad.") return end
+			if minetest.is_protected(pos, name) then return minetest.chat_send_player(name, "KEYPAD: You must be able to build to set up keypad.") end
+			--if meta:get_string("owner")~= name then minetest.chat_send_player(name, "KEYPAD: Only owner can set up keypad.") return end
 			if punchset[name].state == 0 then 
 				minetest.chat_send_player(name, "KEYPAD: Now punch the target block.")
 				punchset[name].node = node.name;punchset[name].pos = {x=pos.x,y=pos.y,z=pos.z};
@@ -1260,7 +1338,9 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	-- DETECTOR "basic_machines:detector"
 	if node.name == "basic_machines:detector" then -- detector init code
 		local meta = minetest.get_meta(pos);
-			if meta:get_string("owner")~= name then minetest.chat_send_player(name, "DETECTOR: Only owner can set up detector.") return end
+			
+			--meta:get_string("owner")~= name
+			if minetest.is_protected(pos,name) then minetest.chat_send_player(name, "DETECTOR: You must be able to build to set up detector.") return end
 			if punchset[name].state == 0 then 
 				minetest.chat_send_player(name, "DETECTOR: Now punch the source block.")
 				punchset[name].node = node.name;
@@ -1304,7 +1384,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 				local meta = minetest.get_meta(punchset[name].pos);
 				meta:set_int("x0",x);meta:set_int("y0",y);meta:set_int("z0",z);
 				x=pos.x-punchset[name].pos.x;y=pos.y-punchset[name].pos.y;z=pos.z-punchset[name].pos.z;
-				meta:set_int("x1",x);meta:set_int("y1",y);meta:set_int("z1",z);
+				meta:set_int("x2",x);meta:set_int("y2",y);meta:set_int("z2",z);
 				punchset[name].state = 0 
 				return
 			end
@@ -1355,16 +1435,16 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(name);
-		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
+		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder can interact
 		
 	
 		if fields.help == "help" then
 			local text = "SETUP: For interactive setup "..
-			"punch the mover and then punch source1, source2, target node (follow instructions). Put locked chest with fuel within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
+			"punch the mover and then punch source1, source2, target node (follow instructions). Put charged battery within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
 			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
-			"\n You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting." ..
+			"\n*advanced* You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting. If you activate mover with OFF signal it will toggle reverse." ..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..
 			"\n\n UPGRADE mover by moving mese blocks in upgrade inventory. Each mese block increases mover range by 10, fuel consumption is divided by (number of mese blocks)+1 in upgrade. Max 10 blocks are used for upgrade. Dont forget to right click mover to refresh after upgrade. "..
 			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
@@ -1418,7 +1498,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
 			meta:set_string("prefer",fields.prefer or "");
-			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put locked chest with fuel next to it and start it with keypad/mese signal.");
+			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 		end
 		return
@@ -1431,7 +1511,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
+		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder can interact
 		
 		if fields.OK == "OK" then
 			local x0,y0,z0,pass,mode;
@@ -1490,23 +1570,24 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		end
 	end
 	
-	-- MOVER
+	-- DETECTOR
 	local fname = "basic_machines:detector_"
 	if string.sub(formname,0,string.len(fname)) == fname then
 		local pos_s = string.sub(formname,string.len(fname)+1); local pos = minetest.string_to_pos(pos_s)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
+		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder
 		
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		
 		if fields.help == "help" then
-			local text = "SETUP: right click or punch and follow chat instructions. With detector you can detect nodes, players, or items inside inventories."..
+			local text = "SETUP: right click or punch and follow chat instructions. With detector you can detect nodes, objects, players, or items inside inventories."..
 			"If detector activates it will trigger machine at target position.\n\nThere are 4 modes of operation - node/player/object/inventory detection. Inside node/player/object "..
 			"write node/player/object name. If you detect players/objects you can specify range of detection. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
 			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
-			"If source position is chest it will look into it and check if there are items inside. If mode is inventory it will check for items in specified inventory of source node."
+			"If source position is chest it will look into it and check if there are items inside. If mode is inventory it will check for items in specified inventory of source node."..
+			"\n\nADVANCED: you can select second source and then select AND/OR from the right top dropdown list to do logical operations"
 			local form = "size [5,5] textarea[0,0;5.5,6.5;help;DETECTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_detector", form)
 		end
@@ -1544,8 +1625,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,10));
 			meta:set_int("NOT",NOT);
 			meta:set_string("node",fields.node or "");
+			
 			local mode = fields.mode or "node";
 			meta:set_string("mode",mode);
+			local op = fields.op or "";
+			meta:set_string("op",op);
 
 		end
 		return
@@ -1559,7 +1643,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if (name ~= meta:get_string("owner") and not privs.privs) or not fields then return end -- only owner can interact
+		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder
 		--minetest.chat_send_all("formname " .. formname .. " fields " .. dump(fields))
 		
 		if fields.OK == "OK" then
