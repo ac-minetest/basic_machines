@@ -163,6 +163,7 @@ minetest.register_node("basic_machines:battery", {
 						local new_infotext = "furnace needs at least 1 energy";
 						if new_infotext~=infotext then -- dont update unnecesarilly
 							meta:set_string("infotext", new_infotext);
+							pos.y=pos.y-1; -- so that it points to battery again!
 						end
 					end 
 				else
