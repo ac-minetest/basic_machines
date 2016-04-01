@@ -137,15 +137,7 @@ minetest.register_node("basic_machines:mover", {
 			if i == inv2m then inv2=j; end; j=j+1; 
 		end
 
-		-- update upgrades
-		local upgrade = 0;
-		local inv = meta:get_inventory();
-		if inv:contains_item("upgrade", ItemStack({name="default:mese"})) then
-			upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
-			if upgrade > 10 then upgrade = 10 end -- not more than 10
-			meta:set_float("upgrade",upgrade+1);
-		end		
-
+		local upgrade = meta:get_float("upgrade"); if upgrade>0 then upgrade = upgrade - 1 end
 		
 		local form  = 
 		"size[8,9.5]" ..  -- width, height
@@ -160,7 +152,7 @@ minetest.register_node("basic_machines:mover", {
 		"label[0.,3.0;MODE selection]"..
 		"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
 		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade]" .. 
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
 		"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
 		
 		
@@ -1446,7 +1438,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
 			"\n*advanced* You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting. If you activate mover with OFF signal it will toggle reverse." ..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..
-			"\n\n UPGRADE mover by moving mese blocks in upgrade inventory. Each mese block increases mover range by 10, fuel consumption is divided by (number of mese blocks)+1 in upgrade. Max 10 blocks are used for upgrade. Dont forget to right click mover to refresh after upgrade. "..
+			"\n\n UPGRADE mover by moving mese blocks in upgrade inventory. Each mese block increases mover range by 10, fuel consumption is divided by (number of mese blocks)+1 in upgrade. Max 10 blocks are used for upgrade. Dont forget to click OK to refresh after upgrade. "..
 			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
 			local form = "size [6,7] textarea[0,0;6.5,8.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
@@ -1459,8 +1451,14 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
 			local range = meta:get_float("upgrade") or 1;	range = range * max_range;
 			
-			if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
-				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
+			-- did the numbers change from last time?
+			if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
+				meta:get_int("x1")~=x1 or meta:get_int("y1")~=y1 or meta:get_int("z1")~=z1 or 
+				meta:get_int("x2")~=x2 or meta:get_int("y2")~=y2 or meta:get_int("z2")~=z2 then
+				-- are new numbers inside bounds?
+				if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
+					minetest.chat_send_player(name,"#mover: all coordinates must be between ".. -max_range .. " and " .. max_range .. ". For increased range set up positions by punching"); return
+				end
 			end
 			
 			if fields.mode then
@@ -1478,6 +1476,15 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			if fields.inv2 then
 				 meta:set_string("inv2",fields.inv2);
 			end
+
+			-- update upgrades
+			local upgrade = 0;
+			local inv = meta:get_inventory();
+			if inv:contains_item("upgrade", ItemStack({name="default:mese"})) then
+				upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
+				if upgrade > 10 then upgrade = 10 end -- not more than 10
+				meta:set_float("upgrade",upgrade+1);
+			end		
 			
 			local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);
 			local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
@@ -1524,7 +1531,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 			
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range) then
-				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
+				minetest.chat_send_player(name,"#keypad: all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			
@@ -1614,7 +1621,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 
 
 			if not privs.privs and (math.abs(x0)>max_range or math.abs(y0)>max_range or math.abs(z0)>max_range or math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range) then
-				minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); return
+				minetest.chat_send_player(name,"#detector: all coordinates must be between ".. -max_range .. " and " .. max_range); return
 			end
 			
 			if fields.inv1 then
@@ -1655,7 +1662,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				active[i]=tonumber(fields["active"..i]) or 0;
 			
 				if (not (privs.privs) and math.abs(posf[i].x)>max_range or math.abs(posf[i].y)>max_range or math.abs(posf[i].z)>max_range) then
-					minetest.chat_send_player(name,"all coordinates must be between ".. -max_range .. " and " .. max_range); 
+					minetest.chat_send_player(name,"#distributor: all coordinates must be between ".. -max_range .. " and " .. max_range); 
 					return
 				end
 			
