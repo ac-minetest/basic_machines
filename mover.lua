@@ -167,6 +167,7 @@ minetest.register_node("basic_machines:mover", {
 			local meta = minetest.get_meta(pos);
 			local itemname = stack:get_name() or "";
 			meta:set_string("prefer",itemname);
+			minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
 			-- local inv = meta:get_inventory();
 			-- inv:set_stack("filter",1, ItemStack({name=itemname})) 
 			return 1;
@@ -365,20 +366,23 @@ minetest.register_node("basic_machines:mover", {
 		-- inventory mode
 		if mode == "inventory" then
 					if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
-					local meta1 = minetest.get_meta(pos1); local inv1 = meta1:get_inventory();
+					
+					-- can we move item to target inventory?
 					local stack = ItemStack(prefer);
+					local meta2 = minetest.get_meta(pos2); local inv2 = meta2:get_inventory();
+					if not inv2:room_for_item(invName2, stack) then	return end
+					
+					-- add item to target inventory and remove item from source inventory
+					local meta1 = minetest.get_meta(pos1); local inv1 = meta1:get_inventory();
+					
 					if inv1:contains_item(invName1, stack) then
+						inv2:add_item(invName2, stack);
 						inv1:remove_item(invName1, stack);
 					else
 						return
 					end
 					
-					local meta2 = minetest.get_meta(pos2); local inv2 = meta2:get_inventory();
-					if inv2:room_for_item(invName2, stack) then
-						inv2:add_item(invName2, stack);
-					else
-						return
-					end
+					
 					minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 					fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
 					meta:set_string("infotext", "Mover block. Fuel "..fuel);
@@ -1503,7 +1507,13 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
 			meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
-			meta:set_string("prefer",fields.prefer or "");
+			
+			--filter
+			local prefer = fields.prefer or "";
+			if meta:get_string("prefer")~=prefer then
+				meta:set_string("prefer",prefer);
+			end
+			
 			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 		end

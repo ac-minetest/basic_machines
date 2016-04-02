@@ -140,7 +140,7 @@ minetest.register_node("basic_machines:battery", {
 					local fuel_time = fmeta:get_float("fuel_time") or 0;
 					local t0 = meta:get_int("ftime"); -- furnace time
 					local t1 = minetest.get_gametime();
-					minetest.chat_send_all("CHECK")
+					
 					if t1-t0<machines_timer then return end -- to prevent too quick furnace acceleration
 					meta:set_int("ftime",t1);
 					if fuel_time>4 then  -- twice as fast cooking
