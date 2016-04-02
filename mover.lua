@@ -1175,8 +1175,10 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	if punchset[name].state == 0 and not punchset.known_nodes[node.name] then return end
 	-- from now on only punches with mover/keypad/... or setup punches
 	
-	if punchset.known_nodes[node.name] then  -- check if owner of machine is punching or if machine public
-			if minetest.is_protected(pos, name) then return end
+	if punchset.known_nodes[node.name] then  -- check if player is suppose to be able to punch interact
+			if node.name~="basic_machines:keypad" then -- keypad is supposed to be punch interactive!
+				if minetest.is_protected(pos, name) then return end
+			end
 			-- local meta = minetest.get_meta(pos);
 			-- if not (meta:get_int("public") == 1) then
 				-- if meta:get_string("owner")~= name then return end
@@ -1195,7 +1197,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		end
 	end
 	
-	 if punchset[name].node == "basic_machines:mover" then -- mover code
+	 if punchset[name].node == "basic_machines:mover" then -- mover code, not first punch
 		
 		if minetest.is_protected(pos,name) then
 			minetest.chat_send_player(name, "MOVER: Punched position is protected. aborting.")

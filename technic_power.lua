@@ -1,13 +1,3 @@
--- rnd 2015, power outlet
--- used to power basic_machines using remaining available power from technic:switching_station. Just place it below mover but within 10 block distance of technich switching station. Each power outlet adds 500 to the power demand. If switching station has not enough unused power ( after technic machines demand), it wont supply power to mover.
--- outlet -> change to battery
-
-  
--- power plant block: costly to make: 8 diamondblocks, battery in center
-  -- -upgradeable, each diamondblock+lava_bucket  will add ammount of energy cells produced in cycle ( 5 seconds) and increase its internal energy storage capacity
-  -- initially produces 1 power cell, storage capacity 10, with each level of upgrade it adds 1 power cell, 10 storage capacity
-  -- when it generates power it will also fill the battery on top of it ( if any), speed of refill equalls speed of power generation, it will put all energy
-  -- possible in battery until is filled, will make recharge sound - electric discharge like in factorio game?
 local machines_timer=5
 
 -- BATTERY
@@ -95,7 +85,6 @@ battery_upgrade = function(pos)
 	meta:set_int("upgrade",count);
 	-- adjust capacity
 	local capacity = 10+20*count;
-	--if count == 99 then capacity = 10000 end -- ultimate upgrade for ultimate capacity
 	local maxpower = capacity*0.1;
 	
 	capacity = math.ceil(capacity*10)/10;
