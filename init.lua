@@ -1,3 +1,7 @@
+-- BASIC_MACHINES: lightweight automation mod for minetest
+-- minetest 0.4.14
+-- (c) 2015-2016 rnd
+
 basic_machines = {};
 
 
