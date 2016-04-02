@@ -727,15 +727,15 @@ minetest.register_node("basic_machines:detector", {
 			return 
 		end 
 		
-		local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT,mode;
+		local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT,mode,op;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
 		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");r=meta:get_int("r");
-		mode=meta:get_string("mode"); local op = meta:get_string("op");
+		mode=meta:get_string("mode"); op = meta:get_string("op");
 		local mode_list = {["node"]=1,["player"]=2,["object"]=3,["inventory"]=4};
 		mode = mode_list[mode] or 1;
 		local op_list = {[""]=1,["AND"]=2,["OR"]=3};
-		local op = op_list[op] or 1;
+		op = op_list[op] or 1;
 		
 
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
@@ -1127,7 +1127,8 @@ minetest.register_node("basic_machines:light_on", {
 		meta:set_string("formspec", form);
 	end,	
 	on_receive_fields = function(pos, formname, fields, player)
-        if fields.deactivate then
+        if minetest.is_protected(pos, player:get_player_name()) then return end
+		if fields.deactivate then
 			local meta = minetest.get_meta(pos);
 			local deactivate = tonumber(fields.deactivate) or 0;
 			if deactivate <0 or deactivate > 600 then deactivate = 0 end
@@ -1602,9 +1603,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields.OK == "OK" then
 			
 			
-			local x0,y0,z0,x1,y1,z1,r,node,NOT;
+			local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 0;z0=tonumber(fields.z0) or 0
 			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or 0;z1=tonumber(fields.z1) or 0
+			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 0;z2=tonumber(fields.z2) or 0
 			r=tonumber(fields.r) or 1;
 			NOT = tonumber(fields.NOT)
 			
@@ -1614,7 +1616,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				return
 			end
 
-			if minetest.is_protected({x=pos.x+x1,y=pos.y+y1,z=pos.z+z1},name) then
+			if minetest.is_protected({x=pos.x+x2,y=pos.y+y2,z=pos.z+z2},name) then
 				minetest.chat_send_player(name, "DETECTOR: position is protected. aborting.")
 				return
 			end
@@ -1629,7 +1631,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);meta:set_int("r",math.min(r,10));
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
+			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
+			
+			meta:set_int("r",math.min(r,10));
 			meta:set_int("NOT",NOT);
 			meta:set_string("node",fields.node or "");
 			

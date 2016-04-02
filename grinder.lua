@@ -119,7 +119,7 @@ minetest.register_node("basic_machines:grinder", {
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return end -- only owner can interact with recycler
+		if minetest.is_protected(pos, player:get_player_name()) and not privs.privs then return end -- only owner can interact with recycler
 		grinder_update_meta(pos);
 	end,
 	
