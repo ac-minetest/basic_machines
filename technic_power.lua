@@ -8,7 +8,7 @@
   -- initially produces 1 power cell, storage capacity 10, with each level of upgrade it adds 1 power cell, 10 storage capacity
   -- when it generates power it will also fill the battery on top of it ( if any), speed of refill equalls speed of power generation, it will put all energy
   -- possible in battery until is filled, will make recharge sound - electric discharge like in factorio game?
-    
+local machines_timer=5
 
 -- BATTERY
 
@@ -140,6 +140,7 @@ minetest.register_node("basic_machines:battery", {
 					local fuel_time = fmeta:get_float("fuel_time") or 0;
 					local t0 = meta:get_int("ftime"); -- furnace time
 					local t1 = minetest.get_gametime();
+					minetest.chat_send_all("CHECK")
 					if t1-t0<machines_timer then return end -- to prevent too quick furnace acceleration
 					meta:set_int("ftime",t1);
 					if fuel_time>4 then  -- twice as fast cooking

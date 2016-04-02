@@ -6,11 +6,9 @@
 
 
 --  *** SETTINGS *** --
-
-
+local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
-local machines_timer = 5 -- main timestep
 local machines_TTL = 16; -- time to live for signals
 
 
