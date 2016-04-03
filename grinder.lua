@@ -73,15 +73,20 @@ local grinder_process = function(pos)
 	end
 
 	
-	fuel = fuel-def[1]; -- burn fuel
 	
 	-- process items
 	
-		inv:add_item("dst",ItemStack(def[2]));
+		-- TO DO: check if there is room for item yyy
+		local addstack = ItemStack(def[2]);
+		if inv:room_for_item("dst", addstack) then
+			inv:add_item("dst",addstack);
+		else return
+		end
 	
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
+		fuel = fuel-def[1]; -- burn fuel
 		meta:set_float("fuel",fuel);
 		meta:set_string("infotext", "fuel status " .. fuel);
 		 

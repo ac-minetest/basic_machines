@@ -25,10 +25,9 @@ dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic 
 dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
 dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 --dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
-
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
 
-minetest.after(0, function() -- if you want keypad to open/close doors
+minetest.after(0, function() -- if you want open/close doors with signal, also steel doors are made impervious to dig through, removal by repeat punch
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua")
 end)
 

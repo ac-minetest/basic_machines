@@ -689,36 +689,20 @@ minetest.register_node("basic_machines:detector", {
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("infotext", "Detector. Right click/punch to set it up.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
-		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z0",0); -- source: read
+		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- source1: read
+		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z1",0); -- source1: read
 		meta:set_int("x2",0);meta:set_int("y2",0);meta:set_int("z2",0); -- target: activate
 		meta:set_int("r",0)
-		meta:set_string("node","");meta:set_int("NOT",0);meta:set_string("mode","node");
+		meta:set_string("node","");meta:set_int("NOT",1);
 		meta:set_string("mode","node");
 		meta:set_int("public",0);
+		meta:set_int("state",0);
+		
 		local inv = meta:get_inventory();inv:set_size("mode_select", 3*1) 
 		inv:set_stack("mode_select", 1, ItemStack("default:coal_lump"))
 		local name = placer:get_player_name();punchset[name] =  {}; punchset[name].node = "";	punchset[name].state = 0
 	end,
-		
-	mesecons = {effector = {
-		action_on = function (pos, node,ttl) 
-			if type(ttl)~="number" then ttl = 1 end
-			if ttl<0 then return end -- prevent infinite recursion
-			local meta = minetest.get_meta(pos);
-			local state = meta:get_int("state") or 0;
-			state = state + 1;
-			meta:set_int("state",state);
-		end,
-		action_off = function (pos, node,ttl) 
-			if type(ttl)~="number" then ttl = 1 end
-			if ttl<0 then return end -- prevent infinite recursion
-			local meta = minetest.get_meta(pos);
-			local state = meta:get_int("state") or 0;
-			state = state - 1;
-			meta:set_int("state",state);
-		end
-	}
-	},
+
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
@@ -769,7 +753,7 @@ minetest.register_node("basic_machines:detector", {
 		"dropdown[0,5.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
 		"label[0.,4.0;MODE selection]"..
 		"label[0.,5.2;inventory selection]"..
-		"field[3.25,3.5;1,1;NOT;NOT 0/1;"..NOT.."]"..
+		"field[2.25,3.5;2,1;NOT;filter out -2/-1/0/1/2/3;"..NOT.."]"..
 		"button[3.,4.4;1,1;help;help] button_exit[3.,5.4;1,1;OK;OK] "
 		
 		--if meta:get_string("owner")==player:get_player_name() then
@@ -861,16 +845,14 @@ minetest.register_abm({
 					trigger = trigger or trigger1;
 				end
 			end
-			
-			
-			if NOT ==  1 then trigger = not trigger end
+
 		elseif mode=="inventory" then
 			local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
 			local inv = cmeta:get_inventory();
 			local stack = ItemStack(node); 
 			local inv1m =meta:get_string("inv1");
 			if inv:contains_item(inv1m, stack) then trigger = true end
-		else
+		else -- players/objects
 			local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
 			local player_near=false;
 			for _,obj in pairs(objects) do
@@ -890,11 +872,30 @@ minetest.register_abm({
 					end
 				end
 			end
-			-- negation
-			if node~="" and NOT==1 and not(trigger) and not(player_near) and mode == "player" then trigger = false -- name specified, but noone around and negation -> 0
-				else if NOT ==  1 then trigger = not trigger end
-			end
+			
+			if node~="" and NOT==-1 and not(trigger) and not(player_near) and mode == "player" then 
+				trigger = true 
+			end-- name specified, but noone around and negation -> 0
+			
 		end
+		
+		-- negation and output filtering
+		local state = meta:get_int("state");
+		
+		
+		if NOT ==  1 then -- just go on normally
+			-- -2: only false, -1: NOT, 0: no signal, 1: normal signal: 2: only true
+			elseif NOT == -1 then trigger = not trigger -- NEGATION
+			elseif NOT == -2 and trigger then return -- ONLY FALSE
+			elseif NOT == 0 then return -- do nothing
+			elseif NOT == 2 and not trigger then return  -- ONLY TRUE
+			elseif NOT == 3 and ((trigger and state == 1) or (not trigger and state == 0)) then return -- no change of state
+		end
+		
+		local nstate;
+		if trigger then nstate = 1 else nstate=0 end -- next detector output state
+		if nstate~=state then meta:set_int("state",nstate) end -- update state if changed
+		
 		
 		local node = minetest.get_node({x=x2,y=y2,z=z2});if not node.name then return end -- error
 		local table = minetest.registered_nodes[node.name];
@@ -909,10 +910,10 @@ minetest.register_abm({
 		
 			effector.action_on({x=x2,y=y2,z=z2},node,machines_TTL); -- run
 			
-			else 
-			meta:set_string("infotext", "detector: idle");
-			-- if not effector.action_off then return end
-			-- effector.action_off({x=x1,y=y1,z=z1},node,machines_TTL); -- run
+		else 
+			meta:set_string("infotext", "detector: off");
+			if not effector.action_off then return end
+			effector.action_off({x=x2,y=y2,z=z2},node,machines_TTL); -- run
 		end
 			
 	end,
@@ -1605,8 +1606,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"write node/player/object name. If you detect players/objects you can specify range of detection. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
 			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
 			"If source position is chest it will look into it and check if there are items inside. If mode is inventory it will check for items in specified inventory of source node."..
-			"\n\nADVANCED: you can select second source and then select AND/OR from the right top dropdown list to do logical operations"
-			local form = "size [5,5] textarea[0,0;5.5,6.5;help;DETECTOR HELP;".. text.."]"
+			"\n\nADVANCED: you can select second source and then select AND/OR from the right top dropdown list to do logical operations. You can also filter output signal:\n -2=only OFF,-1=NOT/0/1=normal,2=only ON, 3 only if changed"
+			local form = "size [5.5,5.5] textarea[0,0;6,7;help;DETECTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_detector", form)
 		end
 		
