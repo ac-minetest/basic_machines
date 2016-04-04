@@ -281,7 +281,10 @@ minetest.register_node("basic_machines:mover", {
 				
 			end 
 			
-			if fuel < fuel_cost then meta:set_string("infotext", "Mover block. Energy ".. fuel ..", needed energy " .. fuel_cost .. ". Put nonempty battery next to mover."); return  end
+			if fuel < fuel_cost then 
+				meta:set_string("infotext", "Mover block. Energy ".. fuel ..", needed energy " .. fuel_cost .. ". Put nonempty battery next to mover."); 
+				return  
+			end
 		
 				
 		if mode == "object" then -- teleport objects and return
@@ -704,7 +707,7 @@ minetest.register_node("basic_machines:detector", {
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- source1: read
 		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z1",0); -- source1: read
-		meta:set_int("x2",0);meta:set_int("y2",0);meta:set_int("z2",0); -- target: activate
+		meta:set_int("x2",0);meta:set_int("y2",1);meta:set_int("z2",0); -- target: activate
 		meta:set_int("r",0)
 		meta:set_string("node","");meta:set_int("NOT",1);
 		meta:set_string("mode","node");
@@ -961,14 +964,14 @@ minetest.register_abm({
 	});
 
 minetest.register_node("basic_machines:clockgen", {
-	description = "Distributor - can forward signal up to 16 different targets",
+	description = "Clock generator - use sparingly, continually activates top block",
 	tiles = {"basic_machine_clock_generator.png"},
 	groups = {oddly_breakable_by_hand=2},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta =  minetest.get_meta(pos);
 		meta:set_string("owner",placer:get_player_name() or "");
-		meta:set_string("infotext","clock generator: place machine on top to be activated");
+		meta:set_string("infotext","clock generator: place machine to be activated on top of generator");
 	end
 })	
 	

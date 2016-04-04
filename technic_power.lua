@@ -45,7 +45,7 @@ battery_recharge = function(pos)
 			inv:set_stack("fuel", 1, stack)
 		end
 	else -- try do determine caloric value
-		local fuellist = inv:get_list("fuel");if not fuellist then return end
+		local fuellist = inv:get_list("fuel");if not fuellist then return energy end
 		local fueladd, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist}) 
 		if fueladd.time > 0 then 
 			add_energy = fueladd.time/40;
