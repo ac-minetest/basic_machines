@@ -862,7 +862,7 @@ minetest.register_node("basic_machines:detector", {
 					end
 					if op == "AND" then 
 						trigger = trigger and trigger1;
-					elseif "op" == "OR" then
+					elseif op == "OR" then
 						trigger = trigger or trigger1;
 					end
 				end
