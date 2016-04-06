@@ -22,7 +22,7 @@ end
 --[power crystal name] = energy provided
 basic_machines.energy_crystals = {
 	["basic_machines:power_cell"]=1,
-	["basic_machines:power_block"]=10,
+	["basic_machines:power_block"]=11,
 	["basic_machines:power_rod"]=100,
 }
 

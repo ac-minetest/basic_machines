@@ -547,7 +547,7 @@ minetest.register_node("basic_machines:mover", {
 
 -- KEYPAD --
 
-local function use_keypad(pos,ttl) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion )
+local function use_keypad(pos,ttl, again) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion )
 	
 	if ttl<0 then return end;
 	local meta = minetest.get_meta(pos);	
@@ -569,9 +569,10 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	local count = meta:get_int("count") or 0; -- counts how many repeats left
 	local active_repeats = meta:get_int("active_repeats") or 0;
 		
-	
-	if count < 0 then return end
-	count = count - 1; meta:set_int("count",count); 
+	if again or count>0 then -- this is keypad repeating its activation
+		if count < 0 then return end 
+		count = count - 1; meta:set_int("count",count);  
+	end
 	
 	if count>=0 then
 		meta:set_string("infotext", "Keypad operation: ".. count .." cycles left")
@@ -584,7 +585,7 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 			meta:set_int("active_repeats",1);
 			minetest.after(machines_timer, function() 
 				meta:set_int("active_repeats",0);
-				use_keypad(pos,machines_TTL) 
+				use_keypad(pos,machines_TTL,1)  -- third parameter means repeat mode
 			end )  -- repeat operation as many times as set with "iter"
 		end
 	end
@@ -598,6 +599,11 @@ local function use_keypad(pos,ttl) -- position, time to live ( how many times ca
 	
 	local tpos = {x=x0,y=y0,z=z0};
 	local node = minetest.get_node(tpos);if not node.name then return end -- error
+	local text = meta:get_string("text"); 
+	if text ~= "" then 
+		local tmeta = minetest.get_meta(tpos);if not tmeta then return end
+		tmeta:set_string("infotext", text);
+	end
 		
 	local table = minetest.registered_nodes[node.name];
 	if not table then return end -- error
@@ -656,14 +662,14 @@ minetest.register_node("basic_machines:keypad", {
 		local name = placer:get_player_name();punchset[name] =  {};punchset[name].state = 0
 	end,
 		
-	-- mesecons = {effector = { 
-		-- action_on = function (pos, node,ttl) 
-		-- if type(ttl)~="number" then ttl = 1 end
-		-- if ttl<0 then return end -- machines_TTL prevents infinite recursion
-		-- use_keypad(pos,ttl-1)
-	-- end
-	-- }
-	-- },
+	mesecons = {effector = { 
+		action_on = function (pos, node,ttl) 
+		if type(ttl)~="number" then ttl = 1 end
+		if ttl<0 then return end -- machines_TTL prevents infinite recursion
+		use_keypad(pos,0) -- activate just 1 time
+	end
+	}
+	},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
@@ -674,6 +680,7 @@ minetest.register_node("basic_machines:keypad", {
 		end -- only  ppl sharing protection can set up keypad
 		local x0,y0,z0,x1,y1,z1,pass,iter,mode;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");iter=meta:get_int("iter") or 1;
+		local text = meta:get_string("text") or "";
 		mode = meta:get_int("mode") or 1;
 		
 		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
@@ -682,7 +689,8 @@ minetest.register_node("basic_machines:keypad", {
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;3.25,1;iter;Repeat how many times;".. iter .."]"..
+		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;1,1;iter;;".. iter .."]"..
+		"label[0.,1.9;repeat]" .."field[1.25,2.5;3.25,1;text;text;".. text .."]" ..
 		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]";
 		-- if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
@@ -1617,6 +1625,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 					pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
 					meta:set_string("pass",pass); 
 				end
+			end
+			
+			if fields.text then
+				meta:set_string("text", fields.text);
 			end
 			
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
