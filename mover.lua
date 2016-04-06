@@ -777,7 +777,7 @@ minetest.register_node("basic_machines:detector", {
 		"dropdown[0,5.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
 		"label[0.,4.0;MODE selection]"..
 		"label[0.,5.2;inventory selection]"..
-		"field[2.25,3.5;2,1;NOT;filter out -2/-1/0/1/2/3;"..NOT.."]"..
+		"field[2.25,3.5;2,1;NOT;filter out -2/-1/0/1/2/3/4;"..NOT.."]"..
 		"button[3.,4.4;1,1;help;help] button_exit[3.,5.4;1,1;OK;OK] "
 		
 		--if meta:get_string("owner")==player:get_player_name() then
@@ -836,9 +836,11 @@ minetest.register_node("basic_machines:detector", {
 			node=meta:get_string("node") or ""; mode=meta:get_string("mode") or ""; op = meta:get_string("op") or "";
 			
 			local trigger = false
+			local detected_obj = "";
 
 			if mode == "node" then
 				local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name; -- read node at source position
+				detected_obj = tnode;
 				
 				if node~="" and string.find(tnode,"default:chest") then -- it source is chest, look inside chest for items
 					local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
@@ -892,7 +894,8 @@ minetest.register_node("basic_machines:detector", {
 						if obj:is_player() then 
 
 							player_near = true
-							if (node=="" or obj:get_player_name()==node) then 
+							detected_obj = obj:get_player_name();
+							if (node=="" or detected_obj==node) then 
 								trigger = true break 
 							end
 							
@@ -900,7 +903,8 @@ minetest.register_node("basic_machines:detector", {
 					elseif mode == "object" and not obj:is_player() then
 						if node=="" then trigger = true break end
 						if obj:get_luaentity() then
-							if obj:get_luaentity().name==node then trigger=true break end
+							detected_obj = obj:get_luaentity().name
+							if detected_obj==node then trigger=true break end
 						end
 					end
 				end
@@ -939,7 +943,13 @@ minetest.register_node("basic_machines:detector", {
 			if trigger then -- activate target node if succesful
 				meta:set_string("infotext", "detector: on");
 				if not effector.action_on then return end
-			
+				if NOT == 4 then -- set detected object name as target text (target must be keypad)
+					if minetest.get_node({x=x2,y=y2,z=z2}).name == "basic_machines:keypad" then
+						detected_obj = detected_obj or "";
+						local tmeta = minetest.get_meta({x=x2,y=y2,z=z2});
+						tmeta:set_string("text",detected_obj);
+					end
+				end
 				effector.action_on({x=x2,y=y2,z=z2},node,ttl-1); -- run
 				
 			else 
@@ -1683,7 +1693,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"write node/player/object name. If you detect players/objects you can specify range of detection. If you want detector to activate target precisely when its not triggered set NOT to 1\n\n"..
 			"For example, to detect empty space write air, to detect tree write default:tree, to detect ripe wheat write farming:wheat_8, for flowing water write default:water_flowing ... ".. 
 			"If source position is chest it will look into it and check if there are items inside. If mode is inventory it will check for items in specified inventory of source node."..
-			"\n\nADVANCED: you can select second source and then select AND/OR from the right top dropdown list to do logical operations. You can also filter output signal:\n -2=only OFF,-1=NOT/0/1=normal,2=only ON, 3 only if changed"
+			"\n\nADVANCED: you can select second source and then select AND/OR from the right top dropdown list to do logical operations. You can also filter output signal:\n -2=only OFF,-1=NOT/0/1=normal,2=only ON, 3 only if changed"..
+			" 4 = if target keypad set its text to detected object name" ;
 			local form = "size [5.5,5.5] textarea[0,0;6,7;help;DETECTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_detector", form)
 		end
