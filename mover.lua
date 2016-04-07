@@ -1,6 +1,6 @@
 ------------------------------------------------------------------------------------------------------------------------------------
 -- BASIC MACHINES MOD by rnd
--- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer (detector), no other lag causing background processing.
+-- mod with basic simple automatization for minetest. No background processing, just one abm with 5s timer (clock generator), no other lag causing background processing.
 ------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -358,11 +358,15 @@ minetest.register_node("basic_machines:mover", {
 		if node2.name == "default:chest" or node2.name == "default:chest_locked" then
 			target_chest = true
 		end
-		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" and not(mode=="transport") then return end -- do nothing if target nonempty and not chest
+		
+		if not(target_chest) and not(mode=="inventory") and minetest.get_node(pos2).name ~= "air" then return end -- do nothing if target nonempty and not chest
 		
 		local invName1="";local invName2="";
 		if mode == "inventory" then 
 			invName1 = meta:get_string("inv1");invName2 = meta:get_string("inv2");
+			if mreverse ~= 0 then -- reverse inventory names too
+				local invNamet = invName1;invName1=invName2;invName2=invNamet;
+			end
 		end
 		
 		
@@ -512,6 +516,7 @@ minetest.register_node("basic_machines:mover", {
 	
 		if mode == "transport" then -- transport nodes parallel as defined by source1 and target, clone with complete metadata
 			local meta1 = minetest.get_meta(pos1):to_table();
+			
 			minetest.set_node(pos2, minetest.get_node(pos1));
 			minetest.get_meta(pos2):from_table(meta1);
 			minetest.set_node(pos1,{name="air"});minetest.get_meta(pos1):from_table(nil)
@@ -958,7 +963,6 @@ minetest.register_node("basic_machines:detector", {
 					end
 				end
 				effector.action_on({x=x2,y=y2,z=z2},node,ttl-1); -- run
-				
 			else 
 				meta:set_string("infotext", "detector: off");
 				if not effector.action_off then return end

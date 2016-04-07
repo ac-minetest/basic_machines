@@ -141,7 +141,7 @@ minetest.register_node("basic_machines:battery", {
 						fmeta:set_float("src_time",src_time+5); 
 					end
 					
-					if fuel_time>40 or fuel_totaltime == 0  then -- must burn for at least 40 secs or furnace out of fuel
+					if fuel_time>40 or fuel_totaltime == 0 or node=="default:furnace" then -- must burn for at least 40 secs or furnace out of fuel
 						
 						fmeta:set_float("fuel_totaltime",60);fmeta:set_float("fuel_time",0) -- add 60 second burn time to furnace
 						energy=energy-1; -- use up one energy
