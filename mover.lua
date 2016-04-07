@@ -742,7 +742,7 @@ minetest.register_node("basic_machines:detector", {
 		x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");
 		x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");r=meta:get_int("r");
 		mode=meta:get_string("mode"); op = meta:get_string("op");
-		local mode_list = {["node"]=1,["player"]=2,["object"]=3,["inventory"]=4};
+		local mode_list = {["node"]=1,["player"]=2,["object"]=3,["inventory"]=4, ["infotext"] = 5,  ["light"]=6};
 		mode = mode_list[mode] or 1;
 		local op_list = {[""]=1,["AND"]=2,["OR"]=3};
 		op = op_list[op] or 1;
@@ -773,7 +773,7 @@ minetest.register_node("basic_machines:detector", {
 		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]".. 
 		"field[0.25,2.5;1,1;x2;target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
 		"field[0.25,3.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,2.5;1,1;r;radius;"..r.."]"..
-		"dropdown[0,4.5;3,1;mode;node,player,object,inventory;".. mode .."]"..
+		"dropdown[0,4.5;3,1;mode;node,player,object,inventory,infotext,light;".. mode .."]"..
 		"dropdown[0,5.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
 		"label[0.,4.0;MODE selection]"..
 		"label[0.,5.2;inventory selection]"..
@@ -886,6 +886,13 @@ minetest.register_node("basic_machines:detector", {
 				local stack = ItemStack(node); 
 				local inv1m =meta:get_string("inv1");
 				if inv:contains_item(inv1m, stack) then trigger = true end
+			elseif mode == "infotext" then
+				local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
+				detected_obj = cmeta:get_string("infotext");
+				if detected_obj == node or node =="" then trigger = true end
+			elseif mode == "light" then
+				detected_obj=minetest.get_node_light({x=x0,y=y0,z=z0}) or 0;
+				if detected_obj>=(tonumber(node) or 0) or node == "" then trigger = true end
 			else -- players/objects
 				local objects = minetest.get_objects_inside_radius({x=x0,y=y0,z=z0}, r)
 				local player_near=false;
@@ -901,11 +908,11 @@ minetest.register_node("basic_machines:detector", {
 							
 						end;
 					elseif mode == "object" and not obj:is_player() then
-						if node=="" then trigger = true break end
 						if obj:get_luaentity() then
-							detected_obj = obj:get_luaentity().name
+							detected_obj = obj:get_luaentity().itemstring or "";
 							if detected_obj==node then trigger=true break end
 						end
+						if node=="" then trigger = true break end
 					end
 				end
 				
