@@ -45,8 +45,8 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 --DEPRECATED: fuels used to power mover, now battery is used
 basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
 
-
 --  *** END OF SETTINGS *** --
+
 
 
 local punchset = {}; 
@@ -55,8 +55,8 @@ minetest.register_on_joinplayer(function(player)
 	local name = player:get_player_name(); if name == nil then return end
 	punchset[name] = {};
 	punchset[name].state = 0;
-end
-)
+end)
+
 
 -- MOVER --
 minetest.register_node("basic_machines:mover", {

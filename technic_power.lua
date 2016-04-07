@@ -43,6 +43,8 @@ battery_recharge = function(pos)
 		if energy+add_energy<=capacity then
 			stack:take_item(1); 
 			inv:set_stack("fuel", 1, stack)
+		else 
+			meta:set_string("infotext", "recharge problem: capacity " .. capacity .. ", needed " .. energy+add_energy)
 		end
 	else -- try do determine caloric value
 		local fuellist = inv:get_list("fuel");if not fuellist then return energy end
@@ -95,6 +97,8 @@ battery_upgrade = function(pos)
 	meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 end
 
+local machines_activate_furnace = minetest.registered_nodes["default:furnace"].on_metadata_inventory_put; -- this function will activate furnace
+
 minetest.register_node("basic_machines:battery", {
 	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it. Its upgradeable.",
 	tiles = {"basic_machine_outlet.png","basic_machine_side.png","basic_machine_battery.png"},
@@ -142,6 +146,8 @@ minetest.register_node("basic_machines:battery", {
 						fmeta:set_float("fuel_totaltime",60);fmeta:set_float("fuel_time",0) -- add 60 second burn time to furnace
 						energy=energy-1; -- use up one energy
 						meta:set_float("energy",energy);
+						-- make furnace start if not already started
+						if node~="default:furnace_active" then machines_activate_furnace(pos) end
 						-- update energy display
 						meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 					end
@@ -227,7 +233,6 @@ minetest.register_node("basic_machines:battery", {
 		end
 	
 })
-
 
 
 
@@ -435,7 +440,7 @@ minetest.register_craftitem("basic_machines:power_cell", {
 })
 
 minetest.register_craftitem("basic_machines:power_block", {
-	description = "Power block - provides 10 power",
+	description = "Power block - provides 11 power",
 	inventory_image = "power_block.png",
 	stack_max = 25
 })
