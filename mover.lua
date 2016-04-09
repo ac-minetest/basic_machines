@@ -10,7 +10,7 @@ local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals
-
+basic_machines.version = "04/09/2016";
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
@@ -1543,7 +1543,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 	
 		if fields.help == "help" then
-			local text = "SETUP: For interactive setup "..
+			local text = "version " .. basic_machines.version .. "\nSETUP: For interactive setup "..
 			"punch the mover and then punch source1, source2, target node (follow instructions). Put charged battery within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
 			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
