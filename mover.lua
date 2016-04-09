@@ -580,7 +580,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local t0 = meta:get_int("t");
 	local t1 = minetest.get_gametime(); 
 	if t1<=t0 then 
-		local delay = 3*machines_timer-2;
+		local delay = 2.2*machines_timer;
 		minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 		if t0<=t1 then -- dont set cool timeout if already set
 			meta:set_string("infotext","KEYPAD: burned out due to too fast activation.");
@@ -847,7 +847,7 @@ minetest.register_node("basic_machines:detector", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-2;
+				local delay = 2.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DETECTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -1062,7 +1062,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-2;
+				local delay = 2.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -1119,7 +1119,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-2;
+				local delay = 2.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); 
