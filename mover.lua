@@ -321,16 +321,36 @@ minetest.register_node("basic_machines:mover", {
 				return
 			end
 			
+			local times = tonumber(prefer) or 0; if times > 10 then times = 10 elseif times<0 then times = 0 end
+			local velocityv;
+			if times~=0 then
+				velocityv = { x = pos2.x-x0-pos.x, y = pos2.y-y0-pos.y, z = pos2.z-z0-pos.z};
+				local vv=math.sqrt(velocityv.x*velocityv.x+velocityv.y*velocityv.y+velocityv.z*velocityv.z);
+				local velocitys=0;
+				if times~=0 then velocitys = vv/times else vv = 0 end
+				if vv ~= 0 then vv=velocitys/vv else vv =  0 end;
+				velocityv.x = velocityv.x * vv;	velocityv.y = velocityv.y * vv;	velocityv.z = velocityv.z* vv
+			end
+			
+			--minetest.chat_send_all(" times ".. times .. " v " .. minetest.pos_to_string(velocityv));
 			
 			-- move objects to another location
 			for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
 				if obj:is_player() then
-					if not minetest.is_protected(obj:getpos(), owner) then -- move player only from owners land
+					if not minetest.is_protected(obj:getpos(), owner) and (prefer == "" or obj:get_player_name()== prefer) then -- move player only from owners land
 						obj:moveto(pos2, false)
 						teleport_any = true;
 					end
 				else
-					obj:moveto(pos2, false)
+					if times ~= 0 then
+						-- move objects with set velocity in target direction
+						obj:setvelocity(velocityv);
+						--minetest.chat_send_all(" acceleration ".. minetest.pos_to_string(obj:getacceleration()));
+						obj:setacceleration({x=0,y=0,z=0});
+						minetest.after(times, function () if obj then obj:setvelocity({x=0,y=0,z=0}); obj:moveto(pos2, false) end end);
+					else
+						obj:moveto(pos2, false)
+					end
 					teleport_any = true;
 				end
 			end
@@ -560,7 +580,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local t0 = meta:get_int("t");
 	local t1 = minetest.get_gametime(); 
 	if t1<=t0 then 
-		local delay = 3*machines_timer-1;
+		local delay = 3*machines_timer-2;
 		minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 		if t0<=t1 then -- dont set cool timeout if already set
 			meta:set_string("infotext","KEYPAD: burned out due to too fast activation.");
@@ -827,7 +847,7 @@ minetest.register_node("basic_machines:detector", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-1;
+				local delay = 3*machines_timer-2;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DETECTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -1042,7 +1062,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-1
+				local delay = 3*machines_timer-2;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -1099,7 +1119,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 3*machines_timer-1;
+				local delay = 3*machines_timer-2;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); 
@@ -1546,7 +1566,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			local text = "version " .. basic_machines.version .. "\nSETUP: For interactive setup "..
 			"punch the mover and then punch source1, source2, target node (follow instructions). Put charged battery within distance 1 from mover. For advanced setup right click mover. Positions are defined by x y z coordinates (see top of mover for orientation). Mover itself is at coordinates 0 0 0. "..
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
-			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). "..
+			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). by setting filter you can specify move time for objects or names for players. "..
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
 			"\n*advanced* You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting. If you activate mover with OFF signal it will toggle reverse." ..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..
