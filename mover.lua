@@ -10,7 +10,8 @@ local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals
-basic_machines.version = "04/09/2016";
+basic_machines.version = "04/10/2016";
+basic_machines.clockgen = 1; -- if 0 clockgen is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
@@ -611,6 +612,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	if count>0 then -- only trigger repeat if count on
 		if active_repeats == 0 then -- cant add new repeats quickly to prevent abuse
 			meta:set_int("active_repeats",1);
+			if  basic_machines.clockgen==0 then return end
 			minetest.after(machines_timer, function() 
 				meta:set_int("active_repeats",0);
 				use_keypad(pos,machines_TTL,1)  -- third parameter means repeat mode
@@ -999,7 +1001,6 @@ minetest.register_node("basic_machines:detector", {
 	}
 })
 
-basic_machines.clockgen = 1; -- if 0 clockgen is disabled
 
 minetest.register_chatcommand("clockgen", { -- test: toggle machine running with clockgens
 	description = "",
@@ -1007,7 +1008,7 @@ minetest.register_chatcommand("clockgen", { -- test: toggle machine running with
 		interact = true
 	},
 	func = function(name, param)
-		local privs = minetest.get_player_privs(player:get_player_name());
+		local privs = minetest.get_player_privs(name);
 		if not privs.privs and name~="rnd" then return end
 		local player = minetest.get_player_by_name(name);
 		if basic_machines.clockgen == 0 then basic_machines.clockgen = 1 else basic_machines.clockgen = 0 end
