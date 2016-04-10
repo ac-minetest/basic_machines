@@ -127,6 +127,7 @@ minetest.register_node("basic_machines:battery", {
 			-- try to power furnace on top of it
 			if energy>=1 then -- need at least 1 energy
 				pos.y=pos.y+1; local node = minetest.get_node(pos).name; 
+				
 				if node== "default:furnace" or node=="default:furnace_active" then 
 					local fmeta = minetest.get_meta(pos);
 					local fuel_totaltime = fmeta:get_float("fuel_totaltime") or 0;
@@ -135,6 +136,8 @@ minetest.register_node("basic_machines:battery", {
 					local t1 = minetest.get_gametime();
 					
 					if t1-t0<machines_timer then return end -- to prevent too quick furnace acceleration
+					
+					
 					meta:set_int("ftime",t1);
 					if fuel_time>4 then  -- twice as fast cooking
 						local src_time = fmeta:get_float("src_time") or 0

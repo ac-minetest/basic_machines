@@ -10,7 +10,7 @@ local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals
-basic_machines.version = "04/10/2016";
+basic_machines.version = "04/10/2016b";
 basic_machines.clockgen = 1; -- if 0 clockgen is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -343,7 +343,7 @@ minetest.register_node("basic_machines:mover", {
 						teleport_any = true;
 					end
 				else
-					if times ~= 0 then
+					if times > 0 then
 						-- move objects with set velocity in target direction
 						obj:setvelocity(velocityv);
 						--minetest.chat_send_all(" acceleration ".. minetest.pos_to_string(obj:getacceleration()));
@@ -580,21 +580,25 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	
 	local t0 = meta:get_int("t");
 	local t1 = minetest.get_gametime(); 
-	if t1<=t0 then 
-		local delay = 3.2*machines_timer;
-		minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
-		if t0<=t1 then -- dont set cool timeout if already set
-			meta:set_string("infotext","KEYPAD: burned out due to too fast activation.");
-		end
-		return
-	elseif meta:get_string("infotext")~="" then 
-		meta:set_string("infotext","")
+	local T = meta:get_int("T"); -- temperature
+	
+	if t0>t1-1 then -- activated before natural time
+		T=T+1;
+	else
+		if T>0 then T=T-1 end
 	end
+	meta:set_int("T",T);
 	meta:set_int("t",t1); -- update last activation time
 	
+	if T > 2 then -- overheat
+			minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
+			meta:set_string("infotext","overheat: temperature ".. T)
+			return
+	end
 	
-	local name =  meta:get_string("owner");
-	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0) end
+	
+	local name =  meta:get_string("owner"); 
+	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0); return end
 	local count = meta:get_int("count") or 0; -- counts how many repeats left
 	local active_repeats = meta:get_int("active_repeats") or 0;
 		
@@ -612,7 +616,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	if count>0 then -- only trigger repeat if count on
 		if active_repeats == 0 then -- cant add new repeats quickly to prevent abuse
 			meta:set_int("active_repeats",1);
-			if  basic_machines.clockgen==0 then return end
+			if basic_machines.clockgen==0 then return end
 			minetest.after(machines_timer, function() 
 				meta:set_int("active_repeats",0);
 				use_keypad(pos,machines_TTL,1)  -- third parameter means repeat mode
@@ -747,7 +751,7 @@ minetest.register_node("basic_machines:detector", {
 		meta:set_int("x1",0);meta:set_int("y1",0);meta:set_int("z1",0); -- source1: read
 		meta:set_int("x2",0);meta:set_int("y2",1);meta:set_int("z2",0); -- target: activate
 		meta:set_int("r",0)
-		meta:set_string("node","");meta:set_int("NOT",1);
+		meta:set_string("node","");meta:set_int("NOT",2);
 		meta:set_string("mode","node");
 		meta:set_int("public",0);
 		meta:set_int("state",0);
@@ -846,19 +850,24 @@ minetest.register_node("basic_machines:detector", {
 			if ttl<0 then return end
 			
 			local meta = minetest.get_meta(pos);
+			
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
-			if t1<=t0 then 
-				local delay = 3.2*machines_timer;
-				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
-				if t0<=t1 then -- dont set cool timeout if already set
-					meta:set_string("infotext","DETECTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
-				end
-				return
-			elseif meta:get_string("infotext")~="" then 
-					meta:set_string("infotext","")
+			local T = meta:get_int("T"); -- temperature
+			
+			if t0>t1-machines_timer then -- activated before natural time
+				T=T+1;
+			else
+				if T>0 then T=T-1 end
 			end
+			meta:set_int("T",T);
 			meta:set_int("t",t1); -- update last activation time
+			
+			if T > 2 then -- overheat
+					minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
+					meta:set_string("infotext","overheat: temperature ".. T)
+					return
+			end			
 
 			
 			local x0,y0,z0,x1,y1,z1,x2,y2,z2,r,node,NOT,mode,op;
@@ -1078,19 +1087,25 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
+
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
-			if t1<=t0 then 
-				local delay = 3.2*machines_timer;
-				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
-				if t0<=t1 then -- dont set cool timeout if already set
-					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
-				end
-				return
-			elseif meta:get_string("infotext")~="" then 
-					meta:set_string("infotext","")
+			local T = meta:get_int("T"); -- temperature
+			
+			if t0>t1-machines_timer then -- activated before natural time
+				T=T+1;
+			else
+				if T>0 then T=T-1 end
 			end
+			meta:set_int("T",T);
 			meta:set_int("t",t1); -- update last activation time
+			
+			if T > 2 then -- overheat
+					minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
+					meta:set_string("infotext","overheat: temperature ".. T)
+					return
+			end
+			
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");local delay = meta:get_float("delay");
 			for i =1,n do
@@ -1099,6 +1114,8 @@ minetest.register_node("basic_machines:distributor", {
 			end
 			
 			local table,node;
+			local delay = minetest.get_meta(pos):get_float("delay");
+			
 			for i=1,n do
 				if active[i]~=0 then 
 					node = minetest.get_node(posf[i]);if not node.name then return end -- error
@@ -1109,7 +1126,6 @@ minetest.register_node("basic_machines:distributor", {
 						--ret = pcall(function() if not table.mesecons.effector then end end); -- exception handling to determine if structure exists
 													
 						local effector=table.mesecons.effector;
-						local delay = minetest.get_meta(pos):get_float("delay");
 						
 						if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
 								if delay>0 then
@@ -1135,19 +1151,27 @@ minetest.register_node("basic_machines:distributor", {
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
+
+			
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
-			if t1<=t0 then 
-				local delay = 3.2*machines_timer;
-				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
-				if t0<=t1 then -- dont set cool timeout if already set
-					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); 
-				end
-				return 
-			elseif meta:get_string("infotext")~="" then 
-					meta:set_string("infotext","")
+			local T = meta:get_int("T"); -- temperature
+			
+			if t0>t1-machines_timer then -- activated before natural time
+				T=T+1;
+			else
+				if T>0 then T=T-1 end
 			end
+			meta:set_int("T",T);
 			meta:set_int("t",t1); -- update last activation time
+			
+			if T > 2 then -- overheat
+					minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
+					meta:set_string("infotext","overheat: temperature ".. T)
+					return
+			end
+			
+			
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");
 			for i =1,n do
@@ -1156,6 +1180,7 @@ minetest.register_node("basic_machines:distributor", {
 			end
 			
 			local node, table
+			local delay = minetest.get_meta(pos):get_float("delay");
 			
 			for i=1,n do
 				if active[i]~=0 then
@@ -1165,7 +1190,7 @@ minetest.register_node("basic_machines:distributor", {
 					if table and table.mesecons and table.mesecons.effector then 
 		
 						local effector=table.mesecons.effector;
-						local delay = minetest.get_meta(pos):get_float("delay");
+						
 						if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
 							if delay>0 then
 								minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
