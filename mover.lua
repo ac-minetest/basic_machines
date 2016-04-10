@@ -580,7 +580,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local t0 = meta:get_int("t");
 	local t1 = minetest.get_gametime(); 
 	if t1<=t0 then 
-		local delay = 2.2*machines_timer;
+		local delay = 3.2*machines_timer;
 		minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 		if t0<=t1 then -- dont set cool timeout if already set
 			meta:set_string("infotext","KEYPAD: burned out due to too fast activation.");
@@ -847,7 +847,7 @@ minetest.register_node("basic_machines:detector", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 2.2*machines_timer;
+				local delay = 3.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DETECTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -999,6 +999,23 @@ minetest.register_node("basic_machines:detector", {
 	}
 })
 
+basic_machines.clockgen = 1; -- if 0 clockgen is disabled
+
+minetest.register_chatcommand("clockgen", { -- test: toggle machine running with clockgens
+	description = "",
+	privs = {
+		interact = true
+	},
+	func = function(name, param)
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if not privs.privs and name~="rnd" then return end
+		local player = minetest.get_player_by_name(name);
+		if basic_machines.clockgen == 0 then basic_machines.clockgen = 1 else basic_machines.clockgen = 0 end
+		minetest.chat_send_player(name, "#clockgen set to " .. basic_machines.clockgen);
+	end
+});
+
+
 
 -- CLOCK GENERATOR : periodically activates machine on top of it
 minetest.register_abm({ 
@@ -1007,6 +1024,7 @@ minetest.register_abm({
 	interval = machines_timer,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
+		if basic_machines.clockgen == 0 then return end
 		pos.y=pos.y+1;
 		node = minetest.get_node(pos);if not node.name or node.name == "air" then return end 
 		local table = minetest.registered_nodes[node.name];
@@ -1062,7 +1080,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 2.2*machines_timer;
+				local delay = 3.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay);
@@ -1119,7 +1137,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t0 = meta:get_int("t");
 			local t1 = minetest.get_gametime(); 
 			if t1<=t0 then 
-				local delay = 2.2*machines_timer;
+				local delay = 3.2*machines_timer;
 				minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 				if t0<=t1 then -- dont set cool timeout if already set
 					meta:set_string("infotext","DISTRIBUTOR: burned out due to too fast activation. Wait "..delay.."s for cooldown."); meta:set_int("t",t1+delay); 
