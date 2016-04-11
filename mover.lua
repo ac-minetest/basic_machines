@@ -10,7 +10,7 @@ local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals
-basic_machines.version = "04/10/2016b";
+basic_machines.version = "04/11/2016a";
 basic_machines.clockgen = 1; -- if 0 clockgen is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -351,8 +351,19 @@ minetest.register_node("basic_machines:mover", {
 					if times > 0 then
 						-- move objects with set velocity in target direction
 						obj:setvelocity(velocityv);
+						if obj:get_luaentity() then -- interaction with objects like carts
+							local luaent = obj:get_luaentity();
+							if luaent.name then -- just accelerate cart
+								if luaent.name == "carts:cart" then
+									luaent.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
+									fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
+									meta:set_string("infotext", "Mover block. Fuel "..fuel);
+									return;
+								end
+							end
+						end
 						--minetest.chat_send_all(" acceleration ".. minetest.pos_to_string(obj:getacceleration()));
-						obj:setacceleration({x=0,y=0,z=0});
+						--obj:setacceleration({x=0,y=0,z=0});
 						minetest.after(times, function () if obj then obj:setvelocity({x=0,y=0,z=0}); obj:moveto(pos2, false) end end);
 					else
 						obj:moveto(pos2, false)
@@ -553,7 +564,8 @@ minetest.register_node("basic_machines:mover", {
 		if not(target_chest) then
 			if not drop then minetest.set_node(pos2, {name = node1.name}); end
 			if drop then 
-				local stack = ItemStack(node1.name);minetest.add_item(pos2,stack) -- drops it
+				local stack = ItemStack(node1.name);
+				minetest.add_item(pos2,stack) -- drops it
 			end
 		end 
 		if not(source_chest) and not(harvest) then
@@ -957,6 +969,10 @@ minetest.register_node("basic_machines:detector", {
 					elseif mode == "object" and not obj:is_player() then
 						if obj:get_luaentity() then
 							detected_obj = obj:get_luaentity().itemstring or "";
+							if detected_obj == "" then 
+								detected_obj = obj:get_luaentity().name or "" 
+							end
+							
 							if detected_obj==node then trigger=true break end
 						end
 						if node=="" then trigger = true break end
