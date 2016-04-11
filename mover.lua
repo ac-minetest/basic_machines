@@ -77,10 +77,11 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_string("prefer", "");
 		meta:set_string("mode", "normal");
 		meta:set_float("upgrade", 1);
+		
+		local privs = minetest.get_player_privs(placer:get_player_name());
+		if privs.privs then meta:set_float("upgrade", -1); end -- means operation will be for free
+		
 		local inv = meta:get_inventory();inv:set_size("upgrade", 1*1);inv:set_size("filter", 1*1) 
-
-		
-		
 		local name = placer:get_player_name(); punchset[name].state = 0
 	end,
 	
@@ -173,6 +174,22 @@ minetest.register_node("basic_machines:mover", {
 			-- inv:set_stack("filter",1, ItemStack({name=itemname})) 
 			return 1;
 		end
+		
+		if listname == "upgrade" then
+			-- update upgrades
+			local meta = minetest.get_meta(pos);
+			local upgrade = 0;
+			local inv = meta:get_inventory();
+			if stack:get_name() == "default:mese" then
+			--inv:contains_item("upgrade", ItemStack({name="default:mese"})) then
+				upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
+				upgrade = upgrade + stack:get_count();
+				if upgrade > 10 then upgrade = 10 end -- not more than 10
+				meta:set_float("upgrade",upgrade+1);
+			end	
+			
+		end
+		
 		return stack:get_count();
 	end,
 	
@@ -250,6 +267,7 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			local upgrade =  meta:get_float("upgrade") or 1;fuel_cost = fuel_cost/upgrade; -- upgrade decreases fuel cost
+			if upgrade == -1 then fuel_cost = 0 end -- free operation 
 			
 		
 			-- FUEL OPERATIONS
@@ -1674,15 +1692,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				 meta:set_string("inv2",fields.inv2);
 			end
 
-			-- update upgrades
-			local upgrade = 0;
-			local inv = meta:get_inventory();
-			if inv:contains_item("upgrade", ItemStack({name="default:mese"})) then
-				upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
-				if upgrade > 10 then upgrade = 10 end -- not more than 10
-				meta:set_float("upgrade",upgrade+1);
-			end		
-			
+		
 			local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);
 			local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
 			local z = z0; z0 = math.min(z,z1); z1 = math.max(z,z1);
