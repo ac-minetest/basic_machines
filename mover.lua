@@ -213,9 +213,14 @@ minetest.register_node("basic_machines:mover", {
 			end
 			
 			if mreverse ~= 0 then -- reverse pos1, pos2
-				local post = {x=pos1.x,y=pos1.y,z=pos1.z};
-				pos1 = {x=pos2.x,y=pos2.y,z=pos2.z};
-				pos2 = {x=post.x,y=post.y,z=post.z};
+				if mode == "object" then
+					x0 = pos2.x-pos.x; y0 = pos2.y-pos.y; z0 = pos2.z-pos.z;
+					pos2 = {x=pos1.x,y=pos1.y,z=pos1.z};
+				else
+					local post = {x=pos1.x,y=pos1.y,z=pos1.z};
+					pos1 = {x=pos2.x,y=pos2.y,z=pos2.z};
+					pos2 = {x=post.x,y=post.y,z=post.z};
+				end
 			end
 			
 
@@ -322,7 +327,7 @@ minetest.register_node("basic_machines:mover", {
 				return
 			end
 			
-			local times = tonumber(prefer) or 0; if times > 10 then times = 10 elseif times<0 then times = 0 end
+			local times = tonumber(prefer) or 0; if times > 20 then times = 20 elseif times<0.2 then times = 0 end
 			local velocityv;
 			if times~=0 then
 				velocityv = { x = pos2.x-x0-pos.x, y = pos2.y-y0-pos.y, z = pos2.z-z0-pos.z};
@@ -855,7 +860,7 @@ minetest.register_node("basic_machines:detector", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-machines_timer then -- activated before natural time
+			if t0>t1-1 then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
@@ -1092,7 +1097,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-machines_timer then -- activated before natural time
+			if t0>t1-1 then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
@@ -1157,7 +1162,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-machines_timer then -- activated before natural time
+			if t0>t1-1 then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
