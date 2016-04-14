@@ -155,7 +155,6 @@ minetest.register_node("basic_machines:enviro", {
 
 local reset_player_physics = function(player)
 	if player then
-	
 		player:set_physics_override({speed=1,jump=0.6,gravity=0.2,sneak=true}) -- value set for extreme test space spawn
 		local skybox = enviro.skyboxes["space"]; -- default skybox is "default"
 		player:set_sky(0,skybox["type"],skybox["tex"]);
@@ -163,9 +162,30 @@ local reset_player_physics = function(player)
 end
 
 
--- restore default values/skybox on join/respawn of player
+-- restore default values/skybox on respawn of player
 minetest.register_on_respawnplayer(reset_player_physics)
---minetest.register_on_joinplayer(reset_player_physics)
+
+-- when player joins, check where he is and adjust settings
+minetest.register_on_joinplayer(
+	function(player)
+		minetest.after(1, function()
+			if player then
+				local pos = player:getpos(); if not pos then return end
+				if pos.y > 9000 then -- is player in space or not?
+					player:set_physics_override({speed=1,jump=0.6,gravity=0.2,sneak=true}) -- value set for extreme test space spawn
+					local skybox = enviro.skyboxes["space"]; -- default skybox is "default"
+					player:set_sky(0,skybox["type"],skybox["tex"]);
+				else
+					player:set_physics_override({speed=1,jump=1,gravity=1,sneak=true}) -- value set for extreme test space spawn
+					local skybox = enviro.skyboxes["default"]; -- default skybox is "default"
+					player:set_sky(0,skybox["type"],skybox["tex"]);
+				end
+			
+			end
+		
+		end)
+	end
+)
 
 
 -- RECIPE: extremely expensive
