@@ -180,7 +180,10 @@ minetest.register_node("basic_machines:mover", {
 			local meta = minetest.get_meta(pos);
 			local upgrade = 0;
 			local inv = meta:get_inventory();
-			if stack:get_name() == "default:mese" then
+			
+			local upgrade_name = "default:mese";
+			if meta:get_int("elevator")==1 then upgrade_name = "default:diamondblock" end
+			if stack:get_name() == upgrade_name then
 			--inv:contains_item("upgrade", ItemStack({name="default:mese"})) then
 				upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
 				upgrade = upgrade + stack:get_count();
@@ -1486,6 +1489,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 						else
 							elevator_mode=true;
 							meta:set_int("upgrade",upgrade+1);
+							meta:set_int("elevator",1);
 						end
 						
 					end
