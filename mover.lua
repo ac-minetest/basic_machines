@@ -257,17 +257,27 @@ minetest.register_node("basic_machines:mover", {
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
 			local fuel_cost = (basic_machines.hardness[node1.name] or 1);
+			local upgrade =  meta:get_float("upgrade") or 1;
 			
 			if node1.name == "default:chest_locked" or mode == "inventory" then fuel_cost = basic_machines.hardness[prefer] or 1 end;
 			
 			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
-			if mode == "object" 
-				then fuel_cost=fuel_cost*0.1; 
-				elseif mode == "inventory" then fuel_cost=fuel_cost*0.1;
+			if mode == "object" then  
+				fuel_cost=fuel_cost*0.1; 
+				if pos2.x==pos1.x and pos2.z==pos1.z then -- check if elevator mode
+					local requirement = math.floor(math.abs(pos2.y-pos.y)/100)+1;
+					if upgrade-1<requirement then
+							meta:set_string("infotext","MOVER: Elevator error. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
+							return;
+					end
+					fuel_cost = 0 
+				end
+			elseif mode == "inventory" then 
+				fuel_cost=fuel_cost*0.1;
 			end
 			
-			local upgrade =  meta:get_float("upgrade") or 1;fuel_cost = fuel_cost/upgrade; -- upgrade decreases fuel cost
-			if upgrade == -1 then fuel_cost = 0 end -- free operation 
+			fuel_cost = fuel_cost/upgrade; -- upgrade decreases fuel cost
+			if upgrade == -1 then fuel_cost = 0 end -- free operation for admin
 			
 		
 			-- FUEL OPERATIONS
@@ -688,10 +698,10 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	-- pass the signal on to target
 	if mode == 2 then -- on
 		if not effector.action_on then return end
-		effector.action_on(tpos,node,ttl); -- run
+		effector.action_on(tpos,node,ttl-1); -- run
 	elseif mode == 1 then -- off
 		if not effector.action_off then return end
-		effector.action_off(tpos,node,ttl); -- run
+		effector.action_off(tpos,node,ttl-1); -- run
 	end
 			
 end
@@ -1455,9 +1465,38 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 		if punchset[name].state == 3 then 
 			if punchset[name].node~="basic_machines:mover" then punchset[name].state = 0 return end
 			local privs = minetest.get_player_privs(puncher:get_player_name());
-			if not privs.privs and (math.abs(punchset[name].pos.x - pos.x)>range or math.abs(punchset[name].pos.y - pos.y)>range or math.abs(punchset[name].pos.z - pos.z)>range) then
-					minetest.chat_send_player(name, "MOVER: Punch closer to mover. aborting.")
-					punchset[name].state = 0; return
+			
+			local elevator_mode = false;
+			if punchset[name].pos.x == pos.x and punchset[name].pos.z == pos.z then -- check if elevator mode
+				if math.abs(punchset[name].pos.y-pos.y)>10 then -- trying to make elevator?
+
+					local meta = minetest.get_meta(punchset[name].pos);
+					if meta:get_string("mode")=="object" then -- only if object mode
+						--count number of diamond blocks to determine elevator can be set up with this height distance
+						local inv = meta:get_inventory();
+						local upgrade = 0;
+						if inv:get_stack("upgrade", 1):get_name() == "default:diamondblock" then
+							upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
+						end
+						
+						local requirement = math.floor(math.abs(punchset[name].pos.y-pos.y)/100)+1;
+						if upgrade<requirement then
+							minetest.chat_send_player(name, "MOVER: Error while trying to make elevator. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
+							punchset[name].state = 0; return
+						else
+							elevator_mode=true;
+							meta:set_int("upgrade",upgrade+1);
+						end
+						
+					end
+				
+				end
+				
+			end
+			
+			if not privs.privs and not elevator_mode and (math.abs(punchset[name].pos.x - pos.x)>range or math.abs(punchset[name].pos.y - pos.y)>range or math.abs(punchset[name].pos.z - pos.z)>range) then
+				minetest.chat_send_player(name, "MOVER: Punch closer to mover. aborting.")
+				punchset[name].state = 0; return
 			end
 			
 			punchset[name].pos2 = {x=pos.x,y=pos.y,z=pos.z}; punchset[name].state = 0;
@@ -1465,25 +1504,26 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			
 			minetest.chat_send_player(name, "MOVER: End position for mover set.")
 			
-			local x = punchset[name].pos1.x-punchset[name].pos.x;
-			local y = punchset[name].pos1.y-punchset[name].pos.y;
-			local z = punchset[name].pos1.z-punchset[name].pos.z;
+			local x0 = punchset[name].pos1.x-punchset[name].pos.x;
+			local y0 = punchset[name].pos1.y-punchset[name].pos.y;
+			local z0 = punchset[name].pos1.z-punchset[name].pos.z;
 			local meta = minetest.get_meta(punchset[name].pos);
-			meta:set_int("x0",x);meta:set_int("y0",y);meta:set_int("z0",z);
 			
-			x = punchset[name].pos11.x-punchset[name].pos.x;
-			y = punchset[name].pos11.y-punchset[name].pos.y;
-			z = punchset[name].pos11.z-punchset[name].pos.z;
-			meta:set_int("x1",x);meta:set_int("y1",y);meta:set_int("z1",z);
 			
-			x = punchset[name].pos2.x-punchset[name].pos.x;
-			y = punchset[name].pos2.y-punchset[name].pos.y;
-			z = punchset[name].pos2.z-punchset[name].pos.z;
-			meta:set_int("x2",x);meta:set_int("y2",y);meta:set_int("z2",z);
 			
-			local x0,y0,z0,x1,y1,z1;
-			x0 = meta:get_int("x0");y0 = meta:get_int("y0");z0 = meta:get_int("z0");
-			x1 = meta:get_int("x1");y1 = meta:get_int("y1");z1 = meta:get_int("z1");
+			local x1 = punchset[name].pos11.x-punchset[name].pos.x;
+			local y1 = punchset[name].pos11.y-punchset[name].pos.y;
+			local z1 = punchset[name].pos11.z-punchset[name].pos.z;
+			
+			
+			local x2 = punchset[name].pos2.x-punchset[name].pos.x;
+			local y2 = punchset[name].pos2.y-punchset[name].pos.y;
+			local z2 = punchset[name].pos2.z-punchset[name].pos.z;
+
+			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
+			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
+			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
+			
 			meta:set_int("pc",0); meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
 			return
 		end
