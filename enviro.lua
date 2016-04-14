@@ -155,8 +155,9 @@ minetest.register_node("basic_machines:enviro", {
 
 local reset_player_physics = function(player)
 	if player then
-		player:set_physics_override({speed=1,jump=1,gravity=1,sneak=true})
-		local skybox = enviro.skyboxes["default"]; -- default skybox is "default"
+	
+		player:set_physics_override({speed=1,jump=0.6,gravity=0.2,sneak=true}) -- value set for extreme test space spawn
+		local skybox = enviro.skyboxes["space"]; -- default skybox is "default"
 		player:set_sky(0,skybox["type"],skybox["tex"]);
 	end
 end
