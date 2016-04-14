@@ -165,7 +165,7 @@ end
 
 -- restore default values/skybox on join/respawn of player
 minetest.register_on_respawnplayer(reset_player_physics)
-minetest.register_on_joinplayer(reset_player_physics)
+--minetest.register_on_joinplayer(reset_player_physics)
 
 
 -- RECIPE: extremely expensive
