@@ -10,7 +10,7 @@ local machines_timer = 5 -- main timestep
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals
-basic_machines.version = "04/14/2016a";
+basic_machines.version = "04/14/2016b";
 basic_machines.clockgen = 1; -- if 0 clockgen is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
