@@ -1,4 +1,5 @@
 local machines_timer=5
+local machines_minstep = 1
 
 -- BATTERY
 
@@ -135,7 +136,7 @@ minetest.register_node("basic_machines:battery", {
 					local t0 = meta:get_int("ftime"); -- furnace time
 					local t1 = minetest.get_gametime();
 					
-					if t1-t0<1 then  -- to prevent too quick furnace acceleration, punishment is cooking reset
+					if t1-t0<machines_minstep then  -- to prevent too quick furnace acceleration, punishment is cooking reset
 						fmeta:set_float("src_time",0); return 
 					end
 					meta:set_int("ftime",t1);
@@ -143,7 +144,7 @@ minetest.register_node("basic_machines:battery", {
 					
 					--if fuel_time>4 then  --  accelerated cooking
 					local src_time = fmeta:get_float("src_time") or 0
-					energy = energy - 0.5; -- use energy to accelerate burning
+					energy = energy - 0.25; -- use energy to accelerate burning
 					fmeta:set_float("src_time",src_time+5); 
 					--end
 					
