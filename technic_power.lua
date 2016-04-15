@@ -124,7 +124,6 @@ minetest.register_node("basic_machines:battery", {
 			local meta = minetest.get_meta(pos);
 			local energy = meta:get_float("energy");
 			local capacity = meta:get_float("capacity");
-			local upgrade = meta:get_int("upgrade");
 			
 			-- try to power furnace on top of it
 			if energy>=1 then -- need at least 1 energy
@@ -142,11 +141,11 @@ minetest.register_node("basic_machines:battery", {
 					end
 					meta:set_int("ftime",t1);
 					
-					
+					local upgrade = meta:get_int("upgrade");upgrade=1+upgrade*0.05;
 					--if fuel_time>4 then  --  accelerated cooking
 					local src_time = fmeta:get_float("src_time") or 0
-					energy = energy - 0.25; -- use energy to accelerate burning
-					fmeta:set_float("src_time",src_time+machines_timer*(1+upgrade*0.1)); -- with max 99 upgrades battery furnace works 10.9x faster
+					energy = energy - 0.25*upgrade; -- use energy to accelerate burning
+					fmeta:set_float("src_time",src_time+machines_timer*upgrade); -- with max 99 upgrades battery furnace works 6x faster
 					--end
 					
 					if fuel_time>40 or fuel_totaltime == 0 or node=="default:furnace" then -- must burn for at least 40 secs or furnace out of fuel
