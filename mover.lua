@@ -7,7 +7,7 @@
 
 --  *** SETTINGS *** --
 local machines_timer = 5 -- main timestep
-local machines_minstep = 1 -- minimal allowed activation timestep
+local machines_minstep = 1 -- minimal allowed activation timestep, if faster machines overheat
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
@@ -631,7 +631,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local t1 = minetest.get_gametime(); 
 	local T = meta:get_int("T"); -- temperature
 	
-	if t0>t1-1 then -- activated before natural time
+	if t0>t1-machines_minstep then -- activated before natural time
 		T=T+1;
 	else
 		if T>0 then T=T-1 end
@@ -904,7 +904,7 @@ minetest.register_node("basic_machines:detector", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-1 then -- activated before natural time
+			if t0>t1-machines_minstep then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
@@ -1145,7 +1145,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-1 then -- activated before natural time
+			if t0>t1-machines_minstep then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
@@ -1210,7 +1210,7 @@ minetest.register_node("basic_machines:distributor", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-1 then -- activated before natural time
+			if t0>t1-machines_minstep then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
