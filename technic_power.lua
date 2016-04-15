@@ -135,25 +135,31 @@ minetest.register_node("basic_machines:battery", {
 					local t0 = meta:get_int("ftime"); -- furnace time
 					local t1 = minetest.get_gametime();
 					
-					if t1-t0<machines_timer then return end -- to prevent too quick furnace acceleration
-					
-					
-					meta:set_int("ftime",t1);
-					if fuel_time>4 then  -- twice as fast cooking
-						local src_time = fmeta:get_float("src_time") or 0
-						fmeta:set_float("src_time",src_time+5); 
+					if t1-t0<1 then  -- to prevent too quick furnace acceleration, punishment is cooking reset
+						fmeta:set_float("src_time",0); return 
 					end
+					meta:set_int("ftime",t1);
+					
+					
+					--if fuel_time>4 then  --  accelerated cooking
+					local src_time = fmeta:get_float("src_time") or 0
+					energy = energy - 0.5; -- use energy to accelerate burning
+					fmeta:set_float("src_time",src_time+5); 
+					--end
 					
 					if fuel_time>40 or fuel_totaltime == 0 or node=="default:furnace" then -- must burn for at least 40 secs or furnace out of fuel
 						
 						fmeta:set_float("fuel_totaltime",60);fmeta:set_float("fuel_time",0) -- add 60 second burn time to furnace
-						energy=energy-1; -- use up one energy
-						meta:set_float("energy",energy);
+						energy=energy-0.5; -- use up energy to add fuel
+						
 						-- make furnace start if not already started
 						if node~="default:furnace_active" then machines_activate_furnace(pos) end
 						-- update energy display
-						meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 					end
+					
+					meta:set_float("energy",energy);
+					meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
+					
 					
 					if energy>=1 then -- no need to recharge yet, will still work next time
 						return 
