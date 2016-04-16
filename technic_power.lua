@@ -141,7 +141,7 @@ minetest.register_node("basic_machines:battery", {
 					end
 					meta:set_int("ftime",t1);
 					
-					local upgrade = meta:get_int("upgrade");upgrade=1+upgrade*0.05;
+					local upgrade = meta:get_int("upgrade");upgrade=upgrade*0.1;
 					--if fuel_time>4 then  --  accelerated cooking
 					local src_time = fmeta:get_float("src_time") or 0
 					energy = energy - 0.25*upgrade; -- use energy to accelerate burning
