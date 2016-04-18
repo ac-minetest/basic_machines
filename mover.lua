@@ -33,7 +33,11 @@ basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["d
 ["default:acacia_tree"]=true,["default:papyrus"]=true};
 				
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
-basic_machines.harvest_table = {["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 4"}};
+basic_machines.harvest_table = {
+["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 3"}, -- example harvesting mese crystals
+["mese_crystals:mese_crystal_ore3"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 2"},
+["mese_crystals:mese_crystal_ore2"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 1"}
+};
 
 -- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = plant_name
 basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1",

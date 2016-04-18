@@ -77,7 +77,7 @@ local grinder_process = function(pos)
 			if supply==0 then -- Take fuel from fuel list if no supply available
 				inv:set_stack("fuel", 1, afterfuel.items[1])
 				fueladd.time=fueladd.time*0.1/4 -- thats 1 for coal
-				minetest.chat_send_all("FUEL ADD TIME " .. fueladd.time)
+				--minetest.chat_send_all("FUEL ADD TIME " .. fueladd.time)
 			end
 		end 
 		if fueladd.time>0 then 
