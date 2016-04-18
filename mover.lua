@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "04/15/2016a";
+basic_machines.version = "04/18/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -441,15 +441,34 @@ minetest.register_node("basic_machines:mover", {
 		
 		-- inventory mode
 		if mode == "inventory" then
-					if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
+					--if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
 					
+					local stack, meta1,inv1;
+					if prefer == "" then -- if prefer == "" then just pick one item from chest to transfer
+						meta1 = minetest.get_meta(pos1);
+						inv1 = meta1:get_inventory();
+						if inv1:is_empty(invName1) then return end -- nothing to move
+						local size = inv1:get_size(invName1);
+						
+						local found = false;
+						for i = 1, size do -- xxx find item to move in inventory
+							stack = inv1:get_stack(invName1, i);
+							if not stack:is_empty() then found = true break end
+						end
+						if not found then return end
+					end
+
 					-- can we move item to target inventory?
-					local stack = ItemStack(prefer);
+					if prefer~="" then
+						stack = ItemStack(prefer);
+					end
 					local meta2 = minetest.get_meta(pos2); local inv2 = meta2:get_inventory();
 					if not inv2:room_for_item(invName2, stack) then	return end
 					
 					-- add item to target inventory and remove item from source inventory
-					local meta1 = minetest.get_meta(pos1); local inv1 = meta1:get_inventory();
+					if prefer~="" then
+						meta1 = minetest.get_meta(pos1); inv1 = meta1:get_inventory();
+					end
 					
 					if inv1:contains_item(invName1, stack) then
 						inv2:add_item(invName2, stack);
