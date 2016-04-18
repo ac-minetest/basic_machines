@@ -8,11 +8,11 @@ basic_machines.grinder_recipes = {
 	["default:stone"] = {2,"default:sand"},
 	["default:cobble"] = {1,"default:gravel"},
 	["default:gravel"] = {0.5,"default:dirt"},
-	["es:aikerum_crystal"] ={32,"es:aikerum_dust 2"}, -- added for es mod
-	["es:ruby_crystal"] = {32,"es:ruby_dust 2"},
-	["es:emerald_crystal"] = {32,"es:emerald_dust 2"},
-	["es:purpellium_lump"] = {32,"es:purpellium_dust 2"},
-	["default:obsidian_shard"] = {256,"default:lava_source"},
+	["es:aikerum_crystal"] ={16,"es:aikerum_dust 2"}, -- added for es mod
+	["es:ruby_crystal"] = {16,"es:ruby_dust 2"},
+	["es:emerald_crystal"] = {16,"es:emerald_dust 2"},
+	["es:purpellium_lump"] = {16,"es:purpellium_dust 2"},
+	["default:obsidian_shard"] = {199,"default:lava_source"},
 };
 
 -- es gems dust cooking
@@ -227,4 +227,4 @@ end
 register_dust("iron","default:iron_lump","default:steel_ingot",4,10)
 register_dust("copper","default:copper_lump","default:copper_ingot",4,10)
 register_dust("gold","default:gold_lump","default:gold_ingot",4,10)
-register_dust("diamond","default:diamond","default:diamond",32,1000) -- 0.3hr cooking time to make diamond!
+register_dust("diamond","default:diamond","default:diamond",16,1000) -- 0.3hr cooking time to make diamond!

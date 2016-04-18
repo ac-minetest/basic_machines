@@ -366,13 +366,13 @@ minetest.register_abm({
 		
 		if upgrade >= 99 then 
 			crystal = "basic_machines:power_rod"
-			text = "upgrade level 99: generating power rod";
+			text = "high upgrade level: power rod";
 			elseif upgrade >=20 then 
 				crystal ="basic_machines:power_block"
-				text = "upgrade level 20: generating power block";
+				text = "medium upgrade level 20: power block";
 			else 
 				crystal ="basic_machines:power_cell"
-				text = "upgrade level 0: generating power cell";
+				text = "low upgrade level: power cell";
 		end
 		local morecrystal = ItemStack(crystal)
 		stack:add_item(morecrystal);
