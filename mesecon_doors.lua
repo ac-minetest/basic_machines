@@ -6,6 +6,8 @@ local function door_signal_overwrite(name)
 		table2[i] = v
 	end
 	
+	local door_on_rightclick = table.on_rightclick;
+	
 	-- this will make door toggle whenever its used
 	table2.mesecons = {effector = {
 		action_on  =  function (pos,node,ttl)
@@ -14,7 +16,7 @@ local function door_signal_overwrite(name)
 			-- create virtual player
 			local clicker = {}; 
 			function clicker:get_player_name() return name end; -- define method get_player_name() returning owner name so that we can call on_rightclick function in door
-			table.on_rightclick(pos, node, clicker)
+			if door_on_rightclick then  door_on_rightclick(pos, node, clicker) end -- safety if it doesnt exist
 			--minetest.swap_node(pos, {name = "protector:trapdoor", param1 = node.param1, param2 = node.param2})
 		end
 		}
