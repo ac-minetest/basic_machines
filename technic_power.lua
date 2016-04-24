@@ -154,7 +154,7 @@ minetest.register_node("basic_machines:battery", {
 						energy=energy-0.5; -- use up energy to add fuel
 						
 						-- make furnace start if not already started
-						if node~="default:furnace_active" then machines_activate_furnace(pos) end
+						if node~="default:furnace_active" and machines_activate_furnace then machines_activate_furnace(pos) end
 						-- update energy display
 					end
 					
