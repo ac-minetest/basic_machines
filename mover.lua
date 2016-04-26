@@ -48,8 +48,11 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 ["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
 ["farming:seed_wheat"]="farming:wheat_1"}
 
---DEPRECATED: fuels used to power mover, now battery is used
-basic_machines.fuels = {["default:coal_lump"]=30,["default:cactus"]=5,["default:tree"]=10,["default:jungletree"]=12,["default:pinetree"]=12,["default:acacia_tree"]=10,["default:coalblock"]=500,["default:lava_source"]=5000,["basic_machines:charcoal"]=20}
+-- list of object that cant be teleported with mover
+basic_machines.no_teleport_table = {
+["itemframes:item"] = true,
+["signs:text"] = true
+}
 
 --  *** END OF SETTINGS *** --
 
@@ -67,7 +70,7 @@ end)
 -- MOVER --
 minetest.register_node("basic_machines:mover", {
 	description = "Mover - universal digging/harvesting/teleporting/transporting machine, its upgradeable.",
-	tiles = {"compass_top.png","default_furnace_top.png", "basic_machine_side.png","basic_machine_side.png","basic_machine_side.png","basic_machine_side.png"},
+	tiles = {"compass_top.png","default_furnace_top.png", "basic_machine_mover_side.png","basic_machine_mover_side.png","basic_machine_mover_side.png","basic_machine_mover_side.png"},
 	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
@@ -346,13 +349,16 @@ minetest.register_node("basic_machines:mover", {
 				for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
 					local lua_entity = obj:get_luaentity() 
 					if not obj:is_player() and lua_entity and lua_entity.itemstring ~= "" then
-						-- put item in chest
-						local stack = ItemStack(lua_entity.itemstring) 
-						if inv:room_for_item("main", stack) then
-							teleport_any = true;
-							inv:add_item("main", stack);
+						local detected_obj = lua_entity.name or "" 
+						if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list 
+							-- put item in chest
+							local stack = ItemStack(lua_entity.itemstring) 
+							if inv:room_for_item("main", stack) then
+								teleport_any = true;
+								inv:add_item("main", stack);
+							end
+							obj:remove();
 						end
-						obj:remove();
 					end
 				end
 				if teleport_any then
@@ -455,7 +461,7 @@ minetest.register_node("basic_machines:mover", {
 						local size = inv1:get_size(invName1);
 						
 						local found = false;
-						for i = 1, size do -- xxx find item to move in inventory
+						for i = 1, size do -- find item to move in inventory
 							stack = inv1:get_stack(invName1, i);
 							if not stack:is_empty() then found = true break end
 						end
@@ -594,7 +600,6 @@ minetest.register_node("basic_machines:mover", {
 			
 		end	
 		
-			
 		
 		minetest.sound_play("transporter", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 		

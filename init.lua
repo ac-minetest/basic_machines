@@ -20,12 +20,12 @@ basic_machines = {};
 
 
 dofile(minetest.get_modpath("basic_machines").."/mark.lua") -- used for markings, borrowed and adapted from worldedit mod
-dofile(minetest.get_modpath("basic_machines").."/mover.lua")
+dofile(minetest.get_modpath("basic_machines").."/mover.lua") -- mover, detector, keypad, distributor
 dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic power for mover
 dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
 dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
---dofile(minetest.get_modpath("basic_machines").."/enviro.lua") -- uncomment this to make it work
+dofile(minetest.get_modpath("basic_machines").."/enviro.lua") -- uncomment spawn/join code to change global physics, disabled by default
 
 
 --dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
