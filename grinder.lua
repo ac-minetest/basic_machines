@@ -105,6 +105,8 @@ local grinder_process = function(pos)
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
+		minetest.sound_play("grinder", {pos=pos,gain=0.5,max_hear_distance = 8,})
+		
 		fuel = fuel-def[1]; -- burn fuel
 		meta:set_float("fuel",fuel);
 		meta:set_string("infotext", "fuel status " .. fuel);
