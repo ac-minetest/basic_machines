@@ -102,7 +102,7 @@ local recycler_process = function(pos)
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
-		minetest.sound_play("recycler", {pos=pos,gain=0.5,max_hear_distance = 8,})
+		minetest.sound_play("recycler", {pos=pos,gain=0.5,max_hear_distance = 16,})
 		
 		
 		fuel = fuel-1; -- burn fuel on succesful operation
