@@ -16,6 +16,7 @@ local function door_signal_overwrite(name)
 			-- create virtual player
 			local clicker = {}; 
 			function clicker:get_player_name() return name end; -- define method get_player_name() returning owner name so that we can call on_rightclick function in door
+			function clicker:is_player() return false end; -- method needed for mods that check this
 			if door_on_rightclick then  door_on_rightclick(pos, node, clicker) end -- safety if it doesnt exist
 			--minetest.swap_node(pos, {name = "protector:trapdoor", param1 = node.param1, param2 = node.param2})
 		end
