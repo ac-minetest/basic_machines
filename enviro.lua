@@ -213,7 +213,7 @@ minetest.register_globalstep(function(dtime)
 					if not populated then -- do damage if player found not close to protectors
 						local hp = player:get_hp();
 						local privs = minetest.get_player_privs(name);
-						if hp>0 and not privs.privs then
+						if hp>0 and not privs.kick then
 							player:set_hp(hp-10); -- dead in 20/10 = 2 events
 							minetest.chat_send_player(name,"WARNING: in space you must stay close to spawn or protected areas");
 						end
@@ -227,6 +227,51 @@ end)
 
 -- END OF SPACE CODE
 
+
+-- AIR EXPERIMENT
+-- minetest.register_node("basic_machines:air", {
+	-- description = "enables breathing in space",
+	-- drawtype = "liquid",
+	-- tiles =  {"default_water_source_animated.png"},
+	
+	-- drawtype = "glasslike",
+	-- paramtype = "light",
+	-- alpha =  150,
+	-- sunlight_propagates = true, -- Sunlight shines through
+	-- walkable     = false, -- Would make the player collide with the air node
+	-- pointable    = false, -- You can't select the node
+	-- diggable     = false, -- You can't dig the node
+	-- buildable_to = true,
+	-- drop = "",
+	-- groups = {not_in_creative_inventory=1},
+	-- after_place_node = function(pos, placer, itemstack, pointed_thing) 
+		-- local r = 3;
+		-- for i = -r,r do
+			-- for j = -r,r do
+				-- for k = -r,r do
+					-- local p = {x=pos.x+i,y=pos.y+j,z=pos.z+k};
+					-- if minetest.get_node(p).name == "air" then
+						-- minetest.set_node(p,{name = "basic_machines:air"})
+					-- end
+				-- end
+			-- end
+		-- end
+	-- end
+	
+-- })
+
+-- minetest.register_abm({ 
+	-- nodenames = {"basic_machines:air"},
+	-- neighbors = {"air"},
+	-- interval = 10,
+	-- chance = 1,
+	-- action = function(pos, node, active_object_count, active_object_count_wider)
+			-- minetest.set_node(pos,{name = "air"})
+		-- end
+	-- });
+
+
+	
 
 -- RECIPE: extremely expensive
 
