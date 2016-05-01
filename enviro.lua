@@ -212,12 +212,14 @@ minetest.register_globalstep(function(dtime)
 					local populated = minetest.find_node_near(pos, 5, "protector:protect");
 					if not populated then -- do damage if player found not close to protectors
 						local hp = player:get_hp();
-						if hp>0 then
+						local privs = minetest.get_player_privs(name);
+						if hp>0 and not privs.privs then
 							player:set_hp(hp-10); -- dead in 20/10 = 2 events
 							minetest.chat_send_player(name,"WARNING: in space you must stay close to spawn or protected areas");
 						end
 					end
 				end
+				
 			end
 		end
 	end
