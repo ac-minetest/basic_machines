@@ -229,4 +229,12 @@ end
 register_dust("iron","default:iron_lump","default:steel_ingot",4,10)
 register_dust("copper","default:copper_lump","default:copper_ingot",4,10)
 register_dust("gold","default:gold_lump","default:gold_ingot",4,10)
+register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,1500)
+register_dust("silver","moreores:silver_lump","moreores:silver_ingot",4,15)
+register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,10)
+
 register_dust("diamond","default:diamond","default:diamond",16,1000) -- 0.3hr cooking time to make diamond!
+
+
+
+
