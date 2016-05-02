@@ -27,6 +27,12 @@ basic_machines.hardness["default:river_water_source"]=21890.;
 basic_machines.hardness["farming:wheat_8"]=1;basic_machines.hardness["farming:cotton_8"]=1;
 basic_machines.hardness["farming:seed_wheat"]=0.5;basic_machines.hardness["farming:seed_cotton"]=0.5;
 
+-- digging mese crystals more expensive
+basic_machines.hardness["mese_crystals:mese_crystal_ore1"] = 10;
+basic_machines.hardness["mese_crystals:mese_crystal_ore2"] = 10;
+basic_machines.hardness["mese_crystals:mese_crystal_ore3"] = 10;
+basic_machines.hardness["mese_crystals:mese_crystal_ore4"] = 10;
+
 
 -- define which nodes are dug up completely, like a tree
 basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,
@@ -34,9 +40,10 @@ basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["d
 				
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {
-["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 3"}, -- example harvesting mese crystals
-["mese_crystals:mese_crystal_ore3"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 2"},
-["mese_crystals:mese_crystal_ore2"] = {"mese_crystals:mese_crystal_ore1", "es:mesecook_crystal 1"}
+["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 3"}, -- example harvesting mese crystals
+["mese_crystals:mese_crystal_ore3"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 2"},
+["mese_crystals:mese_crystal_ore2"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 1"},
+["mese_crystals:mese_crystal_ore1"] = {"mese_crystals:mese_crystal_ore1", ""}
 };
 
 -- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = plant_name
