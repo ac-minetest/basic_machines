@@ -728,10 +728,24 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local tpos = {x=x0,y=y0,z=z0};
 	local node = minetest.get_node(tpos);if not node.name then return end -- error
 	local text = meta:get_string("text"); 
-	if text ~= "" then -- set text on target sign
+	
+	if text ~= "" then -- set text on target node
+		if string.byte(text) == 33 then -- starts with !, then we send chat text to all nearby players, radius 5
+			text = string.sub(text,2) ; if not text or text == "" then return end
+			local players = minetest.get_connected_players();
+			for _,player in pairs(players) do
+				local pos1 = player:getpos();
+				local dist = math.sqrt((pos1.x-tpos.x)^2 + (pos1.y-tpos.y)^2 + (pos1.z-tpos.z)^2 );
+				if dist<=5 then
+					minetest.chat_send_player(player:get_player_name(), text)
+				end
+			end
+			return
+		end
+		
 		local tmeta = minetest.get_meta(tpos);if not tmeta then return end
 		tmeta:set_string("infotext", text);
-		if node.name == "default:sign_wall_wood" then -- update text on signs with signs_lib
+		if basic_machines.signs[node.name] then -- update text on signs with signs_lib
 			tmeta:set_string("text",text);
 			local table = minetest.registered_nodes[node.name];
 			if not table.on_punch then return end -- error
@@ -739,6 +753,22 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 				-- signs_lib.update_sign(pos)
 			-- end
 			table.on_punch(tpos, node, nil);			
+			return
+		end
+		
+		if node.name == "basic_machines:keypad" then -- special modify of target keypad text and change its target
+			local ttext = tmeta:get_string("text");
+			x0=tmeta:get_int("x0");y0=tmeta:get_int("y0");z0=tmeta:get_int("z0");
+			x0=tpos.x+x0;y0=tpos.y+y0;z0=tpos.z+z0;
+			tpos = {x=x0,y=y0,z=z0};
+			if string.byte(ttext) == 35 then -- target keypad's text starts with # ( ascii code 35)
+				ttext =string.sub(ttext,2); if not ttext or ttext == "" then return end
+				ttext = string.gsub(ttext, "#", text); -- replace every # in ttext with text
+				
+				-- set target keypad's target's text
+				tmeta = minetest.get_meta(tpos);if not tmeta then return end
+				tmeta:set_string("infotext", ttext);
+			end
 			return
 		end
 		
