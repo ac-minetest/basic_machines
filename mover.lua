@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "05/02/2016a";
+basic_machines.version = "05/03/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -761,9 +761,9 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			x0=tmeta:get_int("x0");y0=tmeta:get_int("y0");z0=tmeta:get_int("z0");
 			x0=tpos.x+x0;y0=tpos.y+y0;z0=tpos.z+z0;
 			tpos = {x=x0,y=y0,z=z0};
-			if string.byte(ttext) == 35 then -- target keypad's text starts with # ( ascii code 35)
+			if string.byte(ttext) == 64 then -- target keypad's text starts with @ ( ascii code 64)
 				ttext =string.sub(ttext,2); if not ttext or ttext == "" then return end
-				ttext = string.gsub(ttext, "#", text); -- replace every # in ttext with text
+				ttext = string.gsub(ttext, "@", text); -- replace every @ in ttext with text
 				
 				-- set target keypad's target's text
 				tmeta = minetest.get_meta(tpos);if not tmeta then return end
