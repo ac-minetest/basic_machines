@@ -61,6 +61,16 @@ basic_machines.no_teleport_table = {
 ["signs:text"] = true
 }
 
+basic_machines.signs = {
+["default:sign_wall_wood"] = true,
+["signs:sign_wall_green"] = true,
+["signs:sign_wall_green"] = true,
+["signs:sign_wall_yellow"] = true,
+["signs:sign_wall_red"] = true,
+["signs:sign_wall_red"] = true,
+["signs:sign_wall_white_black"] = true
+}
+
 --  *** END OF SETTINGS *** --
 
 
@@ -720,14 +730,18 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local text = meta:get_string("text"); 
 	if text ~= "" then -- set text on target sign
 		local tmeta = minetest.get_meta(tpos);if not tmeta then return end
+		tmeta:set_string("infotext", text);
 		if node.name == "default:sign_wall_wood" then -- update text on signs with signs_lib
 			tmeta:set_string("text",text);
 			local table = minetest.registered_nodes[node.name];
 			if not table.on_punch then return end -- error
-			table.on_punch(pos, node, nil);			
+			-- if signs_lib and signs_lib.update_sign then
+				-- signs_lib.update_sign(pos)
+			-- end
+			table.on_punch(tpos, node, nil);			
 			return
 		end
-		tmeta:set_string("infotext", text);
+		
 	end
 		
 	local table = minetest.registered_nodes[node.name];
