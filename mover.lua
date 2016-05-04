@@ -278,10 +278,7 @@ minetest.register_node("basic_machines:mover", {
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 			local prefer = meta:get_string("prefer"); 
-			--minetest.chat_send_all(" pos1 " .. pos1.x .. " " .. pos1.y .. " " .. pos1.z .. " pos2 " .. pos2.x .. " " .. pos2.y .. " " .. pos2.z );
-			
-
-			
+		
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
 			local fuel_cost = (basic_machines.hardness[node1.name] or 1);
@@ -320,7 +317,6 @@ minetest.register_node("basic_machines:mover", {
 				local fpos = nil;
 				if #positions>0 then fpos = positions[1] end -- pick first battery we found
 				
-				--minetest.chat_send_all(" mover checking for power, found " .. #positions .. " nearby batteries");
 				
 				if fpos then  -- check battery for power
 			
@@ -421,7 +417,6 @@ minetest.register_node("basic_machines:mover", {
 								end
 							end
 						end
-						--minetest.chat_send_all(" acceleration ".. minetest.pos_to_string(obj:getacceleration()));
 						--obj:setacceleration({x=0,y=0,z=0});
 						minetest.after(times, function () if obj then obj:setvelocity({x=0,y=0,z=0}); obj:moveto(pos2, false) end end);
 					else
@@ -1421,7 +1416,7 @@ minetest.register_node("basic_machines:light_off", {
 			minetest.swap_node(pos,{name = "basic_machines:light_on"});		
 			local meta = minetest.get_meta(pos);
 			local deactivate = meta:get_int("deactivate");
-			--minetest.chat_send_all("deactivate ".. deactivate)
+			
 			if deactivate > 0 then 
 					--meta:set_int("active",0);
 					minetest.after(deactivate, 
