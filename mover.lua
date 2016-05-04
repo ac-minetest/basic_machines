@@ -71,7 +71,8 @@ basic_machines.signs = {
 ["signs:sign_wall_yellow"] = true,
 ["signs:sign_wall_red"] = true,
 ["signs:sign_wall_red"] = true,
-["signs:sign_wall_white_black"] = true
+["signs:sign_wall_white_black"] = true,
+["signs:sign_yard"] = true
 }
 
 --  *** END OF SETTINGS *** --
@@ -854,7 +855,7 @@ minetest.register_node("basic_machines:keypad", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
-		meta:set_string("infotext", "Keypad. Right click to set it up or punch it.")
+		meta:set_string("infotext", "Keypad. Right click to set it up or punch it. Set any password and text \"@\" to work as keyboard.")
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",1);
 		meta:set_int("x0",0);meta:set_int("y0",0);meta:set_int("z0",0); -- target
 	
@@ -1927,7 +1928,14 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 			meta:set_int("iter",math.min(tonumber(fields.iter) or 1,500));meta:set_int("mode",mode);
 			meta:set_string("infotext", "Punch keypad to use it.");
-			if pass~="" then meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); end
+			if pass~="" then 
+				if fields.text~="@" then
+					meta:set_string("infotext",meta:get_string("infotext").. ". Password protected."); 
+				else
+					meta:set_string("infotext","punch keyboard to use it."); 
+				end
+			end
+			
 		end
 		return
 	end
