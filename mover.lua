@@ -830,6 +830,15 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 		return 
 	end
 	if name == "" then return end
+		
+	if meta:get_string("text") == "@" then -- keypad works as a keyboard
+		local form  = 
+		"size[3,1]" ..  -- width, height
+		"button_exit[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter text: ;".."".."]";
+		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
+		return
+	end
+	
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
@@ -1930,8 +1939,32 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local meta = minetest.get_meta(pos)
 	
 		if fields.OK == "OK" then
+			
 			local pass;
 			pass = fields.pass or "";
+			
+			if meta:get_string("text")=="@" then -- keyboard mode
+				local x0,y0,z0;
+				x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
+				x0=pos.x+x0;y0=pos.y+y0;z0=pos.z+z0;
+				
+				local tpos = {x=x0,y=y0,z=z0};
+				local tmeta = minetest.get_meta(tpos);
+				tmeta:set_string("infotext", pass);
+				local node = minetest.get_node(tpos);
+				
+				local table = minetest.registered_nodes[node.name];
+				if not table then return end -- error
+				if not table.mesecons then return end -- error
+				if not table.mesecons.effector then return end -- error
+				local effector=table.mesecons.effector;
+				if not effector.action_on then return end
+				effector.action_on(tpos,node,machines_TTL); 
+	
+				return
+			end
+					
+			
 			pass=minetest.get_password_hash(pos.x, pass..pos.y);pass=minetest.get_password_hash(pos.y, pass..pos.z);
 			
 			if pass~=meta:get_string("pass") then
