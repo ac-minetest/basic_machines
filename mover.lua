@@ -729,6 +729,11 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local text = meta:get_string("text"); 
 	
 	if text ~= "" then -- set text on target node
+		if text == "@" then -- keyboard mode, set text from input
+			text = meta:get_string("input") or "";
+			meta:set_string("input",""); -- clear input again
+		end
+		
 		if string.byte(text) == 33 then -- if text starts with !, then we send chat text to all nearby players, radius 5
 			text = string.sub(text,2) ; if not text or text == "" then return end
 			local players = minetest.get_connected_players();
@@ -1952,23 +1957,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			pass = fields.pass or "";
 			
 			if meta:get_string("text")=="@" then -- keyboard mode
-				local x0,y0,z0;
-				x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
-				x0=pos.x+x0;y0=pos.y+y0;z0=pos.z+z0;
-				
-				local tpos = {x=x0,y=y0,z=z0};
-				local tmeta = minetest.get_meta(tpos);
-				tmeta:set_string("infotext", pass);
-				local node = minetest.get_node(tpos);
-				
-				local table = minetest.registered_nodes[node.name];
-				if not table then return end -- error
-				if not table.mesecons then return end -- error
-				if not table.mesecons.effector then return end -- error
-				local effector=table.mesecons.effector;
-				if not effector.action_on then return end
-				effector.action_on(tpos,node,machines_TTL); 
-	
+				meta:set_string("input", pass);
+				use_keypad(pos,machines_TTL);
 				return
 			end
 					
