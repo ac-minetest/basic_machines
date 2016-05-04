@@ -760,11 +760,16 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 				ttext =string.sub(ttext,2); if not ttext or ttext == "" then return end
 				ttext = string.gsub(ttext, "@", text); -- replace every @ in ttext with text
 				
-				-- set target keypad's target's text
+				-- set target keypad's target's infotext
 				tmeta = minetest.get_meta(tpos);if not tmeta then return end
 				tmeta:set_string("infotext", ttext);
 			else
-				tmeta:set_string("infotext", text);
+				if string.byte(text) == 64 then -- if text starts with @ clear target keypad text
+					tmeta:set_string("text",""); 
+					return
+				end
+				tmeta = minetest.get_meta(tpos);if not tmeta then return end
+				tmeta:set_string("infotext", ttext);
 			end
 			return
 		end
