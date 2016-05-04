@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "05/03/2016a";
+basic_machines.version = "05/04/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -40,13 +40,15 @@ basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["d
 				
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {
-["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 3"}, -- example harvesting mese crystals
+["mese_crystals:mese_crystal_ore4"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 3"}, -- harvesting mese crystals
 ["mese_crystals:mese_crystal_ore3"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 2"},
 ["mese_crystals:mese_crystal_ore2"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 1"},
-["mese_crystals:mese_crystal_ore1"] = {"mese_crystals:mese_crystal_ore1", ""}
+["mese_crystals:mese_crystal_ore1"] = {"mese_crystals:mese_crystal_ore1", ""},
+["gloopblocks:basalt_cooled"] = {"air", "default:cobble"}, -- enable coble farms with gloopblocks mod
+["gloopblocks:purnice_cooled"] = {"air", "default:stone"}, -- enable stone farms with gloopblocks mod
 };
 
--- set up nodes for plant when placing from chest in digmode(for example seeds -> plant) : [nodename] = plant_name
+-- set up nodes for plant with reverse on and filter set (for example seeds -> plant) : [nodename] = plant_name
 basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1",
 ["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
 ["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
@@ -61,6 +63,7 @@ basic_machines.no_teleport_table = {
 ["signs:text"] = true
 }
 
+-- when activated with keypad these will be "punched" to update their text too
 basic_machines.signs = {
 ["default:sign_wall_wood"] = true,
 ["signs:sign_wall_green"] = true,
