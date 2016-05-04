@@ -730,7 +730,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local text = meta:get_string("text"); 
 	
 	if text ~= "" then -- set text on target node
-		if string.byte(text) == 33 then -- starts with !, then we send chat text to all nearby players, radius 5
+		if string.byte(text) == 33 then -- if text starts with !, then we send chat text to all nearby players, radius 5
 			text = string.sub(text,2) ; if not text or text == "" then return end
 			local players = minetest.get_connected_players();
 			for _,player in pairs(players) do
@@ -768,6 +768,26 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 				-- set target keypad's target's text
 				tmeta = minetest.get_meta(tpos);if not tmeta then return end
 				tmeta:set_string("infotext", ttext);
+			else
+				tmeta:set_string("infotext", text);
+			end
+			return
+		end
+		
+		if node.name == "basic_machines:detector" then -- change filter on detector
+			if string.byte(text) == 64 then -- if text starts with @ clear the filter
+				tmeta:set_string("node","");
+			else
+				tmeta:set_string("node",text);
+			end
+			return
+		end
+		
+		if node.name == "basic_machines:mover" then -- change filter on mover
+			if string.byte(text) == 64 then -- if text starts with @ clear the filter
+				tmeta:set_string("prefer","");
+			else
+				tmeta:set_string("prefer",text);
 			end
 			return
 		end
@@ -1019,7 +1039,7 @@ minetest.register_node("basic_machines:detector", {
 				local tnode = minetest.get_node({x=x0,y=y0,z=z0}).name; -- read node at source position
 				detected_obj = tnode;
 				
-				if node~="" and string.find(tnode,"default:chest") then -- it source is chest, look inside chest for items
+				if node~="" and string.find(tnode,"default:chest") then -- if source is chest, look inside chest for items
 					local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
 					local inv = cmeta:get_inventory();
 					local stack = ItemStack(node)
@@ -1131,7 +1151,7 @@ minetest.register_node("basic_machines:detector", {
 			if trigger then -- activate target node if succesful
 				meta:set_string("infotext", "detector: on");
 				if not effector.action_on then return end
-				if NOT == 4 then -- set detected object name as target text (target must be keypad)
+				if NOT == 4 then -- set detected object name as target text (target must be keypad, if not changes infotext)
 					if minetest.get_node({x=x2,y=y2,z=z2}).name == "basic_machines:keypad" then
 						detected_obj = detected_obj or "";
 						local tmeta = minetest.get_meta({x=x2,y=y2,z=z2});
