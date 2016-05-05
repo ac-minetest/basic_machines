@@ -3,16 +3,17 @@
 -- this node works as technic grinder
 -- There is a certain fuel cost to operate
 
--- recipe list: [in] ={fuel cost, out}
+-- recipe list: [in] ={fuel cost, out, quantity of material required for processing}
 basic_machines.grinder_recipes = {
-	["default:stone"] = {2,"default:sand"},
-	["default:cobble"] = {1,"default:gravel"},
-	["default:gravel"] = {0.5,"default:dirt"},
-	["es:aikerum_crystal"] ={16,"es:aikerum_dust 2"}, -- added for es mod
-	["es:ruby_crystal"] = {16,"es:ruby_dust 2"},
-	["es:emerald_crystal"] = {16,"es:emerald_dust 2"},
-	["es:purpellium_lump"] = {16,"es:purpellium_dust 2"},
-	["default:obsidian_shard"] = {199,"default:lava_source"},
+	["default:stone"] = {2,"default:sand",1},
+	["default:cobble"] = {1,"default:gravel",1},
+	["default:gravel"] = {0.5,"default:dirt",1},
+	["es:aikerum_crystal"] ={16,"es:aikerum_dust 2",1}, -- added for es mod
+	["es:ruby_crystal"] = {16,"es:ruby_dust 2",1},
+	["es:emerald_crystal"] = {16,"es:emerald_dust 2",1},
+	["es:purpellium_lump"] = {16,"es:purpellium_dust 2",1},
+	["default:obsidian_shard"] = {199,"default:lava_source",1},
+	["gloopblocks:basalt"] = {1, "default:cobble",1}, -- enable coble farms with gloopblocks mod
 };
 
 -- es gems dust cooking
@@ -45,12 +46,18 @@ local grinder_process = function(pos)
 	if stack:is_empty() then return end; -- nothing to do
 
 	local src_item = stack:to_string();
-	local p=string.find(src_item," "); if p then src_item = string.sub(src_item,1,p-1) end -- take first word to determine what item was 
+	local p=string.find(src_item," "); if p then src_item = string.sub(src_item,1,p-1) else p = 0 end -- take first word to determine what item was 
 	
 	local def = basic_machines.grinder_recipes[src_item];
 	if not def then 
 		meta:set_string("infotext", "please insert valid materials"); return
 	end-- unknown node
+	
+	if stack:get_count()< def[3] then
+		meta:set_string("infotext", "Recipe requires at least " .. def[3] .. " " .. src_item);
+		return
+	end
+
 	
 	
 	-- FUEL CHECK
@@ -109,7 +116,7 @@ local grinder_process = function(pos)
 		
 		fuel = fuel-def[1]; -- burn fuel
 		meta:set_float("fuel",fuel);
-		meta:set_string("infotext", "fuel status " .. fuel);
+		meta:set_string("infotext", "fuel " .. fuel);
 		 
 end
 
@@ -213,7 +220,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime)
 		inventory_image = "basic_machines_"..name.."_dust.png",
 	})
 	
-	basic_machines.grinder_recipes[input_node_name] = {grindcost,"basic_machines:"..name.."_dust 2"} -- register grinder recipe
+	basic_machines.grinder_recipes[input_node_name] = {grindcost,"basic_machines:"..name.."_dust 2",1} -- register grinder recipe
 	
 	if ingot~="" then
 		minetest.register_craft({

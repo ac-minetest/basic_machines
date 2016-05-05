@@ -44,12 +44,10 @@ basic_machines.harvest_table = {
 ["mese_crystals:mese_crystal_ore3"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 2"},
 ["mese_crystals:mese_crystal_ore2"] = {"mese_crystals:mese_crystal_ore1", "default:mese_crystal 1"},
 ["mese_crystals:mese_crystal_ore1"] = {"mese_crystals:mese_crystal_ore1", ""},
-["gloopblocks:basalt_cooled"] = {"air", "default:cobble"}, -- enable coble farms with gloopblocks mod
-["gloopblocks:purnice_cooled"] = {"air", "default:stone"}, -- enable stone farms with gloopblocks mod
 };
 
 -- set up nodes for plant with reverse on and filter set (for example seeds -> plant) : [nodename] = plant_name
-basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1",
+basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1", -- so it works with farming redo mod
 ["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
 ["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
 ["farming:seed_cotton"]="farming:cotton_1",["farming:cucumber"]="farming:cucumber_1",["farming:grapes"]="farming:grapes_1",
@@ -57,7 +55,7 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 ["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
 ["farming:seed_wheat"]="farming:wheat_1"}
 
--- list of object that cant be teleported with mover
+-- list of objects that cant be teleported with mover
 basic_machines.no_teleport_table = {
 ["itemframes:item"] = true,
 ["signs:text"] = true

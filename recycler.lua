@@ -55,10 +55,13 @@ local recycler_process = function(pos)
 		if src_item~=meta:get_string("node") then-- did we already handle this? if yes read from cache
 			meta:set_string("node",src_item);
 			meta:set_string("itemlist","{}");
+			meta:set_int("reqcount",0);
 			known_recipe=false;
 		end
 		
-		local itemlist;
+		local itemlist, reqcount;
+		reqcount = 1; -- needed count of materials for recycle to work
+		
 		if not known_recipe then
 			local recipe = minetest.get_all_craft_recipes( src_item );
 			local recipe_id = tonumber(meta:get_int("recipe")) or 1;
@@ -73,12 +76,24 @@ local recycler_process = function(pos)
 			local output = recipe[recipe_id].output or "";
 			if string.find(output," ") then 
 				local par = string.find(output," ");
-				if (tonumber(string.sub(output, par)) or 0)>1 then itemlist = {} end
+				--if (tonumber(string.sub(output, par)) or 0)>1 then itemlist = {} end
+				
+				if par then
+					reqcount = tonumber(string.sub(output, par)) or 1;
+				end
+			
 			end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
 			
 			meta:set_string("itemlist",minetest.serialize(itemlist)); -- read cached itemlist
+			meta:set_int("reqcount",reqcount);
 		else 
 			itemlist=minetest.deserialize(meta:get_string("itemlist")) or {};
+			reqcount = meta:get_int("reqcount") or 1;
+		end
+		
+		if stack:get_count()<reqcount then
+			meta:set_string("infotext", "at least " .. reqcount .. " of " .. src_item .. " is needed ");
+			return
 		end
 		
 		--empty dst inventory before proceeding
@@ -100,7 +115,7 @@ local recycler_process = function(pos)
 		end
 	
 		--take 1 item from src inventory for each activation
-		stack=stack:take_item(1); inv:remove_item("src", stack)
+		stack=stack:take_item(reqcount); inv:remove_item("src", stack)
 		
 		minetest.sound_play("recycler", {pos=pos,gain=0.5,max_hear_distance = 16,})
 		
