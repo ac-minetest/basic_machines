@@ -1487,7 +1487,7 @@ minetest.register_node("basic_machines:light_on", {
 		action_on = function (pos, node,ttl) 
 			local meta = minetest.get_meta(pos);
 			local count = tonumber(meta:get_string("infotext")) or 0;
-			meta:set_infotext("infotext",count+1); -- increase activate count
+			meta:set_string("infotext",count+1); -- increase activate count
 		end
 				}
 	},
