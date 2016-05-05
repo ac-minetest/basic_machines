@@ -293,7 +293,7 @@ minetest.register_node("basic_machines:mover", {
 			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
 			if mode == "object" then  
 				fuel_cost=fuel_cost*0.1; 
-				if pos2.x==pos1.x and pos2.z==pos1.z then -- check if elevator mode
+				if pos2.x==pos.x+x0 and pos2.z==pos.z+z0 then -- check if elevator mode
 					local requirement = math.floor(math.abs(pos2.y-pos.y)/100)+1;
 					if upgrade-1<requirement then
 							meta:set_string("infotext","MOVER: Elevator error. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
