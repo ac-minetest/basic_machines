@@ -255,11 +255,11 @@ minetest.register_node("basic_machines:mover", {
 			pos1.x = pos.x+pos1.x;pos1.y = pos.y+pos1.y;pos1.z = pos.z+pos1.z;
 			
 			-- special modes that use its own source/target positions:
-			if mode == "transport" and mreverse==0 then
+			if mode == "transport" and mreverse<2 then
 				pos2 = {x=meta:get_int("x2")-x0+pos1.x,y=meta:get_int("y2")-y0+pos1.y,z=meta:get_int("z2")-z0+pos1.z}; -- translation from pos1
 			end
 			
-			if mreverse ~= 0 then -- reverse pos1, pos2
+			if mreverse ~= 0 and mreverse ~= 2 then -- reverse pos1, pos2
 				if mode == "object" then
 					x0 = pos2.x-pos.x; y0 = pos2.y-pos.y; z0 = pos2.z-pos.z;
 					pos2 = {x=pos1.x,y=pos1.y,z=pos1.z};
@@ -457,7 +457,7 @@ minetest.register_node("basic_machines:mover", {
 		local invName1="";local invName2="";
 		if mode == "inventory" then 
 			invName1 = meta:get_string("inv1");invName2 = meta:get_string("inv2");
-			if mreverse ~= 0 then -- reverse inventory names too
+			if mreverse == 1 then -- reverse inventory names too
 				local invNamet = invName1;invName1=invName2;invName2=invNamet;
 			end
 		end
@@ -522,7 +522,7 @@ minetest.register_node("basic_machines:mover", {
 					else return -- item not found in chest
 				end
 				
-				if mreverse ~= 0 then -- planting mode: check if transform seed->plant is needed
+				if mreverse == 1 then -- planting mode: check if transform seed->plant is needed
 				if basic_machines.plant_table[prefer]~=nil then
 					prefer = basic_machines.plant_table[prefer];
 				end
@@ -653,7 +653,7 @@ minetest.register_node("basic_machines:mover", {
 			if type(ttl)~="number" then ttl = 1 end
 			local meta = minetest.get_meta(pos);
 			local mreverse = meta:get_int("reverse");
-			if mreverse ~= 0 then mreverse = 0 else mreverse = 1 end
+			if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
 			meta:set_int("reverse",mreverse);			
 		end
 		
@@ -1820,7 +1820,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"\n\nMODES of operation: normal (just teleport block), dig (digs and gives you resulted node - good for harvesting farms), drop "..
 			"(drops node on ground), object (teleportation of player and objects. distance between source1/2 defines teleport radius). by setting filter you can specify move time for objects or names for players. "..
 			"By setting 'filter' only selected nodes are moved.\nInventory mode can exchange items between node inventories. You need to select inventory name for source/target from the dropdown list on the right and enter node to be moved into filter."..
-			"\n*advanced* You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting. If you activate mover with OFF signal it will toggle reverse." ..
+			"\n*advanced* You can reverse start/end position by setting reverse nonzero. This is useful for placing stuff at many locations-planting. If you put reverse=2/3 in transport mode it will disable parallel transport but will still do reverse effect with 3. If you activate mover with OFF signal it will toggle reverse." ..
 			"\n\n FUEL CONSUMPTION depends on blocks to be moved and distance. For example, stone or tree is harder to move than dirt, harvesting wheat is very cheap and and moving lava is very hard."..
 			"\n\n UPGRADE mover by moving mese blocks in upgrade inventory. Each mese block increases mover range by 10, fuel consumption is divided by (number of mese blocks)+1 in upgrade. Max 10 blocks are used for upgrade. Dont forget to click OK to refresh after upgrade. "..
 			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
