@@ -12,7 +12,6 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	
 	local offname = "basic_machines:"..string.gsub(name, ":", "_").. "_OFF";
 	
-	
 	table2.mesecons = {effector = { -- action to toggle light off
 		action_off  =  function (pos,node,ttl)
 			if ttl<0 then return end
@@ -47,6 +46,5 @@ end
 
 enable_toggle_ligth("xdecor:wooden_lightbox");
 enable_toggle_ligth("xdecor:iron_lightbox");
-
 enable_toggle_ligth("moreblocks:slab_meselamp_1");
 enable_toggle_ligth("moreblocks:slab_super_glow_glass");
