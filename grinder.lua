@@ -215,32 +215,49 @@ minetest.register_craft({
 
 local function register_dust(name,input_node_name,ingot,grindcost,cooktime)
 	
-	minetest.register_craftitem("basic_machines:"..name.."_dust", {
-		description = name.. " dust",
-		inventory_image = "basic_machines_"..name.."_dust.png",
-	})
+	local purity_table = {"33","66"};
 	
-	basic_machines.grinder_recipes[input_node_name] = {grindcost,"basic_machines:"..name.."_dust 2",1} -- register grinder recipe
+	for i = 1,#purity_table do
+		local purity = purity_table[i];
+		minetest.register_craftitem("basic_machines:"..name.."_dust_".. purity, {
+			description = name.. " dust purity " .. purity .. "%" ,
+			inventory_image = "basic_machines_"..name.."_dust.png",
+		})
+	end
+	
+	basic_machines.grinder_recipes[input_node_name] = {grindcost,"basic_machines:"..name.."_dust_".. purity_table[1].." 2",1} -- register grinder recipe
 	
 	if ingot~="" then
+		
+		for i = 1,#purity_table-1 do
+			minetest.register_craft({
+				type = "cooking",
+				recipe = "basic_machines:"..name.."_dust_".. purity_table[i],
+				output = "basic_machines:"..name.."_dust_".. purity_table[i+1],
+				cooktime = cooktime
+			})
+		end
+		
 		minetest.register_craft({
-			type = "cooking",
-			recipe = "basic_machines:"..name.."_dust",
-			output = ingot,
-			cooktime = cooktime
-		})
+				type = "cooking",
+				recipe = "basic_machines:"..name.."_dust_".. purity_table[#purity_table],
+				output = ingot,
+				cooktime = cooktime
+			})
+	
 	end
 end
 
 
-register_dust("iron","default:iron_lump","default:steel_ingot",4,10)
-register_dust("copper","default:copper_lump","default:copper_ingot",4,10)
-register_dust("gold","default:gold_lump","default:gold_ingot",4,10)
-register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,1500)
-register_dust("silver","moreores:silver_lump","moreores:silver_ingot",4,15)
-register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,10)
+register_dust("iron","default:iron_lump","default:steel_ingot",4,5)
+register_dust("copper","default:copper_lump","default:copper_ingot",4,5)
+register_dust("gold","default:gold_lump","default:gold_ingot",6,20)
+register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,500)
+register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,10)
+register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,5)
 
-register_dust("diamond","default:diamond","default:diamond",16,1000) -- 0.3hr cooking time to make diamond!
+register_dust("mese","default:mese_crystal","default:mese_crystal",8,200)
+register_dust("diamond","default:diamond","default:diamond",16,350) -- 0.3hr cooking time to make diamond!
 
 
 
