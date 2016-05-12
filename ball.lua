@@ -88,26 +88,53 @@ minetest.register_entity("basic_machines:ball",{
 				local t = math.min(t1,t2,t3); 
 
 				-- fixed: entry point
-				bpos.x = round(10*(bpos.x + t*vn.x+opos.x))/10;
-				bpos.y = round(10*(bpos.y + t*vn.y+opos.y))/10;
-				bpos.z = round(10*(bpos.z + t*vn.z+opos.z))/10;
-				
-				self.object:setpos({x= bpos.x,y=bpos.y,z=bpos.z}) -- place object at entry point
-				
+				bpos.x = bpos.x + t*vn.x+opos.x;
+				bpos.y = bpos.y + t*vn.y+opos.y;
+				bpos.z = bpos.z + t*vn.z+opos.z;
 				
 				if t<0 or t>1 then self.object:remove() return end -- FAILED!
 				
 				-- attempt to determine direction
-				bpos ={ x=math.abs(bpos.x-opos.x),y=math.abs(bpos.y-opos.y),z=math.abs(bpos.z-opos.z)};
-				local maxo = math.max(bpos.x,bpos.y,bpos.z);
-			
-				if bpos.x == maxo then
-					v.x=-v.x
-				elseif bpos.y == maxo then
-					v.y=-v.y
+				local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
+				local dposa = { x=math.abs(dpos.x),y=math.abs(dpos.y),z=math.abs(dpos.z)};
+				local maxo = math.max(dposa.x,dposa.y,dposa.z);
+				local n = {x=0,y=0,z=0};
+				
+				if dposa.x == maxo then
+					if dpos.x>0 then n.x = 1 else n.x = -1 end 
+				elseif dposa.y == maxo then
+					if dpos.y>0 then n.y = 1 else n.y = -1 end
 				else
+					if dpos.z>0 then n.z = 1 else n.z = -1 end
+				end
+				
+				--verify normal
+				nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name
+				walkable = false;
+				if nodename ~= "air" then 
+					walkable = minetest.registered_nodes[nodename].walkable;
+				end
+				if walkable then -- problem, nonempty node - incorrect normal, fix it
+					if n.x ~=0 then  
+						n.x=0; 
+						if dpos.y>0 then n.y = 1 else n.y = -1 end 
+					else
+						if dpos.x>0 then n.x = 1 else n.x = -1 end ; n.y = 0;
+					end
+				end 
+				
+				-- bounce
+				if n.x~=0 then 
+					v.x=-v.x 
+				elseif n.y~=0 then 
+					v.y=-v.y 
+				elseif n.z~=0 then
 					v.z=-v.z				
 				end
+				
+				local r = 0.2
+				bpos = {x=pos.x+n.x*r,y=pos.y+n.y*r,z=pos.z+n.z*r}; -- point placed a bit further away from box
+				self.object:setpos(bpos) -- place object fixed point
 				self.object:setvelocity(v);
 				
 			end
