@@ -1,6 +1,14 @@
 -- BALL: energy ball that flies around, can bounce and activate stuff
 -- rnd 2016:
 
+local function round(x)
+	if x < 0 then 
+		return -math.floor(-x+0.5);
+	else 
+		return math.floor(x+0.5);
+	end
+end
+
 minetest.register_entity("basic_machines:ball",{
 	timer = 0, 
 	lifetime = 20, -- how long it exists before disappearing
@@ -61,24 +69,47 @@ minetest.register_entity("basic_machines:ball",{
 					effector.action_off(pos,node,16); 
 				end
 				self.object:remove() 
-			else -- bounce
+			else -- bounce ( copyright rnd, 2016 )
 				local v = self.object:getvelocity();
-				local opos = {x=math.modf(pos.x),y=math.modf(pos.y), z=math.modf(pos.z)}; -- obstacle
+				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
 				
-				opos.x=math.abs(pos.x-opos.x);
-				opos.y=math.abs(pos.y-opos.y);
-				opos.z=math.abs(pos.z-opos.z);
-				local maxo = math.max(opos.x,opos.y,opos.z);
-				--minetest.chat_send_all(minetest.pos_to_string(opos))
-				if opos.x == maxo then
+				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)};
+				
+				-- try to determine exact point of entry 
+				local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
+				local vn = {x=-v.x/vm,y=-v.y/vm, z= -v.z/vm};
+				
+				local t1=2; local t2 = 2; local t3 = 2;
+				local t0;
+				t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end
+				t0=0.5;if bpos.y<0 then t0 = -0.5 end;if vn.y~=0 then t2 = (t0-bpos.y)/vn.y end
+				t0=0.5;if bpos.z<0 then t0 = -0.5 end;if vn.z~=0 then t3 = (t0-bpos.z)/vn.z end
+				if t1<0 then t1 = 2 end;if t2<0 then t2 = 2 end; if t3<0 then t3 = 2 end
+				local t = math.min(t1,t2,t3); 
+
+				-- fixed: entry point
+				bpos.x = round(10*(bpos.x + t*vn.x+opos.x))/10;
+				bpos.y = round(10*(bpos.y + t*vn.y+opos.y))/10;
+				bpos.z = round(10*(bpos.z + t*vn.z+opos.z))/10;
+				
+				self.object:setpos({x= bpos.x,y=bpos.y,z=bpos.z}) -- place object at entry point
+				
+				
+				if t<0 or t>1 then self.object:remove() return end -- FAILED!
+				
+				-- attempt to determine direction
+				bpos ={ x=math.abs(bpos.x-opos.x),y=math.abs(bpos.y-opos.y),z=math.abs(bpos.z-opos.z)};
+				local maxo = math.max(bpos.x,bpos.y,bpos.z);
+			
+				if bpos.x == maxo then
 					v.x=-v.x
-				elseif opos.y == maxo then
+				elseif bpos.y == maxo then
 					v.y=-v.y
 				else
 					v.z=-v.z				
 				end
 				self.object:setvelocity(v);
-				if maxo<0.25 then self.object:remove() end -- too deep inside block, just remove
+				
 			end
 			
 			return
