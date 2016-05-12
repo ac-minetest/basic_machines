@@ -92,7 +92,7 @@ minetest.register_entity("basic_machines:ball",{
 				bpos.y = bpos.y + t*vn.y+opos.y;
 				bpos.z = bpos.z + t*vn.z+opos.z;
 				
-				if t<0 or t>1 then self.object:remove() return end -- FAILED!
+				if t<0 or t>1 then t=-0.5; v.x=0;v.y=0;v.z=0 end -- FAILED! go little back and stop
 				
 				-- attempt to determine direction
 				local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
