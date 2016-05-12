@@ -94,6 +94,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
 			local luaent = obj:get_luaentity();
 			luaent.energy = -1;
+			obj:set_properties({textures={"basic_machines_ball.png^[colorize:blue:120"}})
 		end
 		}
 	},
