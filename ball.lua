@@ -47,21 +47,26 @@ minetest.register_entity("basic_machines:ball",{
 
 		if walkable then -- we hit a node
 			--minetest.chat_send_all(" hit node at " .. minetest.pos_to_string(pos))
-			self.object:remove() 
+			
 			if minetest.is_protected(pos,self.owner) then return end
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
-			if not table then return end -- error
-			if not table.mesecons then return end 
-			if not table.mesecons.effector then return end
-			local effector=table.mesecons.effector;
-			if self.energy>0 then
-				if not effector.action_on then return end
-				effector.action_on(pos,node,16); 
-			elseif self.energy<0 then
-				if not effector.action_off then return end
-				effector.action_off(pos,node,16); 
+			if table and table.mesecons and table.mesecons.effector then
+				local effector = table.mesecons.effector;
+				if self.energy>0 then
+					if not effector.action_on then return end
+					effector.action_on(pos,node,16); 
+				elseif self.energy<0 then
+					if not effector.action_off then return end
+					effector.action_off(pos,node,16); 
+				end
+				self.object:remove() 
+			else -- bounce
+				local v = self.object:getvelocity();
+				v.x=-v.x; v.y=-v.y; v.z = - v.z;
+				self.object:setvelocity(v);
 			end
+			
 			return
 		end
 	end,
