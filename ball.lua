@@ -63,8 +63,22 @@ minetest.register_entity("basic_machines:ball",{
 				self.object:remove() 
 			else -- bounce
 				local v = self.object:getvelocity();
-				v.x=-v.x; v.y=-v.y; v.z = - v.z;
+				local opos = {x=math.modf(pos.x),y=math.modf(pos.y), z=math.modf(pos.z)}; -- obstacle
+				
+				opos.x=math.abs(pos.x-opos.x);
+				opos.y=math.abs(pos.y-opos.y);
+				opos.z=math.abs(pos.z-opos.z);
+				local maxo = math.max(opos.x,opos.y,opos.z);
+				--minetest.chat_send_all(minetest.pos_to_string(opos))
+				if opos.x == maxo then
+					v.x=-v.x
+				elseif opos.y == maxo then
+					v.y=-v.y
+				else
+					v.z=-v.z				
+				end
 				self.object:setvelocity(v);
+				if maxo<0.25 then self.object:remove() end -- too deep inside block, just remove
 			end
 			
 			return
