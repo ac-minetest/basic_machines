@@ -1,11 +1,10 @@
 -- BALL: energy ball that flies around, can bounce and activate stuff
 -- rnd 2016:
 
---local obj = minetest.add_entity(pos, "basic_machines:ball")
-
 minetest.register_entity("basic_machines:ball",{
 	timer = 0, 
 	lifetime = 20, -- how long it exists before disappearing
+	energy = 1, -- if negative it will deactivate stuff
 	owner = "",
 	origin = {x=0,y=0,z=0},
 	hp_max = 1,
@@ -49,23 +48,22 @@ minetest.register_entity("basic_machines:ball",{
 		if walkable then -- we hit a node
 			--minetest.chat_send_all(" hit node at " .. minetest.pos_to_string(pos))
 			self.object:remove() 
-			
+			if minetest.is_protected(pos,self.owner) then return end
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
 			if not table then return end -- error
 			if not table.mesecons then return end 
 			if not table.mesecons.effector then return end
-			local effector=table.mesecons.effector;	if not effector.action_on then return end
-			effector.action_on(pos,node,16); 
-			
-			--self.object:setvelocity({x=0, y=0, z=0})
-			--self.object:setacceleration({x=0, y=0, z=0})
+			local effector=table.mesecons.effector;
+			if self.energy>0 then
+				if not effector.action_on then return end
+				effector.action_on(pos,node,16); 
+			elseif self.energy<0 then
+				if not effector.action_off then return end
+				effector.action_off(pos,node,16); 
+			end
 			return
-			--return self
 		end
-		
-		--self.object:setacceleration({x=0, y=0, z=0}) -- no gravity!
-		
 	end,
 })
 
@@ -86,7 +84,16 @@ minetest.register_node("basic_machines:ball_spawner", {
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
 			if ttl<0 then return end
-			minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball")
+			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
+			local luaent = obj:get_luaentity();
+			luaent.energy = 1;
+		end,
+		
+		action_off = function (pos, node,ttl) 
+			if ttl<0 then return end
+			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
+			local luaent = obj:get_luaentity();
+			luaent.energy = -1;
 		end
 		}
 	},
