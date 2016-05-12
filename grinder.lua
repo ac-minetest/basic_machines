@@ -249,16 +249,13 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime)
 end
 
 
-register_dust("iron","default:iron_lump","default:steel_ingot",4,5)
-register_dust("copper","default:copper_lump","default:copper_ingot",4,5)
-register_dust("gold","default:gold_lump","default:gold_ingot",6,20)
-register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,500)
-register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,10)
-register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,5)
-
-register_dust("mese","default:mese_crystal","default:mese_crystal",8,200)
-register_dust("diamond","default:diamond","default:diamond",16,350) -- 0.3hr cooking time to make diamond!
+register_dust("iron","default:iron_lump","default:steel_ingot",4,8)
+register_dust("copper","default:copper_lump","default:copper_ingot",4,8)
+register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,8)
+register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,15)
+register_dust("gold","default:gold_lump","default:gold_ingot",6,25)
+register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750)
 
 
-
-
+register_dust("mese","default:mese_crystal","default:mese_crystal",8,250)
+register_dust("diamond","default:diamond","default:diamond",16,500) -- 0.3hr cooking time to make diamond!
