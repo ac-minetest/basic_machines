@@ -74,3 +74,7 @@ minetest.register_craft({
 	-- note: to make it you need to use 1 tree block for fuel + 1 tree block, thats 2, caloric value 2*30=60
 	burntime = 40, -- coal lump has 40, tree block 30, coal block 370 (9*40=360!)
 })
+
+-- COMPATIBILITY
+
+minetest.register_alias("basic_machines:diamond_dust", "basic_machines:diamond_dust_66")
