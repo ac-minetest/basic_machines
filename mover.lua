@@ -410,8 +410,13 @@ minetest.register_node("basic_machines:mover", {
 						obj:setvelocity(velocityv);
 						if obj:get_luaentity() then -- interaction with objects like carts
 							local luaent = obj:get_luaentity();
-							if luaent.name then -- just accelerate cart
-								if luaent.name == "carts:cart" then
+							if luaent.name then 
+								if luaent.name == "basic_machines:ball" then -- move balls for free
+									luaent.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
+									luaent.owner = owner; 
+									return
+								end
+								if luaent.name == "carts:cart" then -- just accelerate cart
 									luaent.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
 									fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
 									meta:set_string("infotext", "Mover block. Fuel "..fuel);

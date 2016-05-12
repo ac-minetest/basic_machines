@@ -25,10 +25,12 @@ dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic 
 dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
 dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
+
 --dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
 
 -- OPTIONAL ADDITIONAL STUFF ( comment to disable )
 
+dofile(minetest.get_modpath("basic_machines").."/ball.lua") 
 dofile(minetest.get_modpath("basic_machines").."/enviro.lua") -- enviro blocks that can change surrounding enviroment physics, uncomment spawn/join code to change global physics, disabled by default
 minetest.after(0, function() 
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua") -- if you want open/close doors with signal, also steel doors are made impervious to dig through, removal by repeat punch
