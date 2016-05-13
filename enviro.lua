@@ -95,8 +95,24 @@ minetest.register_node("basic_machines:enviro", {
 						player:set_sky(0,sky["type"],sky["tex"]);
 					end
 				end
+			end
+			
+			-- attempt to set acceleration to balls, if any around
+			local objects =  minetest.get_objects_inside_radius(pos, r)
+			
+			for _,obj in pairs(objects) do
+				if obj:get_luaentity() then
+					local obj_name = obj:get_luaentity().name or ""
+					if obj_name == "basic_machines:ball" then
+						obj:setacceleration({x=0,y=-g,z=0});
+					end
+				end
 				
 			end
+			
+			
+			
+			
 		end
 	}
 	},

@@ -16,8 +16,9 @@ minetest.register_entity("basic_machines:ball",{
 	owner = "",
 	origin = {x=0,y=0,z=0},
 	hp_max = 1,
+	elasticity = 0.8, -- speed gets multiplied by this after bounce
 	visual="sprite",
-	visual_size={x=.50,y=.50},
+	visual_size={x=.6,y=.6},
 	collisionbox = {0,0,0,0,0,0},
 	physical=false,
 	--textures={"basic_machines_ball"},
@@ -41,7 +42,8 @@ minetest.register_entity("basic_machines:ball",{
 		local pos=self.object:getpos()
 		
 		local origin = self.origin;
-		local r = 20;
+		
+		local r = 30;-- maximal distance when balls disappear
 		if math.abs(pos.x-origin.x)>r or math.abs(pos.y-origin.y)>r or math.abs(pos.z-origin.z)>r then -- remove if it goes too far
 			self.object:remove() 
 			return 
@@ -92,7 +94,10 @@ minetest.register_entity("basic_machines:ball",{
 				bpos.y = bpos.y + t*vn.y+opos.y;
 				bpos.z = bpos.z + t*vn.z+opos.z;
 				
-				if t<0 or t>1 then t=-0.5; v.x=0;v.y=0;v.z=0 end -- FAILED! go little back and stop
+				if t<0 or t>1 then 
+					t=-0.5; v.x=0;v.y=0;v.z=0;
+					self.object:remove() 
+				end -- FAILED! go little back and stop
 				
 				-- attempt to determine direction
 				local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
@@ -123,19 +128,25 @@ minetest.register_entity("basic_machines:ball",{
 					end
 				end 
 				
+				local elasticity = self.elasticity;
+				
+				
 				-- bounce
 				if n.x~=0 then 
-					v.x=-v.x 
+					v.x=-elasticity*v.x 
 				elseif n.y~=0 then 
-					v.y=-v.y 
+					v.y=-elasticity*v.y 
 				elseif n.z~=0 then
-					v.z=-v.z				
+					v.z=-elasticity*v.z				
 				end
 				
 				local r = 0.2
 				bpos = {x=pos.x+n.x*r,y=pos.y+n.y*r,z=pos.z+n.z*r}; -- point placed a bit further away from box
 				self.object:setpos(bpos) -- place object fixed point
+				
 				self.object:setvelocity(v);
+				
+				minetest.sound_play("default_dig_cracky", {pos=pos,gain=1.0,max_hear_distance = 8,})
 				
 			end
 			
