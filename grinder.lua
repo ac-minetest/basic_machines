@@ -245,6 +245,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 		minetest.register_craft({
 				type = "cooking",
 				recipe = "basic_machines:"..name.."_dust_".. purity_table[#purity_table],
+				groups = {not_in_creative_inventory=1},
 				output = ingot,
 				cooktime = cooktime
 			})
