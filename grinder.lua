@@ -8,6 +8,7 @@ basic_machines.grinder_recipes = {
 	["default:stone"] = {2,"default:sand",1},
 	["default:cobble"] = {1,"default:gravel",1},
 	["default:gravel"] = {0.5,"default:dirt",1},
+	["default:dirt"] = {0.5,"default:clay_lump 4",1},
 	["es:aikerum_crystal"] ={16,"es:aikerum_dust 2",1}, -- added for es mod
 	["es:ruby_crystal"] = {16,"es:ruby_dust 2",1},
 	["es:emerald_crystal"] = {16,"es:emerald_dust 2",1},
@@ -225,7 +226,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 		local purity = purity_table[i];
 		minetest.register_craftitem("basic_machines:"..name.."_dust_".. purity, {
 			description = name.. " dust purity " .. purity .. "%" ,
-			inventory_image = "basic_machines_dust.png^[colorize:#"..R..G..B..":255",
+			inventory_image = "basic_machines_dust.png^[colorize:#"..R..G..B..":180",
 		})
 	end
 	
@@ -254,13 +255,16 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 end
 
 
-register_dust("iron","default:iron_lump","default:steel_ingot",4,8,"CC","BB","BB")
+register_dust("iron","default:iron_lump","default:steel_ingot",4,8,"99","99","99")
 register_dust("copper","default:copper_lump","default:copper_ingot",4,8,"C8","80","0D") --c8800d
-register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,8,"FF","FF","FF")
-register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,15,"EE","EE","EE")
 register_dust("gold","default:gold_lump","default:gold_ingot",6,25,"FF","FF","00")
-register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750,"00","00","FF")
 
+-- are moreores (tin, silver, mithril) present?
+local table = minetest.registered_nodes["moreores:tin_lump"]; if table then 
+	register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,8,"FF","FF","FF")
+	register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,15,"BB","BB","BB")
+	register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750,"00","00","FF")
+end
 
 register_dust("mese","default:mese_crystal","default:mese_crystal",8,250,"CC","CC","00")
 register_dust("diamond","default:diamond","default:diamond",16,500,"00","EE","FF") -- 0.3hr cooking time to make diamond!
