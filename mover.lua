@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "05/21/2016a";
+basic_machines.version = "05/23/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -507,9 +507,12 @@ minetest.register_node("basic_machines:mover", {
 						inv2:add_item(invName2, stack);
 						inv1:remove_item(invName1, stack);
 					else
-						return
+						if upgrade == -1 then -- admin is owner.. just add stuff
+							inv2:add_item(invName2, stack);
+						else
+							return -- item not found in chest
+						end
 					end
-					
 					
 					minetest.sound_play("chest_inventory_move", {pos=pos2,gain=1.0,max_hear_distance = 8,})
 					fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
@@ -528,7 +531,8 @@ minetest.register_node("basic_machines:mover", {
 				
 				if inv:contains_item("main", stack) then
 					inv:remove_item("main", stack);
-					else return -- item not found in chest
+				else 
+					return
 				end
 				
 				if mreverse == 1 then -- planting mode: check if transform seed->plant is needed

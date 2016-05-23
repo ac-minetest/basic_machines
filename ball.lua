@@ -109,7 +109,7 @@ minetest.register_entity("basic_machines:ball",{
 			
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
-			if table and table.mesecons and table.mesecons.effector then
+			if table and table.mesecons and table.mesecons.effector then -- activate target
 				self.object:remove();
 				if minetest.is_protected(pos,self.owner) then return end
 				local effector = table.mesecons.effector;
@@ -126,9 +126,9 @@ minetest.register_entity("basic_machines:ball",{
 				if self.bounce == 0 then self.object:remove() return end
 				
 				local v = self.object:getvelocity();
-				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
 				
-				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)};
+				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
+				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)}; -- boundary position on cube, approximate
 				
 				-- try to determine exact point of entry 
 				local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
@@ -136,7 +136,8 @@ minetest.register_entity("basic_machines:ball",{
 				
 				local t1=2; local t2 = 2; local t3 = 2;
 				local t0;
-				t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end
+				-- calculate intersections with cube faces
+				t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end 
 				t0=0.5;if bpos.y<0 then t0 = -0.5 end;if vn.y~=0 then t2 = (t0-bpos.y)/vn.y end
 				t0=0.5;if bpos.z<0 then t0 = -0.5 end;if vn.z~=0 then t3 = (t0-bpos.z)/vn.z end
 				if t1<0 then t1 = 2 end;if t2<0 then t2 = 2 end; if t3<0 then t3 = 2 end
