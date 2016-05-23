@@ -258,7 +258,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-1 then -- activated before natural time
+			if t0>t1-3 then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
