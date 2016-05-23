@@ -93,7 +93,8 @@ minetest.register_entity("basic_machines:ball",{
 		local origin = self.origin;
 		
 		local r = 30;-- maximal distance when balls disappear
-		if math.abs(pos.x-origin.x)>r or math.abs(pos.y-origin.y)>r or math.abs(pos.z-origin.z)>r then -- remove if it goes too far
+                local dist = math.max(math.abs(pos.x-origin.x), math.abs(pos.y-origin.y), math.abs(pos.z-origin.z));
+		if dist>r then -- remove if it goes too far
 			self.object:remove() 
 			return 
 		end
@@ -102,6 +103,7 @@ minetest.register_entity("basic_machines:ball",{
 		local walkable = false;
 		if nodename ~= "air" then 
 			walkable = minetest.registered_nodes[nodename].walkable;
+                        if nodename == "basic_machines:ball_spawner" and dist>1 then walkable = true end -- ball can activate spawner, just not originating one
 		end
 
 		if walkable then -- we hit a node
@@ -125,62 +127,76 @@ minetest.register_entity("basic_machines:ball",{
 				local bounce = self.bounce;
 				if self.bounce == 0 then self.object:remove() return end
 				
+				local n = {x=0,y=1,z=0}; -- this will be bouncen ormal
 				local v = self.object:getvelocity();
-				
 				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
 				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)}; -- boundary position on cube, approximate
 				
-				-- try to determine exact point of entry 
-				local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
-				local vn = {x=-v.x/vm,y=-v.y/vm, z= -v.z/vm};
-				
-				local t1=2; local t2 = 2; local t3 = 2;
-				local t0;
-				-- calculate intersections with cube faces
-				t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end 
-				t0=0.5;if bpos.y<0 then t0 = -0.5 end;if vn.y~=0 then t2 = (t0-bpos.y)/vn.y end
-				t0=0.5;if bpos.z<0 then t0 = -0.5 end;if vn.z~=0 then t3 = (t0-bpos.z)/vn.z end
-				if t1<0 then t1 = 2 end;if t2<0 then t2 = 2 end; if t3<0 then t3 = 2 end
-				local t = math.min(t1,t2,t3); 
-
-				-- fixed: entry point
-				bpos.x = bpos.x + t*vn.x+opos.x;
-				bpos.y = bpos.y + t*vn.y+opos.y;
-				bpos.z = bpos.z + t*vn.z+opos.z;
-				
-				if t<0 or t>1 then 
-					t=-0.5; v.x=0;v.y=0;v.z=0;
-					self.object:remove() 
-				end -- FAILED! go little back and stop
-				
-				-- attempt to determine direction
-				local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
-				local dposa = { x=math.abs(dpos.x),y=math.abs(dpos.y),z=math.abs(dpos.z)};
-				local maxo = math.max(dposa.x,dposa.y,dposa.z);
-				local n = {x=0,y=0,z=0};
-				
-				if dposa.x == maxo then
-					if dpos.x>0 then n.x = 1 else n.x = -1 end 
-				elseif dposa.y == maxo then
-					if dpos.y>0 then n.y = 1 else n.y = -1 end
-				else
-					if dpos.z>0 then n.z = 1 else n.z = -1 end
-				end
-				
-				--verify normal
-				nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name
-				walkable = false;
-				if nodename ~= "air" then 
-					walkable = minetest.registered_nodes[nodename].walkable;
-				end
-				if walkable then -- problem, nonempty node - incorrect normal, fix it
-					if n.x ~=0 then  
-						n.x=0; 
-						if dpos.y>0 then n.y = 1 else n.y = -1 end 
-					else
-						if dpos.x>0 then n.x = 1 else n.x = -1 end ; n.y = 0;
+				if bounce == 2 then -- uses special blocks for exact bouncing: dirt, glass: bounces up/down
+					if node.name == "default:dirt_with_grass" then 
+						if bpos.y<0 then n.y = -1 else n.y = 1 end
+					elseif node.name == "default:glass" then 
+						if bpos.y<0 then n.y = -1 else n.y = 1 end
+					elseif node.name == "default:wood" then 
+						if bpos.z<0 then n.z = -1 else n.z = 1 end
+						n.y = 0;
+					elseif node.name == "default:junglewood" then 
+						if bpos.x<0 then n.x = -1 else n.x = 1 end
+						n.y = 0;
 					end
-				end 
+				else -- normal bounce..
+					
+					-- try to determine exact point of entry 
+					local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
+					local vn = {x=-v.x/vm,y=-v.y/vm, z= -v.z/vm};
+					
+					local t1=2; local t2 = 2; local t3 = 2;
+					local t0;
+					-- calculate intersections with cube faces
+					t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end 
+					t0=0.5;if bpos.y<0 then t0 = -0.5 end;if vn.y~=0 then t2 = (t0-bpos.y)/vn.y end
+					t0=0.5;if bpos.z<0 then t0 = -0.5 end;if vn.z~=0 then t3 = (t0-bpos.z)/vn.z end
+					if t1<0 then t1 = 2 end;if t2<0 then t2 = 2 end; if t3<0 then t3 = 2 end
+					local t = math.min(t1,t2,t3); 
+
+					-- fixed: entry point
+					bpos.x = bpos.x + t*vn.x+opos.x;
+					bpos.y = bpos.y + t*vn.y+opos.y;
+					bpos.z = bpos.z + t*vn.z+opos.z;
+					
+					if t<0 or t>1 then 
+						t=-0.5; v.x=0;v.y=0;v.z=0;
+						self.object:remove() 
+					end -- FAILED! go little back and stop
+					
+					-- attempt to determine direction
+					local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
+					local dposa = { x=math.abs(dpos.x),y=math.abs(dpos.y),z=math.abs(dpos.z)};
+					local maxo = math.max(dposa.x,dposa.y,dposa.z);
+					
+					if dposa.x == maxo then
+						if dpos.x>0 then n.x = 1 else n.x = -1 end 
+					elseif dposa.y == maxo then
+						if dpos.y>0 then n.y = 1 else n.y = -1 end
+					else
+						if dpos.z>0 then n.z = 1 else n.z = -1 end
+					end
+					
+					--verify normal
+					nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name
+					walkable = false;
+					if nodename ~= "air" then 
+						walkable = minetest.registered_nodes[nodename].walkable;
+					end
+					if walkable then -- problem, nonempty node - incorrect normal, fix it
+						if n.x ~=0 then  
+							n.x=0; 
+							if dpos.y>0 then n.y = 1 else n.y = -1 end 
+						else
+							if dpos.x>0 then n.x = 1 else n.x = -1 end ; n.y = 0;
+						end
+					end 
+				end
 				
 				local elasticity = self.elasticity;
 				
@@ -236,6 +252,27 @@ minetest.register_node("basic_machines:ball_spawner", {
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
 			if ttl<0 then return end
+			
+			local meta = minetest.get_meta(pos);
+			local t0 = meta:get_int("t");
+			local t1 = minetest.get_gametime(); 
+			local T = meta:get_int("T"); -- temperature
+			
+			if t0>t1-1 then -- activated before natural time
+				T=T+1;
+			else
+				if T>0 then T=T-1 end
+			end
+			meta:set_int("T",T);
+			meta:set_int("t",t1); -- update last activation time
+			
+			if T > 2 then -- overheat
+					minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
+					meta:set_string("infotext","overheat: temperature ".. T)
+					return
+			end
+			
+			
 			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
 			local luaent = obj:get_luaentity();
 			local meta = minetest.get_meta(pos);
