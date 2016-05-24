@@ -9,6 +9,10 @@ local function round(x)
 	end
 end
 
+basic_machines.ball = {};
+basic_machines.ball.bounce_materials = { -- to be used with bounce setting 2 in ball spawner: 1: bounce in x direction, 2: bounce in z direction, otherwise it bounces in y direction
+["default:wood"]=1, ["default:glass"] = 2
+};
 
 local ball_spawner_update_form = function (pos)
 	
@@ -16,7 +20,7 @@ local ball_spawner_update_form = function (pos)
 		local x0,y0,z0;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0"); -- direction of velocity
 		
-		local energy,bounce,g,puncheable;
+		local energy,bounce,g,puncheable, gravity;
 		local speed = meta:get_float("speed"); -- if positive sets initial ball speed
 		energy = meta:get_float("energy"); -- if positive activates, negative deactivates, 0 does nothing
 		bounce = meta:get_int("bounce"); -- if nonzero bounces when hit obstacle, 0 gets absorbed
@@ -32,6 +36,13 @@ local ball_spawner_update_form = function (pos)
 		"field[2.25,1.5;1,1;gravity;gravity;"..gravity.."]"..
 		"field[3.25,1.5;1,1;puncheable;puncheable;"..puncheable.."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK]";
+		
+		if meta:get_int("admin")==1 then 
+			local lifetime = meta:get_int("lifetime");
+			if lifetime <= 0 then lifetime = 20 end
+			form = form .. "field[0.25,2.5;1,1;lifetime;lifetime;"..lifetime.."]"
+		end
+		
 		meta:set_string("formspec",form);
 
 end
@@ -132,19 +143,22 @@ minetest.register_entity("basic_machines:ball",{
 				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
 				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)}; -- boundary position on cube, approximate
 				
-				if bounce == 2 then -- uses special blocks for exact bouncing: dirt, glass: bounces up/down
-					if node.name == "default:dirt_with_grass" then 
+				if bounce == 2 then -- uses special blocks for non buggy lag proof bouncing: by default it bounces in y direction
+					local bounce_direction = basic_machines.ball.bounce_materials[node.name] or 0;
+					
+					
+					if bounce_direction == 0 then 
 						if bpos.y<0 then n.y = -1 else n.y = 1 end
-					elseif node.name == "default:glass" then 
-						if bpos.y<0 then n.y = -1 else n.y = 1 end
-					elseif node.name == "default:wood" then 
-						if bpos.z<0 then n.z = -1 else n.z = 1 end
-						n.y = 0;
-					elseif node.name == "default:junglewood" then 
+					elseif bounce_direction == 1 then 
 						if bpos.x<0 then n.x = -1 else n.x = 1 end
 						n.y = 0;
+					elseif bounce_direction == 2 then 
+						if bpos.z<0 then n.z = -1 else n.z = 1 end
+						n.y = 0;
 					end
-				else -- normal bounce..
+					
+				
+				else -- normal bounce with complicated algorithm to determine bounce direction - problem: with lag its impossible to determine reliable which node was hit and which face ..
 					
 					-- try to determine exact point of entry 
 					local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
@@ -200,7 +214,6 @@ minetest.register_entity("basic_machines:ball",{
 				
 				local elasticity = self.elasticity;
 				
-				
 				-- bounce
 				if n.x~=0 then 
 					v.x=-elasticity*v.x 
@@ -239,6 +252,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
 		meta:set_string("owner", placer:get_player_name()); 
+		local privs = minetest.get_player_privs(placer:get_player_name()); if privs.privs then meta:set_int("admin",1) end
 		
 		meta:set_float("speed",5); -- if positive sets initial ball speed
 		meta:set_float("energy",1); -- if positive activates, negative deactivates, 0 does nothing
@@ -296,6 +310,8 @@ minetest.register_node("basic_machines:ball_spawner", {
 			luaent.puncheable = puncheable;
 			
 			local x0,y0,z0;
+			if speed>0 then luaent.speed = speed end
+			
 			x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0"); -- direction of velocity
 			if speed~=0 and (x0~=0 or y0~=0 or z0~=0) then -- set velocity direction
 				local velocity = {x=x0,y=y0,z=z0};
@@ -303,6 +319,10 @@ minetest.register_node("basic_machines:ball_spawner", {
 				v = v / speed;
 				velocity.x=velocity.x/v;velocity.y=velocity.y/v;velocity.z=velocity.z/v;
 				obj:setvelocity(velocity);
+			end
+			
+			if meta:get_int("admin")==1 then 
+				luaent.lifetime = meta:get_float("lifetime");
 			end
 			
 			
@@ -364,6 +384,10 @@ minetest.register_node("basic_machines:ball_spawner", {
 			end
 			if fields.puncheable then 
 				meta:set_int("puncheable", tonumber(fields.puncheable) or 0) 
+			end
+			
+			if fields.lifetime then
+				meta:set_int("lifetime", tonumber(fields.lifetime) or 0) 
 			end
 		
 			ball_spawner_update_form(pos);
