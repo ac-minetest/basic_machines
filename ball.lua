@@ -11,7 +11,8 @@ end
 
 basic_machines.ball = {};
 basic_machines.ball.bounce_materials = { -- to be used with bounce setting 2 in ball spawner: 1: bounce in x direction, 2: bounce in z direction, otherwise it bounces in y direction
-["default:wood"]=1, ["default:glass"] = 2
+["default:wood"]=1,
+["default:glass"] = 2,
 };
 
 local ball_spawner_update_form = function (pos)
@@ -20,11 +21,13 @@ local ball_spawner_update_form = function (pos)
 		local x0,y0,z0;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0"); -- direction of velocity
 		
-		local energy,bounce,g,puncheable, gravity;
+		local energy,bounce,g,puncheable, gravity,hp,hurt;
 		local speed = meta:get_float("speed"); -- if positive sets initial ball speed
 		energy = meta:get_float("energy"); -- if positive activates, negative deactivates, 0 does nothing
 		bounce = meta:get_int("bounce"); -- if nonzero bounces when hit obstacle, 0 gets absorbed
 		gravity = meta:get_float("gravity");  -- gravity
+		hp = meta:get_float("hp");
+		hurt = meta:get_float("hurt");
 		puncheable = meta:get_int("puncheable"); -- if 1 can be punched by players in protection, if 2 can be punched by anyone
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
@@ -35,12 +38,13 @@ local ball_spawner_update_form = function (pos)
 		"field[1.25,1.5;1,1;bounce;bounce;".. bounce.."]"..
 		"field[2.25,1.5;1,1;gravity;gravity;"..gravity.."]"..
 		"field[3.25,1.5;1,1;puncheable;puncheable;"..puncheable.."]"..
+		"field[0.25,2.5;1,1;hp;hp;"..hp.."]".."field[1.25,2.5;1,1;hurt;hurt;"..hurt.."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK]";
 		
 		if meta:get_int("admin")==1 then 
 			local lifetime = meta:get_int("lifetime");
 			if lifetime <= 0 then lifetime = 20 end
-			form = form .. "field[0.25,2.5;1,1;lifetime;lifetime;"..lifetime.."]"
+			form = form .. "field[2.25,2.5;1,1;lifetime;lifetime;"..lifetime.."]"
 		end
 		
 		meta:set_string("formspec",form);
@@ -57,19 +61,19 @@ minetest.register_entity("basic_machines:ball",{
 	bounce = 0, -- 0: absorbs in block, 1 = proper bounce=lag buggy, -- to do: 2 = line of sight bounce
 	gravity = 0,
 	speed = 5, -- velocity when punched
+	hurt = 0, -- how much damage it does to target entity, if 0 damage disabled
 	owner = "",
 	origin = {x=0,y=0,z=0},
+	lastpos = {x=0,y=0,z=0}, -- last not-colliding position
 	hp_max = 100,
-	elasticity = 0.8, -- speed gets multiplied by this after bounce
+	elasticity = 0.9, -- speed gets multiplied by this after bounce
 	visual="sprite",
 	visual_size={x=.6,y=.6},
 	collisionbox = {-0.5,-0.5,-0.5, 0.5,0.5,0.5},
 	physical=false,
 
 	--textures={"basic_machines_ball"},
-		on_punch=function(self, puncher, time_from_last_punch, tool_capabilities, dir) -- ball is punched
-			
-		end,
+		
 	on_activate = function(self, staticdata)
 		self.object:set_properties({textures={"basic_machines_ball.png"}})
 		self.timer = 0;self.owner = "";
@@ -114,31 +118,52 @@ minetest.register_entity("basic_machines:ball",{
 		local walkable = false;
 		if nodename ~= "air" then 
 			walkable = minetest.registered_nodes[nodename].walkable;
-                        if nodename == "basic_machines:ball_spawner" and dist>1 then walkable = true end -- ball can activate spawner, just not originating one
+                        if nodename == "basic_machines:ball_spawner" and dist>0.5 then walkable = true end -- ball can activate spawner, just not originating one
 		end
-
+		if not walkable then 
+			self.lastpos = pos 
+			if self.hurt~=0 then -- check for coliding nearby objects
+				local objects = minetest.get_objects_inside_radius(pos,1);
+				if #objects>1 then
+					for _, obj in pairs(objects) do
+						local p = obj:getpos();
+						local d = math.sqrt((p.x-pos.x)^2+(p.y-pos.y)^2+(p.z-pos.z)^2);
+						if d>0 then
+							obj:set_hp(obj:get_hp()-self.hurt)
+							self.object:remove(); return
+						end
+					end
+				end
+			end
+		end
+		
+		
 		if walkable then -- we hit a node
 			--minetest.chat_send_all(" hit node at " .. minetest.pos_to_string(pos))
 			
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
 			if table and table.mesecons and table.mesecons.effector then -- activate target
-				self.object:remove();
+
 				if minetest.is_protected(pos,self.owner) then return end
 				local effector = table.mesecons.effector;
-				if self.energy>0 then
+				local energy = self.energy;
+				self.object:remove();
+				
+				if energy>0 then
 					if not effector.action_on then return end
 					effector.action_on(pos,node,16); 
-				elseif self.energy<0 then
+				elseif energy<0 then
 					if not effector.action_off then return end
 					effector.action_off(pos,node,16); 
 				end
+				
 				
 			else -- bounce ( copyright rnd, 2016 )
 				local bounce = self.bounce;
 				if self.bounce == 0 then self.object:remove() return end
 				
-				local n = {x=0,y=1,z=0}; -- this will be bouncen ormal
+				local n = {x=0,y=0,z=0}; -- this will be bounce normal
 				local v = self.object:getvelocity();
 				local opos = {x=round(pos.x),y=round(pos.y), z=round(pos.z)}; -- obstacle
 				local bpos ={ x=(pos.x-opos.x),y=(pos.y-opos.y),z=(pos.z-opos.z)}; -- boundary position on cube, approximate
@@ -146,71 +171,66 @@ minetest.register_entity("basic_machines:ball",{
 				if bounce == 2 then -- uses special blocks for non buggy lag proof bouncing: by default it bounces in y direction
 					local bounce_direction = basic_machines.ball.bounce_materials[node.name] or 0;
 					
-					
 					if bounce_direction == 0 then 
-						if bpos.y<0 then n.y = -1 else n.y = 1 end
+						if v.y>=0 then n.y = -1 else n.y = 1 end
 					elseif bounce_direction == 1 then 
-						if bpos.x<0 then n.x = -1 else n.x = 1 end
+						if v.x>=0 then n.x = -1 else n.x = 1 end
 						n.y = 0;
 					elseif bounce_direction == 2 then 
-						if bpos.z<0 then n.z = -1 else n.z = 1 end
+						if v.z>=0 then n.z = -1 else n.z = 1 end
 						n.y = 0;
 					end
-					
 				
-				else -- normal bounce with complicated algorithm to determine bounce direction - problem: with lag its impossible to determine reliable which node was hit and which face ..
-					
-					-- try to determine exact point of entry 
-					local vm = math.sqrt(v.x*v.x+v.y*v.y+v.z*v.z); if vm == 0 then vm = 1 end
-					local vn = {x=-v.x/vm,y=-v.y/vm, z= -v.z/vm};
-					
-					local t1=2; local t2 = 2; local t3 = 2;
-					local t0;
-					-- calculate intersections with cube faces
-					t0=0.5;if bpos.x<0 then t0 = -0.5 end;if vn.x~=0 then t1 = (t0-bpos.x)/vn.x end 
-					t0=0.5;if bpos.y<0 then t0 = -0.5 end;if vn.y~=0 then t2 = (t0-bpos.y)/vn.y end
-					t0=0.5;if bpos.z<0 then t0 = -0.5 end;if vn.z~=0 then t3 = (t0-bpos.z)/vn.z end
-					if t1<0 then t1 = 2 end;if t2<0 then t2 = 2 end; if t3<0 then t3 = 2 end
-					local t = math.min(t1,t2,t3); 
+				else -- algorithm to determine bounce direction - problem: with lag its impossible to determine reliable which node was hit and which face ..
 
-					-- fixed: entry point
-					bpos.x = bpos.x + t*vn.x+opos.x;
-					bpos.y = bpos.y + t*vn.y+opos.y;
-					bpos.z = bpos.z + t*vn.z+opos.z;
+					if v.x<=0 then n.x = 1 else n.x = -1 end -- possible bounce directions
+					if v.y<=0 then n.y = 1 else n.y = -1 end 
+					if v.z<=0 then n.z = 1 else n.z = -1 end
 					
-					if t<0 or t>1 then 
-						t=-0.5; v.x=0;v.y=0;v.z=0;
-						self.object:remove() 
-					end -- FAILED! go little back and stop
+					local dpos = {};
+				
+					dpos.x = 0.5*n.x; dpos.y = 0; dpos.z = 0; -- calculate distance to bounding surface midpoints
 					
-					-- attempt to determine direction
-					local dpos = { x=(bpos.x-opos.x),y=(bpos.y-opos.y),z=(bpos.z-opos.z)};
-					local dposa = { x=math.abs(dpos.x),y=math.abs(dpos.y),z=math.abs(dpos.z)};
-					local maxo = math.max(dposa.x,dposa.y,dposa.z);
+					local d1 = (bpos.x-dpos.x)^2 + (bpos.y)^2 + (bpos.z)^2;
+					dpos.x = 0; dpos.y = 0.5*n.y; dpos.z = 0;
+					local d2 = (bpos.x)^2 + (bpos.y-dpos.y)^2 + (bpos.z)^2;
+					dpos.x = 0; dpos.y = 0; dpos.z = 0.5*n.z;
+					local d3 = (bpos.x)^2 + (bpos.y)^2 + (bpos.z-dpos.z)^2;
+					local d = math.min(d1,d2,d3); -- we obtain bounce direction from minimal distance
 					
-					if dposa.x == maxo then
-						if dpos.x>0 then n.x = 1 else n.x = -1 end 
-					elseif dposa.y == maxo then
-						if dpos.y>0 then n.y = 1 else n.y = -1 end
-					else
-						if dpos.z>0 then n.z = 1 else n.z = -1 end
+					if d1==d then --x
+						n.y=0;n.z=0 
+					elseif d2==d then --y 
+						n.x=0;n.z=0
+					elseif d3==d then --z
+						n.x=0;n.y=0
 					end
 					
-					--verify normal
-					nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name
-					walkable = false;
-					if nodename ~= "air" then 
-						walkable = minetest.registered_nodes[nodename].walkable;
-					end
+					
+					nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name -- verify normal
+					walkable = nodename ~= "air";
 					if walkable then -- problem, nonempty node - incorrect normal, fix it
-						if n.x ~=0 then  
+						if n.x ~=0 then  -- x direction is wrong, try something else
 							n.x=0; 
-							if dpos.y>0 then n.y = 1 else n.y = -1 end 
-						else
-							if dpos.x>0 then n.x = 1 else n.x = -1 end ; n.y = 0;
+							if v.y>=0 then n.y = -1 else n.y = 1 end -- try y
+							nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name -- verify normal
+							walkable = nodename ~= "air";
+							if walkable then -- still problem, only remaining is z
+								n.y=0;
+								if v.z>=0 then n.z = -1 else n.z = 1 end
+								nodename=minetest.get_node({x=opos.x+n.x,y=opos.y+n.y,z=opos.z+n.z}).name -- verify normal
+								walkable = nodename ~= "air";
+								if walkable then -- messed up, just remove the ball
+									self.object:remove()
+									return
+								end
+								
+							end
+
 						end
-					end 
-				end
+					end
+					
+				-- end
 				
 				local elasticity = self.elasticity;
 				
@@ -225,16 +245,16 @@ minetest.register_entity("basic_machines:ball",{
 				
 				local r = 0.2
 				bpos = {x=pos.x+n.x*r,y=pos.y+n.y*r,z=pos.z+n.z*r}; -- point placed a bit further away from box
-				self.object:setpos(bpos) -- place object fixed point
+				self.object:setpos(bpos) -- place object at last known outside point
 				
 				self.object:setvelocity(v);
 				
 				minetest.sound_play("default_dig_cracky", {pos=pos,gain=1.0,max_hear_distance = 8,})
 				
 			end
-			
-			return
+			end
 		end
+			return
 	end,
 })
 
@@ -254,6 +274,8 @@ minetest.register_node("basic_machines:ball_spawner", {
 		meta:set_string("owner", placer:get_player_name()); 
 		local privs = minetest.get_player_privs(placer:get_player_name()); if privs.privs then meta:set_int("admin",1) end
 		
+		meta:set_float("hurt",0);
+		meta:set_float("hp",100);
 		meta:set_float("speed",5); -- if positive sets initial ball speed
 		meta:set_float("energy",1); -- if positive activates, negative deactivates, 0 does nothing
 		meta:set_int("bounce",0); -- if nonzero bounces when hit obstacle, 0 gets absorbed
@@ -272,7 +294,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 			local t1 = minetest.get_gametime(); 
 			local T = meta:get_int("T"); -- temperature
 			
-			if t0>t1-3 then -- activated before natural time
+			if t0>t1-2 then -- activated before natural time
 				T=T+1;
 			else
 				if T>0 then T=T-1 end
@@ -286,7 +308,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 					return
 			end
 			
-			
+			pos.x = round(pos.x);pos.y = round(pos.y);pos.z = round(pos.z);
 			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
 			local luaent = obj:get_luaentity();
 			local meta = minetest.get_meta(pos);
@@ -308,6 +330,10 @@ minetest.register_node("basic_machines:ball_spawner", {
 				obj:setacceleration({x=0,y=-gravity,z=0});
 			end
 			luaent.puncheable = puncheable;
+			luaent.owner = meta:get_string("owner");
+			luaent.hurt = meta:get_float("hurt");
+			
+			obj:set_hp( meta:get_float("hp") );
 			
 			local x0,y0,z0;
 			if speed>0 then luaent.speed = speed end
@@ -330,6 +356,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		
 		action_off = function (pos, node,ttl) 
 			if ttl<0 then return end
+			pos.x = round(pos.x);pos.y = round(pos.y);pos.z = round(pos.z);
 			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
 			local luaent = obj:get_luaentity();
 			luaent.energy = -1;
@@ -388,6 +415,14 @@ minetest.register_node("basic_machines:ball_spawner", {
 			
 			if fields.lifetime then
 				meta:set_int("lifetime", tonumber(fields.lifetime) or 0) 
+			end
+			
+			if fields.hurt then
+				meta:set_float("hurt", tonumber(fields.hurt) or 0) 
+			end
+			
+			if fields.hp then
+				meta:set_float("hp", math.abs(tonumber(fields.hp)) or 0) 
 			end
 		
 			ball_spawner_update_form(pos);
