@@ -29,8 +29,11 @@ local ball_spawner_update_form = function (pos)
 		hp = meta:get_float("hp");
 		hurt = meta:get_float("hurt");
 		puncheable = meta:get_int("puncheable"); -- if 1 can be punched by players in protection, if 2 can be punched by anyone
+		
+		local texture = meta:get_string("texture") or  "basic_machines_ball.png";
+		
 		local form  = 
-		"size[4.25,3.75]" ..  -- width, height
+		"size[4.25,4.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"field[3.25,0.5;1,1;speed;speed;"..speed.."]"..
 		--speed, jump, gravity,sneak
@@ -39,7 +42,10 @@ local ball_spawner_update_form = function (pos)
 		"field[2.25,1.5;1,1;gravity;gravity;"..gravity.."]"..
 		"field[3.25,1.5;1,1;puncheable;puncheable;"..puncheable.."]"..
 		"field[0.25,2.5;1,1;hp;hp;"..hp.."]".."field[1.25,2.5;1,1;hurt;hurt;"..hurt.."]"..
-		"button_exit[3.25,3.25;1,1;OK;OK]";
+		"field[0.25,3.5;4,1;texture;texture;"..texture.."]"..
+		"button_exit[3.25,4.25;1,1;OK;OK]";
+		
+		
 		
 		if meta:get_int("admin")==1 then 
 			local lifetime = meta:get_int("lifetime");
@@ -129,6 +135,7 @@ minetest.register_entity("basic_machines:ball",{
 						local p = obj:getpos();
 						local d = math.sqrt((p.x-pos.x)^2+(p.y-pos.y)^2+(p.z-pos.z)^2);
 						if d>0 then
+							if minetest.is_protected(p,self.owner) then return end
 							obj:set_hp(obj:get_hp()-self.hurt)
 							self.object:remove(); return
 						end
@@ -230,7 +237,7 @@ minetest.register_entity("basic_machines:ball",{
 						end
 					end
 					
-				-- end
+				end
 				
 				local elasticity = self.elasticity;
 				
@@ -251,7 +258,6 @@ minetest.register_entity("basic_machines:ball",{
 				
 				minetest.sound_play("default_dig_cracky", {pos=pos,gain=1.0,max_hear_distance = 8,})
 				
-			end
 			end
 		end
 			return
@@ -275,6 +281,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		local privs = minetest.get_player_privs(placer:get_player_name()); if privs.privs then meta:set_int("admin",1) end
 		
 		meta:set_float("hurt",0);
+		meta:set_string("texture", "basic_machines_ball.png");
 		meta:set_float("hp",100);
 		meta:set_float("speed",5); -- if positive sets initial ball speed
 		meta:set_float("energy",1); -- if positive activates, negative deactivates, 0 does nothing
@@ -352,6 +359,9 @@ minetest.register_node("basic_machines:ball_spawner", {
 			end
 			
 			
+			obj:set_properties({textures={meta:get_string("texture")}})
+			
+			
 		end,
 		
 		action_off = function (pos, node,ttl) 
@@ -381,7 +391,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			
-			local speed,energy,bounce,g,puncheable;
+			local speed,energy,bounce,gravity,puncheable;
 			energy = meta:get_float("energy"); -- if positive activates, negative deactivates, 0 does nothing
 			bounce = meta:get_int("bounce"); -- if nonzero bounces when hit obstacle, 0 gets absorbed
 			gravity = meta:get_float("gravity");  -- gravity
@@ -423,6 +433,10 @@ minetest.register_node("basic_machines:ball_spawner", {
 			
 			if fields.hp then
 				meta:set_float("hp", math.abs(tonumber(fields.hp)) or 0) 
+			end
+			
+			if fields.texture then
+				meta:set_string ("texture", fields.texture);
 			end
 		
 			ball_spawner_update_form(pos);
