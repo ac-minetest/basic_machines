@@ -1,6 +1,8 @@
 -- BALL: energy ball that flies around, can bounce and activate stuff
 -- rnd 2016:
 
+-- TO DO: move mode: ball just rolling around on ground, also if inside slope it would "roll down", just increased velocity in slope direction
+
 local function round(x)
 	if x < 0 then 
 		return -math.floor(-x+0.5);
@@ -12,6 +14,9 @@ end
 basic_machines.ball = {};
 basic_machines.ball.bounce_materials = { -- to be used with bounce setting 2 in ball spawner: 1: bounce in x direction, 2: bounce in z direction, otherwise it bounces in y direction
 ["default:wood"]=1,
+["xpanes:bar_2"]=1,
+["xpanes:bar_10"]=1,
+["darkage:iron_bars"]=1,
 ["default:glass"] = 2,
 };
 
