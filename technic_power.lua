@@ -355,7 +355,7 @@ minetest.register_node("basic_machines:generator", {
 minetest.register_abm({ 
 	nodenames = {"basic_machines:generator"},
 	neighbors = {""},
-	interval = 20,
+	interval = 19,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
