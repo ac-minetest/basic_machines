@@ -323,37 +323,7 @@ minetest.register_node("basic_machines:autocrafter", {
 		return stack:get_count()
 	end,
 	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-		--if not pipeworks.may_configure(pos, player) then return 0 end
-		local meta = minetest.get_meta(pos);if meta:get_string("owner")~=player:get_player_name() then return 0 end -- rnd
-		
-		upgrade_autocrafter(pos)
-		local inv = minetest.get_meta(pos):get_inventory()
-		local stack = inv:get_stack(from_list, from_index)
-
-		if to_list == "output" then
-			on_output_change(pos, inv, stack)
-			return 0
-		elseif from_list == "output" then
-			on_output_change(pos, inv, nil)
-			if to_list ~= "recipe" then
-				return 0
-			end -- else fall through to recipe list handling
-		end
-
-		if from_list == "recipe" or to_list == "recipe" then
-			if from_list == "recipe" then
-				inv:set_stack(from_list, from_index, ItemStack(""))
-			end
-			if to_list == "recipe" then
-				stack:set_count(1)
-				inv:set_stack(to_list, to_index, stack)
-			end
-			after_recipe_change(pos, inv)
-			return 0
-		end
-
-		after_inventory_change(pos)
-		return count
+		return 0; -- no internal inventory moves!
 	end,
 	
 	mesecons = {effector = {  -- rnd: run machine when activated by signal

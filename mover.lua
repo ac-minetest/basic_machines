@@ -61,6 +61,11 @@ basic_machines.no_teleport_table = {
 ["signs:text"] = true
 }
 
+-- list of nodes mover cant take from in inventory mode
+basic_machines.limit_inventory_table = { -- node name = {list of bad inventories to take from}
+["basic_machines:autocrafter"]= {["recipe"]=1, ["output"]=1}
+}
+
 -- when activated with keypad these will be "punched" to update their text too
 basic_machines.signs = {
 ["default:sign_wall_wood"] = true,
@@ -476,11 +481,19 @@ minetest.register_node("basic_machines:mover", {
 		if mode == "inventory" then
 					--if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
 					
+					-- forbidden nodes to take from in inventory mode - to prevent abuses :
+					if basic_machines.limit_inventory_table[node1.name] then
+						if basic_machines.limit_inventory_table[node1.name][invName1] then -- forbidden to take from this inventory
+							return 
+						end 
+					end
+					
 					local stack, meta1,inv1;
 					if prefer == "" then -- if prefer == "" then just pick one item from chest to transfer
 						meta1 = minetest.get_meta(pos1);
 						inv1 = meta1:get_inventory();
 						if inv1:is_empty(invName1) then return end -- nothing to move
+						
 						local size = inv1:get_size(invName1);
 						
 						local found = false;
