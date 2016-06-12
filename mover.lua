@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "06/09/2016a";
+basic_machines.version = "06/12/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -701,7 +701,10 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	if t0>t1-machines_minstep then -- activated before natural time
 		T=T+1;
 	else
-		if T>0 then T=T-1 end
+		if T>0 then 
+			T=T-1 
+			if t1-t0>5 then T = 0 end
+		end
 	end
 	meta:set_int("T",T);
 	meta:set_int("t",t1); -- update last activation time
