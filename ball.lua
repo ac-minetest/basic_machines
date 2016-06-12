@@ -3,6 +3,7 @@
 
 -- TO DO: move mode: ball just rolling around on ground, also if inside slope it would "roll down", just increased velocity in slope direction
 
+local ballcount = {};
 local function round(x)
 	if x < 0 then 
 		return -math.floor(-x+0.5);
@@ -110,6 +111,7 @@ minetest.register_entity("basic_machines:ball",{
 	on_step = function(self, dtime)
 		self.timer=self.timer+dtime
 		if self.timer>self.lifetime then 
+			local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 			self.object:remove()
 			return 
 		end
@@ -121,6 +123,7 @@ minetest.register_entity("basic_machines:ball",{
 		local r = 30;-- maximal distance when balls disappear
                 local dist = math.max(math.abs(pos.x-origin.x), math.abs(pos.y-origin.y), math.abs(pos.z-origin.z));
 		if dist>r then -- remove if it goes too far
+			local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 			self.object:remove() 
 			return 
 		end
@@ -142,7 +145,9 @@ minetest.register_entity("basic_machines:ball",{
 						if d>0 then
 							if minetest.is_protected(p,self.owner) then return end
 							obj:set_hp(obj:get_hp()-self.hurt)
-							self.object:remove(); return
+							local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
+							self.object:remove(); 
+							return
 						end
 					end
 				end
@@ -173,7 +178,10 @@ minetest.register_entity("basic_machines:ball",{
 				
 			else -- bounce ( copyright rnd, 2016 )
 				local bounce = self.bounce;
-				if self.bounce == 0 then self.object:remove() return end
+				if self.bounce == 0 then 
+					local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
+					self.object:remove() 
+				return end
 				
 				local n = {x=0,y=0,z=0}; -- this will be bounce normal
 				local v = self.object:getvelocity();
@@ -285,6 +293,8 @@ minetest.register_node("basic_machines:ball_spawner", {
 		meta:set_string("owner", placer:get_player_name()); 
 		local privs = minetest.get_player_privs(placer:get_player_name()); if privs.privs then meta:set_int("admin",1) end
 		
+		if privs.machines then meta:set_int("machines",1) end
+		
 		meta:set_float("hurt",0);
 		meta:set_string("texture", "basic_machines_ball.png");
 		meta:set_float("hp",100);
@@ -309,7 +319,10 @@ minetest.register_node("basic_machines:ball_spawner", {
 			if t0>t1-2 then -- activated before natural time
 				T=T+1;
 			else
-				if T>0 then T=T-1 end
+				if T>0 then 
+					T=T-1 
+					if t1-t0>5 then T = 0 end
+				end
 			end
 			meta:set_int("T",T);
 			meta:set_int("t",t1); -- update last activation time
@@ -318,6 +331,22 @@ minetest.register_node("basic_machines:ball_spawner", {
 					minetest.sound_play("default_cool_lava",{pos = pos, max_hear_distance = 16, gain = 0.25})
 					meta:set_string("infotext","overheat: temperature ".. T)
 					return
+			end
+
+			if meta:get_int("machines")~=1 then -- no machines priv, limit ball count
+				local owner = meta:get_string("owner");
+				local count = ballcount[owner];
+				if not count or count<0 then count = 0 end
+				
+				if count>=2 then 
+					if t1-t0>20 then count = 0 
+						else return 
+					end
+				end
+				
+				count = count + 1;
+				ballcount[owner]=count;
+				--minetest.chat_send_all("count " .. count);
 			end
 			
 			pos.x = round(pos.x);pos.y = round(pos.y);pos.z = round(pos.z);

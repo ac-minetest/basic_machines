@@ -27,6 +27,7 @@ dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
 
 --dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
+dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- experimental, adds on protect event handling
 
 -- OPTIONAL ADDITIONAL STUFF ( comment to disable )
 
@@ -38,10 +39,21 @@ minetest.after(0, function()
 end)
 
 
+-- MACHINE PRIVILEGE
+minetest.register_privilege("machines", {
+	description = "Player is expert basic_machine user: his machines work while not present on server, can spawn more than 2 balls at once",
+})
 
-print("[basic machines] loaded")
+
+
 
 -- machines fuel related recipes
+
+
+
+
+
+
 
 
 -- CHARCOAL
@@ -78,3 +90,4 @@ minetest.register_craft({
 -- COMPATIBILITY
 
 minetest.register_alias("basic_machines:diamond_dust", "basic_machines:diamond_dust_66")
+print("[basic machines] loaded")

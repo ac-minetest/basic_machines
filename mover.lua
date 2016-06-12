@@ -594,8 +594,7 @@ minetest.register_node("basic_machines:mover", {
 					node1.name)
 					
 					for _, pos3 in ipairs(positions) do
-						-- dont take coal from source or target location to avoid chest/fuel confusion isssues
-						if count>16 then break end
+						--if count>16 then break end
 						minetest.set_node(pos3,{name="air"}); count = count+1;
 					end
 					
@@ -1239,6 +1238,14 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		if basic_machines.clockgen == 0 then return end
+		local meta = minetest.get_meta(pos); 
+		local machines = meta:get_int("machines");
+		if machines~=1 then -- no machines privilege
+			if not minetest.get_player_by_name(meta:get_string("owner")) then -- owner not online
+				return 
+			end
+		end
+		
 		pos.y=pos.y+1;
 		node = minetest.get_node(pos);if not node.name or node.name == "air" then return end 
 		local table = minetest.registered_nodes[node.name];
@@ -1301,7 +1308,11 @@ minetest.register_node("basic_machines:distributor", {
 			if t0>t1-machines_minstep then -- activated before natural time
 				T=T+1;
 			else
-				if T>0 then T=T-1 end
+				if T>0 then 
+					T=T-1 
+					if t1-t0>5 then T = 0 end -- reset temperature if more than 5s elapsed since last punch
+				end
+				
 			end
 			meta:set_int("T",T);
 			meta:set_int("t",t1); -- update last activation time
