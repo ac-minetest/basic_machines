@@ -9,7 +9,7 @@ function minetest.is_protected(pos, digger)
 	
 	local is_protected = old_is_protected(pos, digger);
 	if is_protected then -- only if protected
-		local p = {x=math.floor((pos.x)/20)*20+10,y=math.floor((pos.y)/20)*20,z=math.floor((pos.z)/20)*20+10}
+		local p = {x=math.floor((pos.x)/20)*20,y=math.floor((pos.y)/20)*20,z=math.floor((pos.z)/20)*20}
 		if minetest.get_node(p).name == "basic_machines:distributor" then -- attempt to activate distributor at special grid location: coordinates of the form 10+20*i
 			local meta = minetest.get_meta(p);
 			if meta:get_int("active1") == 0 then -- first output is disabled, indicating ready to be used as event handler
@@ -30,7 +30,7 @@ end
 minetest.register_on_chat_message(function(name, message)
 	local player = minetest.get_player_by_name(name);
 	local pos = player:getpos();
-	local p = {x=math.floor((pos.x)/20)*20+10,y=math.floor((pos.y)/20)*20,z=math.floor((pos.z)/20)*20+10}
+	local p = {x=math.floor((pos.x)/20)*20,y=math.floor((pos.y)/20)*20,z=math.floor((pos.z)/20)*20}
 	if minetest.get_node(p).name == "basic_machines:distributor" then -- attempt to activate distributor at special grid location: coordinates of the form 10+20*i
 			local meta = minetest.get_meta(p);
 			if meta:get_int("active1") == 0 then -- first output is disabled, indicating ready to be used as event handler

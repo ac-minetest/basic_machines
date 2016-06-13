@@ -90,6 +90,7 @@ minetest.register_entity("basic_machines:ball",{
 		self.object:set_properties({textures={"basic_machines_ball.png"}})
 		self.timer = 0;self.owner = "";
 		self.origin = self.object:getpos();
+		self.lifetime = 20;
 	end,
 	
 	on_punch = function (self, puncher, time_from_last_punch, tool_capabilities, dir)
