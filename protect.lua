@@ -4,6 +4,7 @@
 -- distributor must have first target filter set to 0 ( disabled ) to handle dig events
 
 local old_is_protected = minetest.is_protected
+local round = math.floor;
 
 function minetest.is_protected(pos, digger)
 	
