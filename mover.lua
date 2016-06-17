@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "06/12/2016a";
+basic_machines.version = "06/17/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -103,6 +103,7 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_string("owner", placer:get_player_name()); meta:set_int("public",0);
 		meta:set_int("x0",0);meta:set_int("y0",-1);meta:set_int("z0",0); -- source1
 		meta:set_int("x1",0);meta:set_int("y1",-1);meta:set_int("z1",0); -- source2: defines cube
+		meta:set_int("pc",0); meta:set_int("dim",1);-- current cube position and dimensions
 		meta:set_int("pc",0); meta:set_int("dim",1);-- current cube position and dimensions
 		meta:set_int("x2",0);meta:set_int("y2",1);meta:set_int("z2",0);
 		meta:set_float("fuel",0)
@@ -411,32 +412,36 @@ minetest.register_node("basic_machines:mover", {
 						teleport_any = true;
 					end
 				else
-					if times > 0 then
-						local finalmove = true;
-						-- move objects with set velocity in target direction
-						obj:setvelocity(velocityv);
-						if obj:get_luaentity() then -- interaction with objects like carts
-							local luaent = obj:get_luaentity();
-							if luaent.name then 
-								if luaent.name == "basic_machines:ball" then -- move balls for free
-									luaent.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
-									finalmove = false;
-									finalsound = false;
-								end
-								if luaent.name == "carts:cart" then -- just accelerate cart
-									luaent.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
-									fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
-									meta:set_string("infotext", "Mover block. Fuel "..fuel);
-									return;
+				
+					local lua_entity = obj:get_luaentity();
+					local detected_obj = lua_entity.name or "" 
+					if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list 
+						if times > 0 then
+							local finalmove = true;
+							-- move objects with set velocity in target direction
+							obj:setvelocity(velocityv);
+							if obj:get_luaentity() then -- interaction with objects like carts
+								if lua_entity.name then 
+									if lua_entity.name == "basic_machines:ball" then -- move balls for free
+										lua_entity.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
+										finalmove = false;
+										finalsound = false;
+									end
+									if lua_entity.name == "carts:cart" then -- just accelerate cart
+										lua_entity.velocity = {x=velocityv.x*times,y=velocityv.y*times,z=velocityv.z*times};
+										fuel = fuel - fuel_cost; meta:set_float("fuel",fuel);
+										meta:set_string("infotext", "Mover block. Fuel "..fuel);
+										return;
+									end
 								end
 							end
+							--obj:setacceleration({x=0,y=0,z=0});
+							if finalmove then -- dont move objects like balls to destination after delay
+								minetest.after(times, function () if obj then obj:setvelocity({x=0,y=0,z=0}); obj:moveto(pos2, false) end end); 
+							end
+						else
+								obj:moveto(pos2, false)
 						end
-						--obj:setacceleration({x=0,y=0,z=0});
-						if finalmove then -- dont move objects like balls to destination after delay
-							minetest.after(times, function () if obj then obj:setvelocity({x=0,y=0,z=0}); obj:moveto(pos2, false) end end); 
-						end
-					else
-						obj:moveto(pos2, false)
 					end
 					teleport_any = true;
 				end
@@ -782,10 +787,11 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			tmeta:set_string("text",text);
 			local table = minetest.registered_nodes[node.name];
 			if not table.on_punch then return end -- error
-			-- if signs_lib and signs_lib.update_sign then
-				-- signs_lib.update_sign(pos)
-			-- end
-			table.on_punch(tpos, node, nil);			
+			if signs_lib and signs_lib.update_sign then
+				--signs_lib.update_sign(pos)
+				table.on_punch(tpos, node, nil); -- warning - this can cause problems if no signs_lib installed
+			end
+			
 			return
 		end
 		
