@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "06/17/2016a";
+basic_machines.version = "06/25/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -1880,7 +1880,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
 		end
 		
-		if fields.altgui then
+		if fields.altgui then -- alternate gui without dropdown menu which causes crash for ios tablet users
 		
 			local x0,y0,z0,x1,y1,z1,x2,y2,z2;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
