@@ -182,6 +182,7 @@ minetest.register_node("basic_machines:mover", {
 		"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
 		"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
 		"button[3,3.25;1,1;help;help]"..
+		"button[6,0.25;2,1;altgui;alternate gui]"..
 		"label[0.,3.0;MODE selection]"..
 		"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
 		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
@@ -1879,6 +1880,45 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
 		end
 		
+		if fields.altgui then
+		
+			local x0,y0,z0,x1,y1,z1,x2,y2,z2;
+			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
+			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
+			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
+			local range = meta:get_float("upgrade") or 1;	range = range * max_range;
+			
+			
+			local inv1 = meta:get_string("inv1");local inv2 = meta:get_string("inv2");
+			
+			local prefer =  meta:get_string("prefer");
+			local mode =  meta:get_string("mode");
+			local upgrade =  meta:get_int("upgrade");
+			local mreverse = meta:get_int("reverse");
+
+			
+			local form = "size[8,9.5]" ..  -- width, height
+			--"size[6,10]" ..  -- width, height
+			"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+			"field[3.25,0.5;1.5,1;inv1;inv1;" .. inv1 .."]"..
+			"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+			"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
+			"field[3.25,2.5;1.5,1;inv2;inv2;" .. inv2 .."]"..
+			"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+			"button[3,3.25;1,1;help;help]"..
+			"field[0.25,3.6;3,1;mode;mode;".. mode .."]"..
+			"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
+			"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
+			"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
+			-- minetest.after(1,
+				-- function()
+					minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
+				-- end
+				-- )
+			return 
+		end
+		
+		
 		if fields.OK == "OK" then
 			local x0,y0,z0,x1,y1,z1,x2,y2,z2;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
@@ -1941,7 +1981,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 		end
-		return
+		return 
 	end
 	
 	-- KEYPAD

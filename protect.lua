@@ -33,7 +33,7 @@ minetest.register_on_chat_message(function(name, message)
 	local pos = player:getpos();
 	local r = 20;local p = {x=round(pos.x/r+0.5)*r,y=round(pos.y/r+0.5)*r+1,z=round(pos.z/r+0.5)*r}
 	--minetest.chat_send_all(minetest.pos_to_string(p))
-	if minetest.get_node(p).name == "basic_machines:distributor" then -- attempt to activate distributor at special grid location: coordinates of the form 10+20*i
+	if minetest.get_node(p).name == "basic_machines:distributor" then -- attempt to activate distributor at special grid location: coordinates of the form 20*i
 			local meta = minetest.get_meta(p);
 			if meta:get_int("active1") == 0 then -- first output is disabled, indicating ready to be used as event handler
 				local y1 = meta:get_int("y1");
