@@ -145,6 +145,11 @@ minetest.register_entity("basic_machines:ball",{
 						local d = math.sqrt((p.x-pos.x)^2+(p.y-pos.y)^2+(p.z-pos.z)^2);
 						if d>0 then
 							if minetest.is_protected(p,self.owner) then return end
+							
+							if obj:is_player() then -- dont hurt owner
+								if obj:get_player_name()==self.owner then break end
+							end
+							
 							obj:set_hp(obj:get_hp()-self.hurt)
 							local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 							self.object:remove(); 
@@ -476,9 +481,96 @@ minetest.register_node("basic_machines:ball_spawner", {
 		
 			ball_spawner_update_form(pos);
 		end
+	end,
+	
+	after_dig_node = function(pos, oldnode, oldmetadata, digger)
+		local name = digger:get_player_name();
+		local inv = digger:get_inventory();
+		inv:remove_item("main", ItemStack("basic_machines:ball_spawner"));
+		local stack = ItemStack("basic_machines:ball_spell");
+		local meta = oldmetadata["fields"];
+		meta["formspec"]=nil;
+		stack:set_metadata(minetest.serialize(meta));
+		inv:add_item("main",stack);
 	end
 	
 })
+
+
+local spelltime = {};
+
+-- ball as magic spell user can cast
+minetest.register_tool("basic_machines:ball_spell", {
+	description = "ball spawner",
+	inventory_image = "basic_machines_ball.png",
+	tool_capabilities = {
+		full_punch_interval = 2,
+		max_drop_level=0,
+	},
+	on_use = function(itemstack, user, pointed_thing)
+		
+		local pos = user:getpos();pos.y=pos.y+1;
+		local meta = minetest.deserialize(itemstack:get_metadata());
+		local owner = meta["owner"] or "";
+		
+		if minetest.is_protected(pos,owner) then return end
+		
+		local t0 = spelltime[owner] or 0;
+		local t1 = minetest.get_gametime(); 
+		if t1-t0<2 then return end -- too soon
+		spelltime[owner]=t1;
+		
+		
+		local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");
+		local luaent = obj:get_luaentity();
+
+		
+		local speed,energy,bounce,gravity,puncheable;
+		speed = tonumber(meta["speed"]) or 0;
+		energy = tonumber(meta["energy"]) or 0; -- if positive activates, negative deactivates, 0 does nothing
+		bounce = tonumber(meta["bounce"]) or 0; -- if nonzero bounces when hit obstacle, 0 gets absorbed
+		gravity = tonumber(meta["gravity"]) or 0;  -- gravity
+		puncheable = tonumber(meta["puncheable"]) or 0; -- if 1 can be punched by players in protection, if 2 can be punched by anyone
+		
+		if energy<0 then
+			obj:set_properties({textures={"basic_machines_ball.png^[colorize:blue:120"}})
+		end
+		
+		luaent.bounce = bounce;
+		luaent.energy = energy;
+		if gravity>0 then
+			obj:setacceleration({x=0,y=-gravity,z=0});
+		end
+		luaent.puncheable = puncheable;
+		luaent.owner = meta["owner"];
+		luaent.hurt = tonumber(meta["hurt"]);
+		
+		obj:set_hp( tonumber(meta["hp"]) );
+		
+		local x0,y0,z0;
+		if speed>0 then luaent.speed = speed end
+		
+		
+
+		local v = user:get_look_dir();
+		v.x=v.x*speed;v.y=v.y*speed;v.z=v.z*speed;
+		obj:setvelocity(v);
+
+		
+		if tonumber(meta["admin"])==1 then 
+			luaent.lifetime = tonumber(meta["lifetime"]);
+		end
+		
+		
+		obj:set_properties({textures={meta["texture"]}})
+		
+		
+	end,
+	
+	
+})
+
+
 
 
 minetest.register_craft({
