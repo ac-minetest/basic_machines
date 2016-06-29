@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "06/27/2016a";
+basic_machines.version = "06/29/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -204,7 +204,9 @@ minetest.register_node("basic_machines:mover", {
 			local itemname = stack:get_name() or "";
 			meta:set_string("prefer",itemname);
 			minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
-			-- local inv = meta:get_inventory();
+			minetest.show_formspec(player:get_player_name(), "basic_machines_inventory", 
+			"size[8, 4] list[current_player;main;0,0;8,4;]");
+		-- local inv = meta:get_inventory();
 			-- inv:set_stack("filter",1, ItemStack({name=itemname})) 
 			return 1;
 		end
@@ -760,7 +762,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local node = minetest.get_node(tpos);if not node.name then return end -- error
 	local text = meta:get_string("text"); 
 	
-	if text ~= "" then -- set text on target node
+	if text ~= "" then -- TEXT MODE; set text on target
 		if text == "@" then -- keyboard mode, set text from input
 			text = meta:get_string("input") or "";
 			meta:set_string("input",""); -- clear input again
@@ -801,10 +803,21 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			x0=tmeta:get_int("x0");y0=tmeta:get_int("y0");z0=tmeta:get_int("z0");
 			x0=tpos.x+x0;y0=tpos.y+y0;z0=tpos.z+z0;
 			tpos = {x=x0,y=y0,z=z0};
-			if string.byte(ttext) == 64 then -- target keypad's text starts with @ ( ascii code 64)
+			if string.byte(ttext) == 64 then -- target keypad's text starts with @ ( ascii code 64) -> character replacement
 				ttext =string.sub(ttext,2); if not ttext or ttext == "" then return end
 				ttext = string.gsub(ttext, "@", text); -- replace every @ in ttext with text
 				
+				-- set target keypad's target's infotext
+				tmeta = minetest.get_meta(tpos);if not tmeta then return end
+				tmeta:set_string("infotext", ttext);
+			elseif string.byte(ttext) == 37 then -- target keypad's text starts with % ( ascii code 37) -> word extraction
+				local i = tonumber(string.sub(ttext,2,2)) or 1; --read the number following the %
+
+				--extract i-th word from text 
+				 local j = 0; 
+				 for word in string.gmatch(text, "%a+") do 
+					j=j+1; if j == i then ttext = word; break; end
+				 end
 				-- set target keypad's target's infotext
 				tmeta = minetest.get_meta(tpos);if not tmeta then return end
 				tmeta:set_string("infotext", ttext);
