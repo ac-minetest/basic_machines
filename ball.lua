@@ -144,7 +144,9 @@ minetest.register_entity("basic_machines:ball",{
 						local p = obj:getpos();
 						local d = math.sqrt((p.x-pos.x)^2+(p.y-pos.y)^2+(p.z-pos.z)^2);
 						if d>0 then
-							if minetest.is_protected(p,self.owner) then return end
+							
+							--if minetest.is_protected(p,self.owner) then return end
+							if math.abs(p.x)>32 or math.abs(p.y)>32 or math.abs(p.z)>32 then return end
 							
 							if obj:is_player() then -- dont hurt owner
 								if obj:get_player_name()==self.owner then break end
@@ -513,7 +515,7 @@ minetest.register_tool("basic_machines:ball_spell", {
 		local meta = minetest.deserialize(itemstack:get_metadata());
 		local owner = meta["owner"] or "";
 		
-		if minetest.is_protected(pos,owner) then return end
+		--if minetest.is_protected(pos,owner) then return end
 		
 		local t0 = spelltime[owner] or 0;
 		local t1 = minetest.get_gametime(); 

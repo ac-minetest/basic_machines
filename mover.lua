@@ -815,7 +815,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 
 				--extract i-th word from text 
 				 local j = 0; 
-				 for word in string.gmatch(text, "%a+") do 
+				 for word in string.gmatch(text, "%S+") do 
 					j=j+1; if j == i then ttext = word; break; end
 				 end
 				-- set target keypad's target's infotext
