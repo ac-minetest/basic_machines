@@ -1,6 +1,6 @@
 -- make other light blocks toggle able:
 
-local function enable_toggle_ligth(name)
+local function enable_toggle_light(name)
 
 local table = minetest.registered_nodes[name]; if not table then return end
 	local table2 = {}
@@ -44,7 +44,7 @@ local table = minetest.registered_nodes[name]; if not table then return end
 end
 
 
-enable_toggle_ligth("xdecor:wooden_lightbox");
-enable_toggle_ligth("xdecor:iron_lightbox");
-enable_toggle_ligth("moreblocks:slab_meselamp_1");
-enable_toggle_ligth("moreblocks:slab_super_glow_glass");
+enable_toggle_light("xdecor:wooden_lightbox");
+enable_toggle_light("xdecor:iron_lightbox");
+enable_toggle_light("moreblocks:slab_meselamp_1");
+enable_toggle_light("moreblocks:slab_super_glow_glass");

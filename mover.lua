@@ -11,14 +11,23 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "06/29/2016a";
+basic_machines.version = "07/01/2016a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
 ["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,
 ["default:lava_source"]=21890,["default:water_source"]=11000,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
+--move machines for free
 basic_machines.hardness["basic_machines:mover"]=0.;
+basic_machines.hardness["basic_machines:keypad"]=0.;
+basic_machines.hardness["basic_machines:distributor"]=0.;
+basic_machines.hardness["basic_machines:battery"]=0.;
+basic_machines.hardness["basic_machines:detector"]=0.;
+basic_machines.hardness["basic_machines:generator"]=0.;
+basic_machines.hardness["basic_machines:ball_spawner"]=0.;
+basic_machines.hardness["basic_machines:light_on"]=0.;
+basic_machines.hardness["basic_machines:light_off"]=0.;
 
 basic_machines.hardness["es:toxic_water_source"]=21890.;basic_machines.hardness["es:toxic_water_flowing"]=11000;
 basic_machines.hardness["default:river_water_source"]=21890.;
@@ -947,7 +956,10 @@ minetest.register_node("basic_machines:keypad", {
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;1,1;iter;;".. iter .."]"..
 		"label[0.,1.9;repeat]" .."field[1.25,2.5;3.25,1;text;text;".. text .."]" ..
-		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]";
+		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
+		"button_exit[3.25,0.25;1,1;help;help]"
+		
+		;
 		-- if meta:get_string("owner")==player:get_player_name() then
 			minetest.show_formspec(player:get_player_name(), "basic_machines:keypad_"..minetest.pos_to_string(pos), form)
 		-- else
@@ -1891,6 +1903,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"\n\n Activate mover by keypad/detector signal or mese signal (if mesecons mod) .";
 			local form = "size [6,7] textarea[0,0;6.5,8.5;help;MOVER HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_mover", form)
+			return
 		end
 		
 		if fields.altgui then -- alternate gui without dropdown menu which causes crash for ios tablet users
@@ -2005,6 +2018,35 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(player:get_player_name());
 		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder can interact
+		
+		if fields.help then
+			local text = "target : represents coordinates ( x, y, z ) relative to keypad. (0,0,0) is keypad itself, (0,1,0) is one node above, (0,-1,0) one node below. X coordinate axes goes from east to west, Y from down to up, Z from south to north."..
+			"\n\nPassword: enter password and press OK. Password will be encrypted. Next time you use keypad you will need to enter correct password to gain access."..
+				"\n\nrepeat: number to control how many times activation is repeated after initial punch"..
+
+				"\n\ntext: if set then text on target node will be changed. In case target is detector/mover, filter settings will be changed. Can be used for special operations."..
+
+				"\n\n1=OFF/2=ON/3=TOGGLE control the way how target node is activated"..
+
+			"\n**************************************************\nusage\n"..
+
+				"\nJust punch ( left click ) keypad, then the target block will be activated."..
+				"\nTo set text on other nodes ( text shows when you look at node ) just target the node and set nonempty text. Upon activation text will be set. When target node is another keypad, its \"text\" field will be set. When targets is mover/detector, its \"filter\" field will be set. To clear \"filter\" set text to \"@\"."..
+
+				"\n\nkeyboard : to use keypad as keyboard for text input write \"@\" in \"text\" field and set any password. Next time keypad is used it will work as text input device."..
+
+				"\n\ndisplaying messages to nearby players ( up to 5 blocks around keypad's target ): set text to \"!text\". Upon activation player will see \"text\" in their chat."..
+
+				"\n\nplaying sound to nearby players : set text to \"$sound_name\""..
+
+				"\n\nadvanced: "..
+				"\ntext replacement : Suppose keypad A is set with text \"@some @. text @!\" and keypad B is set with text \"insertion\". Suppose we target A with B and activate B. Then text of keypad A will be set to \"some insertion. text insertion!\" insertion\""..
+				"\nword extraction: Suppose keypad A is set with text \"%1\". Then upon activation text of keypad A will be set to  1.st word of keypad B.";
+			
+			local form = "size [6,7] textarea[0,0;6.5,8.5;help;KEYPAD HELP;".. text.."]"
+			minetest.show_formspec(name, "basic_machines:help_keypad", form)
+			return
+		end
 		
 		if fields.OK == "OK" then
 			local x0,y0,z0,pass,mode;

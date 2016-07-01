@@ -258,7 +258,7 @@ local generator_update_meta = function(pos)
 		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (gold and diamond block)]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
-		"button[4.5,0.35;1.5,1;OK;REFRESH]";
+		"button[4.5,1.5;1.5,1;OK;REFRESH]" .. "button[6,1.5;1.5,1;help;help]";
 		meta:set_string("formspec", form);
 end
 
@@ -306,7 +306,15 @@ minetest.register_node("basic_machines:generator", {
 		
 		on_receive_fields = function(pos, formname, fields, sender) 
 			if fields.quit then return end
+			if fields.help then
+				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low (0-20), medium (20-99) and high level (99). Upgrading the generator will increase the rate at which the crystals are produces.\n\nYou can automate the process of recharging by using mover in inventory mode, taking from inventory \"fuel\"";
+				local form = "size [6,7] textarea[0,0;6.5,8.5;help;GENERATOR HELP;".. text.."]"
+				minetest.show_formspec(sender:get_player_name(), "basic_machines:help_mover", form)
+				return
+			end
 			local meta = minetest.get_meta(pos);
+			
+			
 			generator_update_meta(pos);
 		end,
 		
