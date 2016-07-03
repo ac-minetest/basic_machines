@@ -146,7 +146,7 @@ minetest.register_entity("basic_machines:ball",{
 						if d>0 then
 							
 							--if minetest.is_protected(p,self.owner) then return end
-							if math.abs(p.x)>32 or math.abs(p.y)>32 or math.abs(p.z)>32 then return end
+							if math.abs(p.x)<32 and math.abs(p.y)<32 and math.abs(p.z)<32 then return end -- no damage around spawn
 							
 							if obj:is_player() then -- dont hurt owner
 								if obj:get_player_name()==self.owner then break end
