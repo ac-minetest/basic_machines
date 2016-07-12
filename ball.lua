@@ -547,9 +547,10 @@ minetest.register_tool("basic_machines:ball_spell", {
 		
 		local pos = user:getpos();pos.y=pos.y+1;
 		local meta = minetest.deserialize(itemstack:get_metadata());
+		if not meta then return end
 		local owner = meta["owner"] or "";
 		
-		if minetest.is_protected(pos,owner) then return end
+		--if minetest.is_protected(pos,owner) then return end
 		
 		local t0 = spelltime[owner] or 0;
 		local t1 = minetest.get_gametime(); 
