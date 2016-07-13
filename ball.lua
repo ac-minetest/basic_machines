@@ -609,7 +609,6 @@ minetest.register_tool("basic_machines:ball_spell", {
 
 
 
-
 minetest.register_craft({
 	output = "basic_machines:ball_spawner",
 	recipe = {

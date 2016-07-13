@@ -286,6 +286,18 @@ end)
 		-- end
 	-- });
 
+	
+minetest.register_on_punchplayer( -- bring gravity closer to normal with each punch
+	function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
+	
+		local gravity = player:get_physics_override().gravity;
+		if gravity<1 then
+			gravity = 0.5*gravity+0.5;
+			player:set_physics_override({gravity=gravity})
+		end
+	end
+	
+)
 
 	
 
