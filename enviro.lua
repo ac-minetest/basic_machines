@@ -8,14 +8,15 @@ enviro.skyboxes = {
 	["default"]={type = "regular", tex = {}}, 
 	["space"]={type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
 	["caves"]={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}}};
-
+	
 local space_start = 1500;
 
 	
 local enviro_update_form = function (pos)
 	
 		local meta = minetest.get_meta(pos);
-	
+		
+		
 		local x0,y0,z0;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 
@@ -32,6 +33,8 @@ local enviro_update_form = function (pos)
 		local speed,jump, g, sneak;
 		speed = meta:get_float("speed");jump = meta:get_float("jump");
 		g = meta:get_float("g"); sneak = meta:get_int("sneak");
+		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z;
+		
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
@@ -43,7 +46,8 @@ local enviro_update_form = function (pos)
 		"field[3.25,1.5;1,1;sneak;sneak;"..sneak.."]"..
 		"label[0.,3.0;Skybox selection]"..
 		"dropdown[0.,3.35;3,1;skybox;"..skylist..";".. sky_ind .."]"..
-		"button_exit[3.25,3.25;1,1;OK;OK]";
+		"button_exit[3.25,3.25;1,1;OK;OK]"..
+		"list["..list_name..";fuel;3.25,2.25;1,1;]";
 		meta:set_string("formspec",form);
 
 end
@@ -69,6 +73,9 @@ minetest.register_node("basic_machines:enviro", {
 		meta:set_string("owner",name);
 		local privs = minetest.get_player_privs(name);
 		if privs.privs then meta:set_int("admin",1) end
+
+		local inv = meta:get_inventory();
+		inv:set_size("fuel",1*1);
 		
 		enviro_update_form(pos);
 	end,
@@ -77,6 +84,15 @@ minetest.register_node("basic_machines:enviro", {
 		action_on = function (pos, node,ttl) 
 			local meta = minetest.get_meta(pos);
 			local admin = meta:get_int("admin");
+			
+			local inv = meta:get_inventory(); local stack = ItemStack("default:diamond 1");
+			
+			if inv:contains_item("fuel", stack) then
+				inv:remove_item("fuel", stack);
+			else
+				meta:set_string("infotext","Error. Insert diamond in fuel inventory") 
+				return
+			end
 			
 			local x0,y0,z0,r,skybox,speed,jump,g,sneak;
 			x0=meta:get_int("x0"); y0=meta:get_int("y0");z0=meta:get_int("z0"); -- target
@@ -89,7 +105,9 @@ minetest.register_node("basic_machines:enviro", {
 				local pos1 = player:getpos();
 				local dist = math.sqrt((pos1.x-pos.x)^2 + (pos1.y-pos.y)^2 + (pos1.z-pos.z)^2 );
 				if dist<=r then
+					
 					player:set_physics_override({speed=speed,jump=jump,gravity=g,sneak=sneak})
+					
 					if admin == 1 then -- only admin can change skybox
 						local sky = enviro.skyboxes[skybox];
 						player:set_sky(0,sky["type"],sky["tex"]);
@@ -163,7 +181,14 @@ minetest.register_node("basic_machines:enviro", {
 		
 			enviro_update_form(pos);
 		end
-	end
+	end,
+	
+	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
+		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
+		return stack:get_count();
+	end,
 })
 
 
