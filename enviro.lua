@@ -36,7 +36,7 @@ local enviro_update_form = function (pos)
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z;
 		
 		local form  = 
-		"size[4.25,3.75]" ..  -- width, height
+		"size[8,8.5]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
 		"field[3.25,0.5;1,1;r;radius;"..r.."]"..
 		--speed, jump, gravity,sneak
@@ -47,7 +47,8 @@ local enviro_update_form = function (pos)
 		"label[0.,3.0;Skybox selection]"..
 		"dropdown[0.,3.35;3,1;skybox;"..skylist..";".. sky_ind .."]"..
 		"button_exit[3.25,3.25;1,1;OK;OK]"..
-		"list["..list_name..";fuel;3.25,2.25;1,1;]";
+		"list["..list_name..";fuel;3.25,2.25;1,1;]"..
+		"list[current_player;main;0,4.5;8,4;]";
 		meta:set_string("formspec",form);
 
 end
