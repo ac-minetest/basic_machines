@@ -82,7 +82,7 @@ local recycler_process = function(pos)
 					reqcount = tonumber(string.sub(output, par)) or 1;
 				end
 			
-			end -- cause  if for example output is "default:mese 9" we dont want to get meseblock from just 1 mese..
+			end 
 			
 			meta:set_string("itemlist",minetest.serialize(itemlist)); -- read cached itemlist
 			meta:set_int("reqcount",reqcount);
@@ -197,6 +197,7 @@ minetest.register_node("basic_machines:recycler", {
 	},
 	
 	on_receive_fields = function(pos, formname, fields, sender) 
+		if minetest.is_protected(pos, sender:get_player_name()) then return end
 		if fields.quit then return end
 		local meta = minetest.get_meta(pos);
 		local recipe=1;
