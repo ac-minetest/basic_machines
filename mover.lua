@@ -1276,6 +1276,7 @@ minetest.register_abm({
 	neighbors = {""},
 	interval = machines_timer,
 	chance = 1,
+	
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		if basic_machines.clockgen == 0 then return end
 		local meta = minetest.get_meta(pos); 
@@ -1306,8 +1307,9 @@ minetest.register_node("basic_machines:clockgen", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta =  minetest.get_meta(pos);
-		meta:set_string("owner",placer:get_player_name() or "");
-		meta:set_string("infotext","clock generator: place machine to be activated on top of generator");
+		local owner = placer:get_player_name() or "";
+		meta:set_string("owner",owner);
+		meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
 	end
 })	
 	
