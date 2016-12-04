@@ -22,16 +22,16 @@ basic_machines = {};
 dofile(minetest.get_modpath("basic_machines").."/mark.lua") -- used for markings, borrowed and adapted from worldedit mod
 dofile(minetest.get_modpath("basic_machines").."/mover.lua") -- mover, detector, keypad, distributor
 dofile(minetest.get_modpath("basic_machines").."/technic_power.lua") -- technic power for mover
-dofile(minetest.get_modpath("basic_machines").."/recycler.lua")
-dofile(minetest.get_modpath("basic_machines").."/grinder.lua")
+dofile(minetest.get_modpath("basic_machines").."/recycler.lua") -- recycle old used tools
+dofile(minetest.get_modpath("basic_machines").."/grinder.lua") -- grind materials into dusts
 dofile(minetest.get_modpath("basic_machines").."/autocrafter.lua") -- borrowed and adapted from pipeworks mod
+dofile(minetest.get_modpath("basic_machines").."/constructor.lua") -- enable crafting of all machines
 
---dofile(minetest.get_modpath("basic_machines").."/cpu.lua") -- experimental
-dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- experimental, adds on protect event handling
+dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- enable interaction with players, adds local on protect/chat event handling
 
 -- OPTIONAL ADDITIONAL STUFF ( comment to disable )
 
-dofile(minetest.get_modpath("basic_machines").."/ball.lua") 
+dofile(minetest.get_modpath("basic_machines").."/ball.lua") -- interactive flying ball, can activate blocks or be used as a weapon
 dofile(minetest.get_modpath("basic_machines").."/enviro.lua") -- enviro blocks that can change surrounding enviroment physics, uncomment spawn/join code to change global physics, disabled by default
 minetest.after(0, function() 
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua") -- if you want open/close doors with signal, also steel doors are made impervious to dig through, removal by repeat punch
@@ -44,20 +44,8 @@ minetest.register_privilege("machines", {
 	description = "Player is expert basic_machine user: his machines work while not present on server, can spawn more than 2 balls at once",
 })
 
-
-
-
 -- machines fuel related recipes
-
-
-
-
-
-
-
-
 -- CHARCOAL
-
 
 minetest.register_craftitem("basic_machines:charcoal", {
 	description = "Wood charcoal",
@@ -88,6 +76,4 @@ minetest.register_craft({
 })
 
 -- COMPATIBILITY
-
-minetest.register_alias("basic_machines:diamond_dust", "basic_machines:diamond_dust_66")
 print("[basic machines] loaded")

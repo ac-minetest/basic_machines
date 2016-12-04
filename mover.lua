@@ -301,9 +301,14 @@ minetest.register_node("basic_machines:mover", {
 		
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
-			local fuel_cost = (basic_machines.hardness[node1.name] or 1);
+			local hardness = basic_machines.hardness[node1.name];
+			-- no free teleports from machine blocks
+			if hardness == 0 and mode == "object" then hardness = 1 end
+			local fuel_cost = hardness or 1;
+			
 			local upgrade =  meta:get_float("upgrade") or 1;
 			
+			-- taking items from chests/inventory move
 			if node1.name == "default:chest_locked" or mode == "inventory" then fuel_cost = basic_machines.hardness[prefer] or 1 end;
 			
 			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
@@ -2288,54 +2293,54 @@ end)
 
 -- CRAFTS --
 
-minetest.register_craft({
-	output = "basic_machines:keypad",
-	recipe = {
-		{"default:stick"},
-		{"default:wood"},
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:keypad",
+	-- recipe = {
+		-- {"default:stick"},
+		-- {"default:wood"},
+	-- }
+-- })
 
-minetest.register_craft({
-	output = "basic_machines:mover",
-	recipe = {
-		{"default:mese_crystal", "default:mese_crystal","default:mese_crystal"},
-		{"default:mese_crystal", "default:mese_crystal","default:mese_crystal"},
-		{"default:stone", "basic_machines:keypad", "default:stone"}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:mover",
+	-- recipe = {
+		-- {"default:mese_crystal", "default:mese_crystal","default:mese_crystal"},
+		-- {"default:mese_crystal", "default:mese_crystal","default:mese_crystal"},
+		-- {"default:stone", "basic_machines:keypad", "default:stone"}
+	-- }
+-- })
 
-minetest.register_craft({
-	output = "basic_machines:detector",
-	recipe = {
-		{"default:mese_crystal", "default:mese_crystal"},
-		{"default:mese_crystal", "default:mese_crystal"},
-		{"basic_machines:keypad",""}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:detector",
+	-- recipe = {
+		-- {"default:mese_crystal", "default:mese_crystal"},
+		-- {"default:mese_crystal", "default:mese_crystal"},
+		-- {"basic_machines:keypad",""}
+	-- }
+-- })
 
-minetest.register_craft({
-	output = "basic_machines:light_on",
-	recipe = {
-		{"default:torch", "default:torch"},
-		{"default:torch", "default:torch"}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:light_on",
+	-- recipe = {
+		-- {"default:torch", "default:torch"},
+		-- {"default:torch", "default:torch"}
+	-- }
+-- })
 
 
-minetest.register_craft({
-	output = "basic_machines:distributor",
-	recipe = {
-		{"default:steel_ingot"},
-		{"default:mese_crystal"},
-		{"basic_machines:keypad"}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:distributor",
+	-- recipe = {
+		-- {"default:steel_ingot"},
+		-- {"default:mese_crystal"},
+		-- {"basic_machines:keypad"}
+	-- }
+-- })
 
-minetest.register_craft({
-	output = "basic_machines:clockgen",
-	recipe = {
-		{"default:diamondblock"},
-		{"basic_machines:keypad"}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:clockgen",
+	-- recipe = {
+		-- {"default:diamondblock"},
+		-- {"basic_machines:keypad"}
+	-- }
+-- })

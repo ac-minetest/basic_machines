@@ -3,6 +3,16 @@
 -- this node works as a reverse of crafting process with a 25% loss of items (aka recycling). You can select which recipe to use when recycling.
 -- There is a fuel cost to recycle
 
+-- prevent unrealistic recyclings
+local no_recycle_list  = {
+	["default:steel_ingot"]=1,["default:copper_ingot"]=1,["default:bronze_ingot"]=1,["default:gold_ingot"]=1,
+	["dye:white"]=1,["dye:grey"]=1,["dye:dark_grey"]=1,["dye:black"]=1,
+	["dye:violet"]=1,["dye:blue"]=1,["dye:cyan"]=1,["dye:dark_green"]=1,
+	["dye:green"]=1,["dye:yellow"]=1,["dye:brown"]=1,["dye:orange"]=1,
+	["dye:red"]=1,["dye:magenta"]=1,["dye:pink"]=1,
+}
+
+
 local recycler_process = function(pos) 
 	
 	local node = minetest.get_node({x=pos.x,y=pos.y-1,z=pos.z}).name;
@@ -63,6 +73,9 @@ local recycler_process = function(pos)
 		reqcount = 1; -- needed count of materials for recycle to work
 		
 		if not known_recipe then
+		
+			if no_recycle_list[src_item] then meta:set_string("node","") return end -- dont allow recycling of forbidden items
+			
 			local recipe = minetest.get_all_craft_recipes( src_item );
 			local recipe_id = tonumber(meta:get_int("recipe")) or 1;
 			
@@ -213,12 +226,12 @@ minetest.register_node("basic_machines:recycler", {
 })
 
 
-minetest.register_craft({
-	output = "basic_machines:recycler",
-	recipe = {
-		{"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
-		{"default:mese_crystal","default:diamondblock","default:mese_crystal"},
-		{"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
+-- minetest.register_craft({
+	-- output = "basic_machines:recycler",
+	-- recipe = {
+		-- {"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
+		-- {"default:mese_crystal","default:diamondblock","default:mese_crystal"},
+		-- {"default:mese_crystal","default:mese_crystal","default:mese_crystal"},
 		
-	}
-})
+	-- }
+-- })

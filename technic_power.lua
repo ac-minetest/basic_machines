@@ -431,25 +431,25 @@ end
 -- CRAFTS
 ------------------------
 
-minetest.register_craft({
-	output = "basic_machines:battery",
-	recipe = {
-		{"","default:steel_ingot",""},
-		{"default:steel_ingot","default:mese","default:steel_ingot"},
-		{"","default:diamond",""},
+-- minetest.register_craft({
+	-- output = "basic_machines:battery",
+	-- recipe = {
+		-- {"","default:steel_ingot",""},
+		-- {"default:steel_ingot","default:mese","default:steel_ingot"},
+		-- {"","default:diamond",""},
 		
-	}
-})
+	-- }
+-- })
 
-minetest.register_craft({
-	output = "basic_machines:generator",
-	recipe = {
-		{"","",""},
-		{"default:diamondblock","basic_machines:battery","default:diamondblock"},
-		{"default:diamondblock","default:diamondblock","default:diamondblock"}
+-- minetest.register_craft({
+	-- output = "basic_machines:generator",
+	-- recipe = {
+		-- {"","",""},
+		-- {"default:diamondblock","basic_machines:battery","default:diamondblock"},
+		-- {"default:diamondblock","default:diamondblock","default:diamondblock"}
 		
-	}
-})
+	-- }
+-- })
 
 minetest.register_craftitem("basic_machines:power_cell", {
 	description = "Power cell - provides 1 power",

@@ -338,11 +338,11 @@ minetest.register_on_punchplayer( -- bring gravity closer to normal with each pu
 
 -- RECIPE: extremely expensive
 
-minetest.register_craft({
-	output = "basic_machines:enviro",
-	recipe = {
-		{"basic_machines:generator", "basic_machines:clockgen","basic_machines:generator"},
-		{"basic_machines:generator", "basic_machines:generator","basic_machines:generator"},
-		{"basic_machines:generator", "basic_machines:generator", "basic_machines:generator"}
-	}
-})
+-- minetest.register_craft({
+	-- output = "basic_machines:enviro",
+	-- recipe = {
+		-- {"basic_machines:generator", "basic_machines:clockgen","basic_machines:generator"},
+		-- {"basic_machines:generator", "basic_machines:generator","basic_machines:generator"},
+		-- {"basic_machines:generator", "basic_machines:generator", "basic_machines:generator"}
+	-- }
+-- })

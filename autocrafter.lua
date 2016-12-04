@@ -337,11 +337,11 @@ minetest.register_node("basic_machines:autocrafter", {
 	--on_timer = run_autocrafter -- rnd
 })
 
-minetest.register_craft( {
-	output = "basic_machines:autocrafter",
-	recipe = {
-	        { "default:steel_ingot", "default:mese_crystal", "default:steel_ingot" },
-	        { "default:diamondblock", "default:steel_ingot", "default:diamondblock" },
-	        { "default:steel_ingot", "default:mese_crystal", "default:steel_ingot" }
-	},
-})
+-- minetest.register_craft( {
+	-- output = "basic_machines:autocrafter",
+	-- recipe = {
+	        -- { "default:steel_ingot", "default:mese_crystal", "default:steel_ingot" },
+	        -- { "default:diamondblock", "default:steel_ingot", "default:diamondblock" },
+	        -- { "default:steel_ingot", "default:mese_crystal", "default:steel_ingot" }
+	-- },
+-- })

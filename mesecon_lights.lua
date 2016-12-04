@@ -1,4 +1,4 @@
--- make other light blocks toggle able:
+-- make other light blocks work with mesecon signals - can toggle on/off
 
 local function enable_toggle_light(name)
 
@@ -48,3 +48,5 @@ enable_toggle_light("xdecor:wooden_lightbox");
 enable_toggle_light("xdecor:iron_lightbox");
 enable_toggle_light("moreblocks:slab_meselamp_1");
 enable_toggle_light("moreblocks:slab_super_glow_glass");
+
+enable_toggle_light("darkage:lamp");

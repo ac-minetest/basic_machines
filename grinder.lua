@@ -198,15 +198,15 @@ minetest.register_node("basic_machines:grinder", {
 })
 
 
-minetest.register_craft({
-	output = "basic_machines:grinder",
-	recipe = {
-		{"default:diamond","default:mese","default:diamond"},
-		{"default:mese","default:diamondblock","default:mese"},
-		{"default:diamond","default:mese","default:diamond"},
+-- minetest.register_craft({
+	-- output = "basic_machines:grinder",
+	-- recipe = {
+		-- {"default:diamond","default:mese","default:diamond"},
+		-- {"default:mese","default:diamondblock","default:mese"},
+		-- {"default:diamond","default:mese","default:diamond"},
 		
-	}
-})
+	-- }
+-- })
 
 
 
@@ -259,11 +259,20 @@ register_dust("iron","default:iron_lump","default:steel_ingot",4,8,"99","99","99
 register_dust("copper","default:copper_lump","default:copper_ingot",4,8,"C8","80","0D") --c8800d
 register_dust("gold","default:gold_lump","default:gold_ingot",6,25,"FF","FF","00")
 
+--  grinding ingots gives dust too
+basic_machines.grinder_recipes["default:steel_ingot"] = {8,"basic_machines:iron_dust_33 2",1};
+basic_machines.grinder_recipes["default:copper_ingot"] = {8,"basic_machines:copper_dust_33 2",1};
+basic_machines.grinder_recipes["default:gold_ingot"] = {8,"basic_machines:gold_dust_33 2",1};
+
 -- are moreores (tin, silver, mithril) present?
 local table = minetest.registered_nodes["moreores:tin_lump"]; if table then 
 	register_dust("tin","moreores:tin_lump","moreores:tin_ingot",4,8,"FF","FF","FF")
 	register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,15,"BB","BB","BB")
 	register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750,"00","00","FF")
+	
+	basic_machines.grinder_recipes["moreores:tin_ingot"] = {8,"basic_machines:tin_dust_33 2",1};
+	basic_machines.grinder_recipes["moreores:silver_ingot"] = {15,"basic_machines:silver_dust_33 2",1};
+	basic_machines.grinder_recipes["moreores:mithril_ingot"] = {750,"basic_machines:mithril_dust_33 2",1};
 end
 
 register_dust("mese","default:mese_crystal","default:mese_crystal",8,250,"CC","CC","00")
