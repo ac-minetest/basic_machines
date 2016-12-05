@@ -3,7 +3,7 @@
 -- CONSTRUCTOR machine: used to make all other basic_machines
 
 basic_machines.craft_recipes = {
-["keypad"] = {item = "basic_machines:keypad", description = "Turns on/off lights and activates machines", craft = {"default:wood","default:stick"}, tex  = "keypad"},
+["keypad"] = {item = "basic_machines:keypad", description = "Turns on/off lights and activates machines or opens doors", craft = {"default:wood","default:stick"}, tex  = "keypad"},
 ["light"]={item = "basic_machines:light_on", description = "Light in darkness", craft = {"default:torch 4"}, tex  = "light"},
 ["mover"]={item = "basic_machines:mover", description = "Can dig, harvest, plant, teleport or move items from/in inventories", craft = {"default:mese_crystal 6","default:stone 2", "basic_machines:keypad"}, tex = "basic_machine_mover_side"},
 
