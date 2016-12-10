@@ -11,7 +11,7 @@ basic_machines.craft_recipes = {
 
 ["distributor"]= {item = "basic_machines:distributor", description = "Organize your circuits better", craft = {"default:steel_ingot","default:mese_crystal", "basic_machines:keypad"}, tex = "distributor"},
 
-["clock generator"]= {item = "basic_machines:clockgen", description = "For making circuits that run non stop", craft = {"default:diamondblock","basic_machines:keypad"}, tex = "basic_machine_clock_generator"},
+["clock_generator"]= {item = "basic_machines:clockgen", description = "For making circuits that run non stop", craft = {"default:diamondblock","basic_machines:keypad"}, tex = "basic_machine_clock_generator"},
 
 ["recycler"]= {item = "basic_machines:recycler", description = "Recycle old tools", craft = {"default:mese_crystal 8","default:diamondblock"}, tex = "recycler"},
 
@@ -29,7 +29,7 @@ basic_machines.craft_recipes = {
 }
 
 basic_machines.craft_recipe_order = { -- order in which nodes appear
-	"keypad","light","grinder","mover", "battery","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment"
+	"keypad","light","grinder","mover", "battery","generator","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment"
 }
 
 		
@@ -84,6 +84,7 @@ local constructor_update_meta = function(pos)
 			
 		else 
 			description = "" 
+			tex = ""
 		end
 		
 		
@@ -171,6 +172,7 @@ minetest.register_node("basic_machines:constructor", {
 	
 	on_receive_fields = function(pos, formname, fields, sender) 
 		
+		if minetest.is_protected(pos, sender:get_player_name())  then return end 
 		local meta = minetest.get_meta(pos);
 		
 		if fields.craft then

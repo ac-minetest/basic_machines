@@ -129,8 +129,8 @@ minetest.register_node("basic_machines:mover", {
 		
 		
 		local text = "This machine can move anything. General idea is the following : \n\n"..
-		"First you need to define rectangle work area (where it takes, marked by two number 1 boxes that appear in world) and target area (where it puts, marked by one number 2 box) by punching mover then following CHAT instructions exactly.\n"..
-		"After that you just select mode of operation and other minor settings.\n\n"..
+		"First you need to define rectangle work area (where it takes, marked by two number 1 boxes that appear in world) and target area (where it puts, marked by one number 2 box) by punching mover then following CHAT instructions exactly.\n\n"..
+		"CHECK why it doesnt work: 1. did you click OK in mover after changing setting 2. does it have battery, 3. does battery have enough fuel\n\n"..
 		"IMPORTANT: Please read the help button inside machine before first use.";
 		
 			local form = "size [5.5,5.5] textarea[0,0;6,7;help;MOVER INTRODUCTION;".. text.."]"
