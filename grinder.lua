@@ -83,7 +83,7 @@ local grinder_process = function(pos)
 				end
 		else
 			if supply==0 then -- Take fuel from fuel list if no supply available
-				inv:set_stack("fuel", 1, afterfuel.items[1])
+				inv:set_stack("fuel",1,afterfuel.items[1])
 				fueladd.time=fueladd.time*0.1/4 -- thats 1 for coal
 				--minetest.chat_send_all("FUEL ADD TIME " .. fueladd.time)
 			end
@@ -125,6 +125,7 @@ end
 local grinder_update_meta = function(pos)
 		local meta = minetest.get_meta(pos);
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+		local inv_name = "nodemeta:" .. pos.x ..","..pos.y..","..pos.z ;
 		local form  = 
 		"size[8,8]" ..  -- width, height
 		--"size[6,10]" ..  -- width, height
@@ -133,7 +134,13 @@ local grinder_update_meta = function(pos)
 		"list["..list_name..";dst;1.,0.5;3,3;]"..
 		"list["..list_name..";fuel;0.,2.5;1,1;]".. 
 		"list[current_player;main;0,4;8,4;]"..
-		"button[6.5,0.5;1,1;OK;OK]";
+		"button[6.5,0.5;1,1;OK;OK]"..
+
+		"listring[" .. inv_name .. ";dst]"..
+		"listring[current_player;main]"..
+		"listring[" .. inv_name .. ";src]";
+
+
 		meta:set_string("formspec", form);
 end
 

@@ -95,7 +95,7 @@ local constructor_update_meta = function(pos)
 			textlist = textlist .. v .. ", ";
 			
 		end
-
+		
 		local form  = 
 			"size[8,11]"..
 			"textlist[0,0;3,1.5;craft;" .. textlist .. ";" .. selected .."]"..
@@ -107,8 +107,9 @@ local constructor_update_meta = function(pos)
 			"list[context;main;0,3.7;8,3;]"..
 			"list[context;dst;5,0;3,2;]"..
 			"label[0,6.5;player inventory]"..
-			"list[current_player;main;0,7;8,4;]"
-		
+			"list[current_player;main;0,7;8,4;]"..
+			"listring[context;main]"..
+			"listring[current_player;main]";
 		meta:set_string("formspec", form);
 end
 

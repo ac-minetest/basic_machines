@@ -15,6 +15,11 @@ local function door_signal_overwrite(name)
 			local meta = minetest.get_meta(pos);local name = meta:get_string("doors_owner");
 			-- create virtual player
 			local clicker = {}; 
+			function clicker:get_wielded_item() 
+				local item = {}
+				function item:get_name() return "" end 
+				return item 
+			end
 			function clicker:get_player_name() return name end; -- define method get_player_name() returning owner name so that we can call on_rightclick function in door
 			function clicker:is_player() return false end; -- method needed for mods that check this: like denaid areas mod
 			if door_on_rightclick then  door_on_rightclick(pos, node, clicker) end -- safety if it doesnt exist
@@ -27,8 +32,9 @@ local function door_signal_overwrite(name)
 end 
 
 minetest.after(0,function()
-	door_signal_overwrite("doors:door_wood_a");door_signal_overwrite("doors:door_wood_b");
-	door_signal_overwrite("doors:door_steel_a");door_signal_overwrite("doors:door_steel_b");
+	door_signal_overwrite("doors:door_wood");door_signal_overwrite("doors:door_steel")
+	--door_signal_overwrite("doors:door_wood_a");door_signal_overwrite("doors:door_wood_b");
+	--door_signal_overwrite("doors:door_steel_a");door_signal_overwrite("doors:door_steel_b");
 	door_signal_overwrite("doors:trapdoor");door_signal_overwrite("doors:trapdoor_open");
 	door_signal_overwrite("doors:trapdoor_steel");door_signal_overwrite("doors:trapdoor_steel_open");
 	

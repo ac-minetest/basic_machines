@@ -29,6 +29,8 @@ basic_machines.hardness["basic_machines:ball_spawner"]=0.;
 basic_machines.hardness["basic_machines:light_on"]=0.;
 basic_machines.hardness["basic_machines:light_off"]=0.;
 
+-- grief potential items need highest possible upgrades
+basic_machines.hardness["boneworld:acid_source_active"]=21890.;
 basic_machines.hardness["es:toxic_water_source"]=21890.;basic_machines.hardness["es:toxic_water_flowing"]=11000;
 basic_machines.hardness["default:river_water_source"]=21890.;
 
@@ -304,10 +306,10 @@ minetest.register_node("basic_machines:mover", {
 
 			-- PROTECTION CHECK
 			local owner = meta:get_string("owner");
-			if minetest.is_protected(pos1, owner) or minetest.is_protected(pos2, owner) then
-				meta:set_float("fuel", -1);
-				meta:set_string("infotext", "Mover block. Protection fail. Deactivated.")
-			return end
+			if (minetest.is_protected(pos1, owner) or minetest.is_protected(pos2, owner)) and mode~="object" then
+				meta:set_string("infotext", "Mover block. Protection fail. ")
+			return 
+			end
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 			local prefer = meta:get_string("prefer"); 
@@ -1321,6 +1323,9 @@ minetest.register_node("basic_machines:clockgen", {
 	after_place_node = function(pos, placer)
 		local meta =  minetest.get_meta(pos);
 		local owner = placer:get_player_name() or "";
+		local privs = minetest.get_player_privs(owner);
+		if privs.machines then meta:set_int("machines",1) end
+		
 		meta:set_string("owner",owner);
 		meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
 	end

@@ -79,7 +79,7 @@ end
 minetest.register_entity("basic_machines:ball",{
 	timer = 0, 
 	lifetime = 20, -- how long it exists before disappearing
-	energy = 1, -- if negative it will deactivate stuff, positive will activate, 0 wont do anything
+	energy = 0, -- if negative it will deactivate stuff, positive will activate, 0 wont do anything
 	puncheable = 1, -- can be punched by players in protection
 	bounce = 0, -- 0: absorbs in block, 1 = proper bounce=lag buggy, -- to do: 2 = line of sight bounce
 	gravity = 0,
@@ -178,13 +178,17 @@ minetest.register_entity("basic_machines:ball",{
 		if walkable then -- we hit a node
 			--minetest.chat_send_all(" hit node at " .. minetest.pos_to_string(pos))
 			
+			
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
 			if table and table.mesecons and table.mesecons.effector then -- activate target
 
-				if minetest.is_protected(pos,self.owner) then return end
-				local effector = table.mesecons.effector;
 				local energy = self.energy;
+				if energy~=0 then
+					if minetest.is_protected(pos,self.owner) then return end
+				end
+				local effector = table.mesecons.effector;
+				
 				self.object:remove();
 				
 				if energy>0 then
