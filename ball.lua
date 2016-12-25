@@ -86,6 +86,7 @@ minetest.register_entity("basic_machines:ball",{
 	speed = 5, -- velocity when punched
 	hurt = 0, -- how much damage it does to target entity, if 0 damage disabled
 	owner = "",
+	state = false,
 	origin = {x=0,y=0,z=0},
 	lastpos = {x=0,y=0,z=0}, -- last not-colliding position
 	hp_max = 100,
@@ -104,6 +105,13 @@ minetest.register_entity("basic_machines:ball",{
 		self.origin = self.object:getpos();
 		self.lifetime = 20;
 	end,
+	
+	get_staticdata = function(self) -- this gets called before object put in world and before it hides
+		if not self.state then return nil end
+		self.object:remove();
+		return nil
+	end,
+	
 	
 	on_punch = function (self, puncher, time_from_last_punch, tool_capabilities, dir)
 		if self.puncheable == 0 then return end
@@ -129,6 +137,7 @@ minetest.register_entity("basic_machines:ball",{
 			return 
 		end
 		
+		if not self.state then self.state = true end
 		local pos=self.object:getpos()
 		
 		local origin = self.origin;

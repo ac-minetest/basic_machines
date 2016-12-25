@@ -1383,44 +1383,42 @@ minetest.register_node("basic_machines:distributor", {
 					return
 			end
 			
-			local posf = {}; local active = {};
-			local n = meta:get_int("n");local delay = meta:get_float("delay");
-			for i =1,n do
-				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
-				active[i]=meta:get_int("active"..i);
-			end
-			
-			local table,node;
 			local delay = minetest.get_meta(pos):get_float("delay");
 			
-			for i=1,n do
-				if active[i]~=0 then 
-					node = minetest.get_node(posf[i]);if not node.name then return end -- error
-					table = minetest.registered_nodes[node.name];
-					
-					if table and table.mesecons and table.mesecons.effector then -- check if all elements exist, safe cause it checks from left to right
-						-- alternative way: overkill
-						--ret = pcall(function() if not table.mesecons.effector then end end); -- exception handling to determine if structure exists
-													
-						local effector=table.mesecons.effector;
+			local activate = function()
+				local posf = {}; local active = {};
+				local n = meta:get_int("n");local delay = meta:get_float("delay");
+				for i =1,n do
+					posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
+					active[i]=meta:get_int("active"..i);
+				end
+				
+				local table,node;
+			
+				for i=1,n do
+					if active[i]~=0 then 
+						node = minetest.get_node(posf[i]);if not node.name then return end -- error
+						table = minetest.registered_nodes[node.name];
 						
-						if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
-								if delay>0 then
-									minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end); 
-								else
-									effector.action_on(posf[i],node,ttl-1); 
-								end
-						elseif active[i] == -1 and effector.action_off then 
-							if delay>0 then
-								minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
-							else
+						if table and table.mesecons and table.mesecons.effector then -- check if all elements exist, safe cause it checks from left to right
+							-- alternative way: overkill
+							--ret = pcall(function() if not table.mesecons.effector then end end); -- exception handling to determine if structure exists
+														
+							local effector=table.mesecons.effector;
+							
+							if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
+								effector.action_on(posf[i],node,ttl-1); 
+							elseif active[i] == -1 and effector.action_off then 
 								effector.action_off(posf[i],node,ttl-1)
 							end
 						end
+						
 					end
-					
 				end
 			end
+			
+			if delay>0 then minetest.after(delay, activate) else activate() end
+			
 	end,
 	
 	action_off = function (pos, node,ttl) 
@@ -1447,43 +1445,36 @@ minetest.register_node("basic_machines:distributor", {
 					meta:set_string("infotext","overheat: temperature ".. T)
 					return
 			end
-			
-			
-			local posf = {}; local active = {};
-			local n = meta:get_int("n");
-			for i =1,n do
-				posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
-				active[i]=meta:get_int("active"..i);
-			end
-			
-			local node, table
 			local delay = minetest.get_meta(pos):get_float("delay");
 			
-			for i=1,n do
-				if active[i]~=0 then
-					node = minetest.get_node(posf[i]);if not node.name then return end -- error
-					table = minetest.registered_nodes[node.name];
-					
-					if table and table.mesecons and table.mesecons.effector then 
-		
-						local effector=table.mesecons.effector;
-						
-						if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
-							if delay>0 then
-								minetest.after(delay, function() effector.action_off(posf[i],node,ttl-1) end);
-							else
+			local activate = function()
+				local posf = {}; local active = {};
+				local n = meta:get_int("n");
+				for i =1,n do
+					posf[i]={x=meta:get_int("x"..i)+pos.x,y=meta:get_int("y"..i)+pos.y,z=meta:get_int("z"..i)+pos.z};
+					active[i]=meta:get_int("active"..i);
+				end
+				
+				local node, table
+				
+				
+				for i=1,n do
+					if active[i]~=0 then
+						node = minetest.get_node(posf[i]);if not node.name then return end -- error
+						table = minetest.registered_nodes[node.name];
+						if table and table.mesecons and table.mesecons.effector then 
+							local effector=table.mesecons.effector;
+							if (active[i] == 1 or active[i]==-2) and effector.action_off then  -- normal OR only forward input OFF
 								effector.action_off(posf[i],node,ttl-1); 
-							end
-						elseif (active[i] == -1) and effector.action_on then 
-							if delay>0 then
-								minetest.after(delay, function() effector.action_on(posf[i],node,ttl-1) end);
-							else
+							elseif (active[i] == -1) and effector.action_on then 
 								effector.action_on(posf[i],node,ttl-1); 
 							end
 						end
 					end
 				end
 			end
+			
+			if delay>0 then minetest.after(delay, activate) else activate() end
 			
 	end
 	}
@@ -2310,8 +2301,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"You can add more targets with ADD. To see where target node is click SHOW button next to it.\n"..
 			"Numbers in each row represent (from left to right) : first 3 numbers are target coordinates,\n"..
 			"last number controls how signal is passed to target. For example, to only pass OFF signal use -2,\n"..
-			"to only pass ON use 2, -1 negates the signal, 1 = pass original signal, 0 blocks signal\n\n"..
-			"ADVANCED: you can use distributor as a even handler. First you must deactivate first target by putting 0 at\n"..
+			"to only pass ON use 2, -1 negates the signal, 1 = pass original signal, 0 blocks signal\n"..
+			"delay option adds delay to activations, in seconds\n\n"..
+			"ADVANCED: you can use distributor as an event handler. First you must deactivate first target by putting 0 at\n"..
 			"last place in first line. Meanings of first 2 numbers are as follows: first number 0/1 controls if node/n".. "listens to failed interact attempts around it, second number -1/1 listens to chat and can mute it";
 			local form = "size [5.5,5.5] textarea[0,0;6,7;help;DISTRIBUTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_distributor", form)
