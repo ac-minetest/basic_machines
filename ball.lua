@@ -159,7 +159,7 @@ minetest.register_entity("basic_machines:ball",{
 		if not walkable then 
 			self.lastpos = pos 
 			if self.hurt~=0 then -- check for coliding nearby objects
-				local objects = minetest.get_objects_inside_radius(pos,1);
+				local objects = minetest.get_objects_inside_radius(pos,2);
 				if #objects>1 then
 					for _, obj in pairs(objects) do
 						local p = obj:getpos();
@@ -169,11 +169,27 @@ minetest.register_entity("basic_machines:ball",{
 							--if minetest.is_protected(p,self.owner) then return end
 							if math.abs(p.x)<32 and math.abs(p.y)<32 and math.abs(p.z)<32 then return end -- no damage around spawn
 							
-							if obj:is_player() then -- dont hurt owner
-								if obj:get_player_name()==self.owner then break end
+							if obj:is_player() then --player
+								if obj:get_player_name()==self.owner then break end -- dont hurt owner
+							
+								local hp = obj:get_hp()
+								local newhp = hp-self.hurt;
+								if newhp<=0 and boneworld and boneworld.killxp then
+									local killxp =  boneworld.killxp[self.owner];
+									if killxp then
+										boneworld.killxp[self.owner] = killxp + 0.01;
+									end
+								end
+								obj:set_hp(newhp)
+							else -- non player
+								local hp = obj:get_hp()
+								local newhp = hp-self.hurt;
+								obj:set_hp(newhp)
 							end
 							
-							obj:set_hp(obj:get_hp()-self.hurt)
+							
+							
+							
 							local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 							self.object:remove(); 
 							return
@@ -314,7 +330,7 @@ minetest.register_entity("basic_machines:ball",{
 minetest.register_node("basic_machines:ball_spawner", {
 	description = "Spawns energy ball one block above",
 	tiles = {"basic_machines_ball.png"},
-	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	drawtype = "allfaces",
 	paramtype = "light",
 	param1=1,

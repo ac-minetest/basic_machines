@@ -25,12 +25,15 @@ basic_machines.hardness["basic_machines:distributor"]=0.;
 basic_machines.hardness["basic_machines:battery"]=0.;
 basic_machines.hardness["basic_machines:detector"]=0.;
 basic_machines.hardness["basic_machines:generator"]=0.;
+basic_machines.hardness["basic_machines:clockgen"]=0.;
 basic_machines.hardness["basic_machines:ball_spawner"]=0.;
 basic_machines.hardness["basic_machines:light_on"]=0.;
 basic_machines.hardness["basic_machines:light_off"]=0.;
 
 -- grief potential items need highest possible upgrades
 basic_machines.hardness["boneworld:acid_source_active"]=21890.;
+basic_machines.hardness["darkage:mud"]=21890.;
+
 basic_machines.hardness["es:toxic_water_source"]=21890.;basic_machines.hardness["es:toxic_water_flowing"]=11000;
 basic_machines.hardness["default:river_water_source"]=21890.;
 
@@ -107,7 +110,7 @@ end)
 minetest.register_node("basic_machines:mover", {
 	description = "Mover - universal digging/harvesting/teleporting/transporting machine, its upgradeable.",
 	tiles = {"compass_top.png","default_furnace_top.png", "basic_machine_mover_side.png","basic_machine_mover_side.png","basic_machine_mover_side.png","basic_machine_mover_side.png"},
-	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -726,7 +729,7 @@ minetest.register_node("basic_machines:mover", {
 
 -- KEYPAD --
 
-local function use_keypad(pos,ttl, again) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion )
+local function use_keypad(pos,ttl, manual) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion ), was it manual activation?
 	
 	if ttl<0 then return end;
 	local meta = minetest.get_meta(pos);	
@@ -756,11 +759,25 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	local name =  meta:get_string("owner"); 
 	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0); return end
 	local count = meta:get_int("count") or 0; -- counts how many repeats left
-	local active_repeats = meta:get_int("active_repeats") or 0;
-		
-	if again or count>0 then -- this is keypad repeating its activation
-		if count < 0 then return end 
+	
+	if manual then 
+		if meta:get_int("repeat")==1 then -- stop it
+			meta:set_int("repeat",0);
+			meta:set_int("count", 0)
+			meta:set_int("T",4);
+			meta:set_string("infotext", "#KEYPAD: reseting. Punch again after 5s to activate")
+			return;
+		end
+	end	
+	
+	
+	
+	if count>0 then -- this is keypad repeating its activation
 		count = count - 1; meta:set_int("count",count);  
+	else
+		meta:set_int("repeat",0); 
+		return 
+		
 	end
 	
 	if count>=0 then
@@ -770,14 +787,12 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 	end
 		
 	if count>0 then -- only trigger repeat if count on
-		if active_repeats == 0 then -- cant add new repeats quickly to prevent abuse
-			meta:set_int("active_repeats",1);
+			meta:set_int("repeat",1); -- its repeating now
 			if basic_machines.clockgen==0 then return end
 			minetest.after(machines_timer, function() 
-				meta:set_int("active_repeats",0);
-				use_keypad(pos,machines_TTL,1)  -- third parameter means repeat mode
-			end )  -- repeat operation as many times as set with "iter"
-		end
+				use_keypad(pos,machines_TTL) 
+			end )  
+		
 	end
 	
 	local x0,y0,z0,mode;
@@ -879,6 +894,18 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			return
 		end
 		
+		if node.name == "basic_machines:distributor" then
+			local i = string.find(text," ");
+			if i then
+				local ti = tonumber(string.sub(text,1,i-1)) or 1;
+				local tm = tonumber(string.sub(text,i+1)) or 1;
+				if ti>=1 and ti<=16 and tm>=-2 and tm<=2 then
+					tmeta:set_int("active"..ti,tm)
+				end
+			end
+		return
+		end
+		
 	end
 		
 	local table = minetest.registered_nodes[node.name];
@@ -910,7 +937,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 		local iter = meta:get_int("iter");
 		local count = meta:get_int("count");
 		if count<iter-1 or iter<2 then meta:set_int("active_repeats",0) end -- so that keypad can work again, at least one operation must have occured though
-		meta:set_int("count",iter); use_keypad(pos,machines_TTL) -- time to live set when punched
+		meta:set_int("count",iter); use_keypad(pos,machines_TTL,true) -- time to live set when punched
 		return 
 	end
 	if name == "" then return end
@@ -934,7 +961,7 @@ end
 minetest.register_node("basic_machines:keypad", {
 	description = "Keypad - basic way to activate machines by sending signal",
 	tiles = {"keypad.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -995,7 +1022,7 @@ minetest.register_node("basic_machines:keypad", {
 minetest.register_node("basic_machines:detector", {
 	description = "Detector - can detect blocks/players/objects and activate machines",
 	tiles = {"detector.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -1318,7 +1345,7 @@ minetest.register_abm({
 minetest.register_node("basic_machines:clockgen", {
 	description = "Clock generator - use sparingly, continually activates top block",
 	tiles = {"basic_machine_clock_generator.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta =  minetest.get_meta(pos);
@@ -1338,7 +1365,7 @@ minetest.register_node("basic_machines:clockgen", {
 minetest.register_node("basic_machines:distributor", {
 	description = "Distributor - can forward signal up to 16 different targets",
 	tiles = {"distributor.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -1526,7 +1553,7 @@ minetest.register_node("basic_machines:distributor", {
 minetest.register_node("basic_machines:light_off", {
 	description = "Light off",
 	tiles = {"light_off.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
 			minetest.swap_node(pos,{name = "basic_machines:light_on"});		
@@ -1553,7 +1580,7 @@ minetest.register_node("basic_machines:light_off", {
 minetest.register_node("basic_machines:light_on", {
 	description = "Light on",
 	tiles = {"light.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	light_source = LIGHT_MAX,
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
@@ -2049,7 +2076,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"\n**************************************************\nusage\n"..
 
 				"\nJust punch ( left click ) keypad, then the target block will be activated."..
-				"\nTo set text on other nodes ( text shows when you look at node ) just target the node and set nonempty text. Upon activation text will be set. When target node is another keypad, its \"text\" field will be set. When targets is mover/detector, its \"filter\" field will be set. To clear \"filter\" set text to \"@\"."..
+				"\nTo set text on other nodes ( text shows when you look at node ) just target the node and set nonempty text. Upon activation text will be set. When target node is another keypad, its \"text\" field will be set. When targets is mover/detector, its \"filter\" field will be set. To clear \"filter\" set text to \"@\".  When target is distributor, you can change i-th target of distributor to mode mode with \"i mode\""..
 
 				"\n\nkeyboard : to use keypad as keyboard for text input write \"@\" in \"text\" field and set any password. Next time keypad is used it will work as text input device."..
 
@@ -2119,7 +2146,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 			if meta:get_string("text")=="@" then -- keyboard mode
 				meta:set_string("input", pass);
-				use_keypad(pos,machines_TTL);
+				meta:set_int("count",1);
+				use_keypad(pos,machines_TTL,false);
 				return
 			end
 					
@@ -2135,8 +2163,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
 			meta:set_int("count",meta:get_int("iter")); 
 			meta:set_int("active_repeats",0);
-			use_keypad(pos,machines_TTL)
-			else meta:set_int("count",0); meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
+			use_keypad(pos,machines_TTL,true)
+		else 
+			meta:set_int("count",0); 
+			meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
 		end
 		
 		return

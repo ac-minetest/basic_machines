@@ -159,7 +159,7 @@ end
 minetest.register_node("basic_machines:recycler", {
 	description = "Recycler - use to get some ingredients back from crafted things",
 	tiles = {"recycler.png"},
-	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);

@@ -6,10 +6,11 @@
 local enviro = {};
 enviro.skyboxes = {
 	["default"]={type = "regular", tex = {}}, 
-	["space"]={type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
-	["caves"]={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}}};
+	["space"]=={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}},--{type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
+	["caves"]={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}},
+	};
 	
-local space_start = 1500;
+local space_start = 1100;
 
 	
 local enviro_update_form = function (pos)
@@ -57,7 +58,7 @@ end
 minetest.register_node("basic_machines:enviro", {
 	description = "Changes enviroment for players around target location",
 	tiles = {"enviro.png"},
-	groups = {oddly_breakable_by_hand=2},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -205,7 +206,7 @@ minetest.register_node("basic_machines:enviro", {
 
 local reset_player_physics = function(player)
 	if player then
-		player:set_physics_override({speed=1,jump=1,gravity=1,sneak=true}) -- value set for extreme test space spawn
+		player:set_physics_override({speed=1,jump=1,gravity=1}) -- value set for extreme test space spawn
 		local skybox = enviro.skyboxes["default"]; -- default skybox is "default"
 		player:set_sky(0,skybox["type"],skybox["tex"]);
 	end
@@ -217,11 +218,11 @@ enviro_adjust_physics = function(player) -- adjust players physics/skybox 1 seco
 		if player then
 			local pos = player:getpos(); if not pos then return end
 			if pos.y > space_start then -- is player in space or not?
-				player:set_physics_override({speed=1,jump=0.6,gravity=0.2,sneak=true}) -- value set for extreme test space spawn
+				player:set_physics_override({speed=1,jump=0.5,gravity=0.1}) -- value set for extreme test space spawn
 				local skybox = enviro.skyboxes["space"];
 				player:set_sky(0,skybox["type"],skybox["tex"]);
 			else
-				player:set_physics_override({speed=1,jump=1,gravity=1,sneak=true}) -- value set for extreme test space spawn
+				player:set_physics_override({speed=1,jump=1,gravity=1}) -- value set for extreme test space spawn
 				local skybox = enviro.skyboxes["default"];
 				player:set_sky(0,skybox["type"],skybox["tex"]);
 			end
@@ -238,6 +239,13 @@ minetest.register_on_joinplayer(enviro_adjust_physics)
 
 
 -- SERVER GLOBAL SPACE CODE: uncomment to enable it
+
+local round = math.floor;
+local protector_position = function(pos) 
+	local r = 20;
+	local ry = 2*r;
+	return {x=round(pos.x/r+0.5)*r,y=round(pos.y/ry+0.5)*ry,z=round(pos.z/r+0.5)*r};
+end
 
 local stimer = 0
 local enviro_space = {};
@@ -257,19 +265,33 @@ minetest.register_globalstep(function(dtime)
 			end
 			
 			if inspace==1 then -- special space code
-				local dist = math.abs(pos.x)+math.abs(pos.z);
-				if dist > 50 then -- close to spawn normal
-					local populated = minetest.find_node_near(pos, 5, "protector:protect");
-					if not populated then -- do damage if player found not close to protectors
+				
+					
+					if pos.y<1500 and pos.y>1120 then
 						local hp = player:get_hp();
-						local privs = minetest.get_player_privs(name);
-						if hp>0 and not privs.kick then
-							player:set_hp(hp-10); -- dead in 20/10 = 2 events
-							minetest.chat_send_player(name,"WARNING: in space you must stay close to spawn or protected areas");
+						if hp>0 then
+							minetest.chat_send_player(name,"WARNING: you entered DEADLY RADIATION ZONE");
+							player:set_hp(hp-15); 
+						end
+						return
+					else
+					
+						local ppos = protector_position(pos);
+						local populated = (minetest.get_node(ppos).name=="basic_protect:protector");
+						if populated then 
+							if minetest.get_meta(ppos):get_int("space") == 1 then populated = false end
+						end
+						
+						if not populated then -- do damage if player found not close to protectors
+							local hp = player:get_hp();
+							local privs = minetest.get_player_privs(name);
+							if hp>0 and not privs.kick then
+								player:set_hp(hp-10); -- dead in 20/10 = 2 events
+								minetest.chat_send_player(name,"WARNING: in space you must stay close to spawn or protected areas");
+							end
 						end
 					end
-				end
-				
+			
 			end
 		end
 	end
@@ -325,6 +347,8 @@ minetest.register_on_punchplayer( -- bring gravity closer to normal with each pu
 	function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
 	
 		if player:get_physics_override() == nil then return end
+		local pos = player:getpos(); if pos.y>= space_start then return end
+		
 		local gravity = player:get_physics_override().gravity;
 		if gravity<1 then
 			gravity = 0.5*gravity+0.5;

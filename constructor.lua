@@ -26,10 +26,17 @@ basic_machines.craft_recipes = {
 ["autocrafter"] = {item = "basic_machines:autocrafter", description = "Automate crafting", craft = { "default:steel_ingot 5", "default:mese_crystal 2", "default:diamondblock 2"}, tex = "pipeworks_autocrafter"},
 
 ["grinder"] = {item = "basic_machines:grinder", description = "Makes dusts and grinds materials", craft = {"default:diamond 13","default:mese 4"}, tex = "grinder"},
+
+["power_block"] = {item = "basic_machines:power_block 5", description = "Energy cell, contains 11 energy units", craft = {"basic_machines:power_rod"}, tex = "power_block"},
+
+["power_cell"] = {item = "basic_machines:power_cell 5", description = "Energy cell, contains 1 energy unit", craft = {"basic_machines:power_block"}, tex = "power_cell"},
+
+["coal_lump"] = {item = "default:coal_lump", description = "Coal lump, contains 1 energy unit", craft = {"basic_machines:power_cell 2"}, tex = "default_coal_lump"},
+
 }
 
 basic_machines.craft_recipe_order = { -- order in which nodes appear
-	"keypad","light","grinder","mover", "battery","generator","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment"
+	"keypad","light","grinder","mover", "battery","generator","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment", "power_block", "power_cell", "coal_lump",
 }
 
 		
@@ -53,7 +60,7 @@ local constructor_process = function(pos)
 			for _,v in pairs(craftlist) do
 				inv:remove_item("main", ItemStack(v));
 			end
-			inv:add_item("dst", ItemStack(item));
+			inv:add_item("main", ItemStack(item));
 
 end
 
@@ -97,17 +104,17 @@ local constructor_update_meta = function(pos)
 		end
 		
 		local form  = 
-			"size[8,11]"..
+			"size[8,10]"..
 			"textlist[0,0;3,1.5;craft;" .. textlist .. ";" .. selected .."]"..
 			"button[3.5,1;1.25,0.75;CRAFT;CRAFT]"..
 			"image[3.65,0;1,1;".. tex .. ".png]"..
 			"label[0,1.85;".. description .. "]"..
-			"list[context;recipe;0,2.35;8,1;]"..
-			"label[0,3.3;Put crafting materials here]"..
-			"list[context;main;0,3.7;8,3;]"..
-			"list[context;dst;5,0;3,2;]"..
-			"label[0,6.5;player inventory]"..
-			"list[current_player;main;0,7;8,4;]"..
+			"list[context;recipe;5,0;3,2;]"..
+			"label[0,2.3;Put crafting materials here]"..
+			"list[context;main;0,2.7;8,3;]"..
+			--"list[context;dst;5,0;3,2;]"..
+			"label[0,5.5;player inventory]"..
+			"list[current_player;main;0,6;8,4;]"..
 			"listring[context;main]"..
 			"listring[current_player;main]";
 		meta:set_string("formspec", form);
@@ -117,7 +124,7 @@ end
 minetest.register_node("basic_machines:constructor", {
 	description = "Constructor: used to make machines",
 	tiles = {"grinder.png","default_furnace_top.png", "basic_machine_side.png","basic_machine_side.png","basic_machine_side.png","basic_machine_side.png"},
-	groups = {oddly_breakable_by_hand=2,mesecon_effector_on = 1},
+	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
@@ -125,7 +132,7 @@ minetest.register_node("basic_machines:constructor", {
 		meta:set_string("owner", placer:get_player_name());
 		meta:set_string("craft","keypad")
 		meta:set_int("selected",1);
-		local inv = meta:get_inventory();inv:set_size("main", 24);inv:set_size("dst",6);
+		local inv = meta:get_inventory();inv:set_size("main", 24);--inv:set_size("dst",6);
 		inv:set_size("recipe",8);
 	end,
 	

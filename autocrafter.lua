@@ -245,7 +245,7 @@ minetest.register_node("basic_machines:autocrafter", {
 	description = "Autocrafter", 
 	drawtype = "normal", 
 	tiles = {"pipeworks_autocrafter.png"}, 
-	groups = {snappy = 3, tubedevice = 1, tubedevice_receiver = 1}, 
+	groups = {cracky=3, mesecon_effector_on = 1},
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
