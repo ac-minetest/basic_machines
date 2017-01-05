@@ -6,7 +6,7 @@
 local enviro = {};
 enviro.skyboxes = {
 	["default"]={type = "regular", tex = {}}, 
-	["space"]=={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}},--{type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
+	["space"]={type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
 	["caves"]={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}},
 	};
 	
@@ -58,6 +58,7 @@ end
 minetest.register_node("basic_machines:enviro", {
 	description = "Changes enviroment for players around target location",
 	tiles = {"enviro.png"},
+	drawtype = "allfaces",
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
@@ -269,9 +270,11 @@ minetest.register_globalstep(function(dtime)
 					
 					if pos.y<1500 and pos.y>1120 then
 						local hp = player:get_hp();
+						
 						if hp>0 then
 							minetest.chat_send_player(name,"WARNING: you entered DEADLY RADIATION ZONE");
-							player:set_hp(hp-15); 
+							local privs = minetest.get_player_privs(name)
+							if not privs.kick then player:set_hp(hp-15) end
 						end
 						return
 					else
