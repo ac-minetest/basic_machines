@@ -59,6 +59,8 @@ minetest.register_node("basic_machines:enviro", {
 	description = "Changes enviroment for players around target location",
 	tiles = {"enviro.png"},
 	drawtype = "allfaces",
+	paramtype = "light",
+	param1=1,
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)

@@ -729,7 +729,7 @@ minetest.register_node("basic_machines:mover", {
 
 -- KEYPAD --
 
-local function use_keypad(pos,ttl, manual) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion ), was it manual activation?
+local function use_keypad(pos,ttl, again) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion ), do we want to activate again
 	
 	if ttl<0 then return end;
 	local meta = minetest.get_meta(pos);	
@@ -760,14 +760,15 @@ local function use_keypad(pos,ttl, manual) -- position, time to live ( how many 
 	if minetest.is_protected(pos,name) then meta:set_string("infotext", "Protection fail. reset."); meta:set_int("count",0); return end
 	local count = meta:get_int("count") or 0; -- counts how many repeats left
 	
-	if manual then 
-		if meta:get_int("repeat")==1 then -- stop it
-			meta:set_int("repeat",0);
-			meta:set_int("count", 0)
-			meta:set_int("T",4);
-			meta:set_string("infotext", "#KEYPAD: reseting. Punch again after 5s to activate")
-			return;
-		end
+	local repeating = meta:get_int("repeating");
+	
+	if repeating==1 and again~=1 then 
+		-- stop it
+		meta:set_int("repeating",0);
+		meta:set_int("count", 0)
+		meta:set_int("T",4);
+		meta:set_string("infotext", "#KEYPAD: reseting. Punch again after 5s to activate")
+		return;
 	end	
 	
 	
@@ -775,7 +776,7 @@ local function use_keypad(pos,ttl, manual) -- position, time to live ( how many 
 	if count>0 then -- this is keypad repeating its activation
 		count = count - 1; meta:set_int("count",count);  
 	else
-		meta:set_int("repeat",0); 
+		meta:set_int("repeating",0); 
 		--return 
 	end
 	
@@ -786,10 +787,10 @@ local function use_keypad(pos,ttl, manual) -- position, time to live ( how many 
 	end
 		
 	if count>0 then -- only trigger repeat if count on
-			meta:set_int("repeat",1); -- its repeating now
+			if repeating == 0 then meta:set_int("repeating",1); end-- its repeating now
 			if basic_machines.clockgen==0 then return end
 			minetest.after(machines_timer, function() 
-				use_keypad(pos,machines_TTL) 
+				use_keypad(pos,machines_TTL,1) 
 			end )  
 		
 	end
@@ -916,8 +917,10 @@ local function use_keypad(pos,ttl, manual) -- position, time to live ( how many 
 	if mode == 3 then -- keypad in toggle mode
 		local state = meta:get_int("state") or 0;state = 1-state; meta:set_int("state",state);
 		if state == 0 then mode = 1 else mode = 2 end
+	end
 	-- pass the signal on to target
-	elseif mode == 2 then -- on
+	
+	if mode == 2 then -- on
 		if not effector.action_on then return end
 		effector.action_on(tpos,node,ttl-1); -- run
 	elseif mode == 1 then -- off
@@ -934,7 +937,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 		local iter = meta:get_int("iter");
 		local count = meta:get_int("count");
 		if count<iter-1 or iter<2 then meta:set_int("active_repeats",0) end -- so that keypad can work again, at least one operation must have occured though
-		meta:set_int("count",iter); use_keypad(pos,machines_TTL,true) -- time to live set when punched
+		meta:set_int("count",iter); use_keypad(pos,machines_TTL,0) -- time to live set when punched
 		return 
 	end
 	if name == "" then return end
@@ -975,7 +978,7 @@ minetest.register_node("basic_machines:keypad", {
 		action_on = function (pos, node,ttl) 
 		if type(ttl)~="number" then ttl = 1 end
 		if ttl<0 then return end -- machines_TTL prevents infinite recursion
-		use_keypad(pos,0) -- activate just 1 time
+		use_keypad(pos,0,0) -- activate just 1 time
 	end
 	}
 	},
@@ -2144,7 +2147,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			if meta:get_string("text")=="@" then -- keyboard mode
 				meta:set_string("input", pass);
 				meta:set_int("count",1);
-				use_keypad(pos,machines_TTL,false);
+				use_keypad(pos,machines_TTL,0);
 				return
 			end
 					
@@ -2160,7 +2163,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if meta:get_int("count")<=0 then -- only accept new operation requests if idle
 			meta:set_int("count",meta:get_int("iter")); 
 			meta:set_int("active_repeats",0);
-			use_keypad(pos,machines_TTL,true)
+			use_keypad(pos,machines_TTL,0)
 		else 
 			meta:set_int("count",0); 
 			meta:set_string("infotext","operation aborted by user. punch to activate.") -- reset
