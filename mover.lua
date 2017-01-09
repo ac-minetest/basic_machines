@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "01/04/2017a";
+basic_machines.version = "01/09/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -105,6 +105,72 @@ minetest.register_on_joinplayer(function(player)
 	punchset[name].state = 0;
 end)
 
+local get_mover_form = function(node,player)
+	local meta = minetest.get_meta(pos);
+	local privs = minetest.get_player_privs(player:get_player_name());
+	local cant_build = minetest.is_protected(pos,player:get_player_name());
+	if not privs.privs  and cant_build then 
+		return 
+	end -- only ppl sharing protection can setup
+	
+	local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode,mreverse;
+	
+	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
+
+	machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
+	machines.pos11[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos11(player:get_player_name()) -- mark pos11
+	machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
+	
+	prefer = meta:get_string("prefer");
+	local mreverse = meta:get_int("reverse");
+	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
+	local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
+	
+	local mode = mode_list[meta:get_string("mode")] or "";
+	
+	local meta1 = minetest.get_meta({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0}); -- source meta
+	local meta2 = minetest.get_meta({x=pos.x+x2,y=pos.y+y2,z=pos.z+z2}); -- target meta
+	
+	
+	local inv1=1; local inv2=1;
+	local inv1m = meta:get_string("inv1");local inv2m = meta:get_string("inv2");
+	
+	local list1 = meta1:get_inventory():get_lists(); local inv_list1 = ""; local j;
+	j=1; -- stupid dropdown requires item index but returns string on receive so we have to find index.. grrr, one other solution: invert the table: key <-> value
+	
+	
+	for i in pairs( list1) do 
+		inv_list1 = inv_list1 .. i .. ","; 
+		if i == inv1m then inv1=j end; j=j+1;
+	end
+	local list2 = meta2:get_inventory():get_lists(); local inv_list2 = "";
+	j=1;
+	for i in pairs( list2) do 
+		inv_list2 = inv_list2 .. i .. ",";
+		if i == inv2m then inv2=j; end; j=j+1; 
+	end
+
+	local upgrade = meta:get_float("upgrade"); if upgrade>0 then upgrade = upgrade - 1 end
+	
+	local form  = 
+	"size[8,9.5]" ..  -- width, height
+	--"size[6,10]" ..  -- width, height
+	"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+	"dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
+	"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+	"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
+	"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
+	"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+	"button[3,3.25;1,1;help;help]"..
+	"button[6,0.25;2,1;altgui;alternate gui]"..
+	"label[0.,3.0;MODE selection]"..
+	"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
+	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
+	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
+	"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
+	return form
+end
+
 
 -- MOVER --
 minetest.register_node("basic_machines:mover", {
@@ -153,76 +219,8 @@ minetest.register_node("basic_machines:mover", {
 	
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		local meta = minetest.get_meta(pos);
-		local privs = minetest.get_player_privs(player:get_player_name());
-		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if not privs.privs  and cant_build then 
-			return 
-		end -- only ppl sharing protection can setup
-		
-		local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode,mreverse;
-		
-		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
-
-		machines.pos1[player:get_player_name()] = {x=pos.x+x0,y=pos.y+y0,z=pos.z+z0};machines.mark_pos1(player:get_player_name()) -- mark pos1
-		machines.pos11[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos11(player:get_player_name()) -- mark pos11
-		machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
-		
-		prefer = meta:get_string("prefer");
-		local mreverse = meta:get_int("reverse");
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
-		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
-		
-		local mode = mode_list[meta:get_string("mode")] or "";
-		
-		local meta1 = minetest.get_meta({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0}); -- source meta
-		local meta2 = minetest.get_meta({x=pos.x+x2,y=pos.y+y2,z=pos.z+z2}); -- target meta
-		
-		
-		local inv1=1; local inv2=1;
-		local inv1m = meta:get_string("inv1");local inv2m = meta:get_string("inv2");
-		
-		local list1 = meta1:get_inventory():get_lists(); local inv_list1 = ""; local j;
-		j=1; -- stupid dropdown requires item index but returns string on receive so we have to find index.. grrr, one other solution: invert the table: key <-> value
-		
-		
-		for i in pairs( list1) do 
-			inv_list1 = inv_list1 .. i .. ","; 
-			if i == inv1m then inv1=j end; j=j+1;
-		end
-		local list2 = meta2:get_inventory():get_lists(); local inv_list2 = "";
-		j=1;
-		for i in pairs( list2) do 
-			inv_list2 = inv_list2 .. i .. ",";
-			if i == inv2m then inv2=j; end; j=j+1; 
-		end
-
-		local upgrade = meta:get_float("upgrade"); if upgrade>0 then upgrade = upgrade - 1 end
-		
-		local form  = 
-		"size[8,9.5]" ..  -- width, height
-		--"size[6,10]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
-		"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-		"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-		"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
-		"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
-		"button[3,3.25;1,1;help;help]"..
-		"button[6,0.25;2,1;altgui;alternate gui]"..
-		"label[0.,3.0;MODE selection]"..
-		"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
-		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
-		"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
-		
-		
-		
-		-- if meta:get_string("owner")==player:get_player_name() then
-			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
-		-- else
-			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_mover", form)
-		-- end
+		local form = get_mover_form(node,player)
+		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
@@ -231,10 +229,9 @@ minetest.register_node("basic_machines:mover", {
 			local itemname = stack:get_name() or "";
 			meta:set_string("prefer",itemname);
 			minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
-			--minetest.show_formspec(player:get_player_name(), "basic_machines_inventory", 
-			--"size[8, 4] list[current_player;main;0,0;8,4;]");
-			-- local inv = meta:get_inventory();
-			-- inv:set_stack("filter",1, ItemStack({name=itemname})) 
+			
+			local form = get_mover_form(node,player)
+			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 			return 1;
 		end
 		
