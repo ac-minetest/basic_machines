@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "01/09/2017a";
+basic_machines.version = "01/17/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -105,14 +105,10 @@ minetest.register_on_joinplayer(function(player)
 	punchset[name].state = 0;
 end)
 
-local get_mover_form = function(node,player)
-	local meta = minetest.get_meta(pos);
-	local privs = minetest.get_player_privs(player:get_player_name());
-	local cant_build = minetest.is_protected(pos,player:get_player_name());
-	if not privs.privs  and cant_build then 
-		return 
-	end -- only ppl sharing protection can setup
+local get_mover_form = function(pos,player)
 	
+	if not player then return end
+	local meta = minetest.get_meta(pos);
 	local x0,y0,z0,x1,y1,z1,x2,y2,z2,prefer,mode,mreverse;
 	
 	x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");x1=meta:get_int("x1");y1=meta:get_int("y1");z1=meta:get_int("z1");x2=meta:get_int("x2");y2=meta:get_int("y2");z2=meta:get_int("z2");
@@ -219,7 +215,11 @@ minetest.register_node("basic_machines:mover", {
 	
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		local form = get_mover_form(node,player)
+		local privs = minetest.get_player_privs(player:get_player_name());
+		local cant_build = minetest.is_protected(pos,player:get_player_name());
+		if not privs.privs and cant_build then return end -- only ppl sharing protection can setup
+		
+		local form = get_mover_form(pos,player)
 		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 	end,
 	
@@ -228,9 +228,8 @@ minetest.register_node("basic_machines:mover", {
 			local meta = minetest.get_meta(pos);
 			local itemname = stack:get_name() or "";
 			meta:set_string("prefer",itemname);
-			minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
-			
-			local form = get_mover_form(node,player)
+			--minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
+			local form = get_mover_form(pos,player)
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 			return 1;
 		end
@@ -1358,6 +1357,42 @@ minetest.register_node("basic_machines:clockgen", {
 
 
 -- DISTRIBUTOR --
+local get_distributor_form = function(pos,player)
+	if not player then return end
+	local meta = minetest.get_meta(pos);
+	local privs = minetest.get_player_privs(player:get_player_name());
+	local cant_build = minetest.is_protected(pos,player:get_player_name());
+	--meta:get_string("owner")~=player:get_player_name() and 
+	if not privs.privs and cant_build then 
+		return 
+	end 
+	
+	local p = {}; local active = {};
+	local n = meta:get_int("n");
+	local delay = meta:get_float("delay");
+	for i =1,n do
+		p[i]={x=meta:get_int("x"..i),y=meta:get_int("y"..i),z=meta:get_int("z"..i)};
+		active[i]=meta:get_int("active"..i);
+	end
+	
+	-- machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
+	-- machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
+			
+	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
+	local form  = 
+	"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
+	"label[0,-0.25;target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON]";
+	for i =1,n do
+		form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
+		form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
+	end
+	
+	form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
+	form = form.."button[6.25,"..(0.25+(n)*0.75)..";1,1;help;help]";
+	return form
+
+end
+
 
 minetest.register_node("basic_machines:distributor", {
 	description = "Distributor - can forward signal up to 16 different targets",
@@ -1504,42 +1539,8 @@ minetest.register_node("basic_machines:distributor", {
 	}
 	},
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-		local meta = minetest.get_meta(pos);
-		local privs = minetest.get_player_privs(player:get_player_name());
-		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		--meta:get_string("owner")~=player:get_player_name() and 
-		if not privs.privs and cant_build then 
-			return 
-		end 
-		
-		local p = {}; local active = {};
-		local n = meta:get_int("n");
-		local delay = meta:get_float("delay");
-		for i =1,n do
-			p[i]={x=meta:get_int("x"..i),y=meta:get_int("y"..i),z=meta:get_int("z"..i)};
-			active[i]=meta:get_int("active"..i);
-		end
-		
-		-- machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
-		-- machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
-				
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
-		local form  = 
-		"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
-		"label[0,-0.25;target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON]";
-		for i =1,n do
-			form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
-			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button_exit[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
-		end
-		
-		form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
-		form = form.."button[6.25,"..(0.25+(n)*0.75)..";1,1;help;help]";
-		
-		--if meta:get_string("owner")==player:get_player_name() then
-			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
-		-- else
-			-- minetest.show_formspec(player:get_player_name(), "view_only_basic_machines_distributor", form)
-		--end
+		local form = get_distributor_form(pos,player)
+		if form then minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form) end
 	end,
 	}
 )
@@ -2279,6 +2280,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields["ADD"] then
 			local n = meta:get_int("n");
 			if n<16 then meta:set_int("n",n+1);	end -- max 16 outputs
+			local form = get_distributor_form(pos,player)
+			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
 			return
 		end
 		
@@ -2319,6 +2322,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				end
 				
 				meta:set_int("n",n-1);
+				local form = get_distributor_form(pos,player)
+				minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
 				return;
 			end
 		end
