@@ -14,7 +14,9 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	
 	table2.mesecons = {effector = { -- action to toggle light off
 		action_off  =  function (pos,node,ttl)
-			if ttl<0 then return end
+			if type(ttl) == "number" then
+				if ttl<0 then return end
+			end
 			minetest.swap_node(pos,{name = offname});
 		end
 		}
@@ -32,7 +34,9 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	table3.light_source = 0; -- off block has light off
 	table3.mesecons = {effector = {
 		action_on  =  function (pos,node,ttl)
-			if ttl<0 then return end
+			if type(ttl) == "number" then
+				if ttl<0 then return end
+			end
 			minetest.swap_node(pos,{name = name});
 		end
 		}
