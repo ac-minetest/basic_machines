@@ -14,6 +14,8 @@ local function door_signal_overwrite(name)
 		action_on  =  function (pos,node,ttl)
 			if type(ttl) == "number" then
 				if ttl<0 then return end
+			else
+				return end
 			end
 			local meta = minetest.get_meta(pos);local name = meta:get_string("doors_owner");
 			-- create virtual player
