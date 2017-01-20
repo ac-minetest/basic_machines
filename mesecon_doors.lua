@@ -13,6 +13,7 @@ local function door_signal_overwrite(name)
 	table2.mesecons = {effector = {
 		action_on  =  function (pos,node,ttl)
 			if type(ttl)~="number" then ttl = 1 end
+			if ttl<0 then return end
 			local meta = minetest.get_meta(pos);local name = meta:get_string("doors_owner");
 			-- create virtual player
 			local clicker = {}; 
