@@ -3,35 +3,35 @@
 -- CONSTRUCTOR machine: used to make all other basic_machines
 
 basic_machines.craft_recipes = {
-["keypad"] = {item = "basic_machines:keypad", description = "Turns on/off lights and activates machines or opens doors", craft = {"default:wood","default:stick"}, tex  = "keypad"},
-["light"]={item = "basic_machines:light_on", description = "Light in darkness", craft = {"default:torch 4"}, tex  = "light"},
-["mover"]={item = "basic_machines:mover", description = "Can dig, harvest, plant, teleport or move items from/in inventories", craft = {"default:mese_crystal 6","default:stone 2", "basic_machines:keypad"}, tex = "basic_machine_mover_side"},
+["keypad"] = {item = "basic_machines:keypad", description = "Turns on/off lights and activates machines or opens doors", craft = {"default:wood","default:stick"}},
+["light"]={item = "basic_machines:light_on", description = "Light in darkness", craft = {"default:torch 4"}},
+["mover"]={item = "basic_machines:mover", description = "Can dig, harvest, plant, teleport or move items from/in inventories", craft = {"default:mese_crystal 6","default:stone 2", "basic_machines:keypad"}},
 
-["detector"] = {item = "basic_machines:detector", description = "Detect and measure players, objects,blocks,light level", craft = {"default:mese_crystal 4","basic_machines:keypad"}, tex = "detector"},
+["detector"] = {item = "basic_machines:detector", description = "Detect and measure players, objects,blocks,light level", craft = {"default:mese_crystal 4","basic_machines:keypad"}},
 
-["distributor"]= {item = "basic_machines:distributor", description = "Organize your circuits better", craft = {"default:steel_ingot","default:mese_crystal", "basic_machines:keypad"}, tex = "distributor"},
+["distributor"]= {item = "basic_machines:distributor", description = "Organize your circuits better", craft = {"default:steel_ingot","default:mese_crystal", "basic_machines:keypad"}},
 
-["clock_generator"]= {item = "basic_machines:clockgen", description = "For making circuits that run non stop", craft = {"default:diamondblock","basic_machines:keypad"}, tex = "basic_machine_clock_generator"},
+["clock_generator"]= {item = "basic_machines:clockgen", description = "For making circuits that run non stop", craft = {"default:diamondblock","basic_machines:keypad"}},
 
-["recycler"]= {item = "basic_machines:recycler", description = "Recycle old tools", craft = {"default:mese_crystal 8","default:diamondblock"}, tex = "recycler"},
+["recycler"]= {item = "basic_machines:recycler", description = "Recycle old tools", craft = {"default:mese_crystal 8","default:diamondblock"}},
 
-["enviroment"] = {item = "basic_machines:enviro", description = "Change gravity and more", craft = {"basic_machines:generator 8","basic_machines:clockgen"}, tex = "enviro"},
+["enviroment"] = {item = "basic_machines:enviro", description = "Change gravity and more", craft = {"basic_machines:generator 8","basic_machines:clockgen"}},
 
-["ball_spawner"]={item = "basic_machines:ball_spawner", description = "Spawn moving energy balls", craft = {"basic_machines:power_cell","basic_machines:keypad"}, tex = "basic_machines_ball"},
+["ball_spawner"]={item = "basic_machines:ball_spawner", description = "Spawn moving energy balls", craft = {"basic_machines:power_cell","basic_machines:keypad"}},
 
-["battery"]={item = "basic_machines:battery", description = "Power for machines", craft = {"default:steel_ingot 3","default:mese","default:diamond"}, tex = "basic_machine_battery"},
+["battery"]={item = "basic_machines:battery", description = "Power for machines", craft = {"default:steel_ingot 3","default:mese","default:diamond"}},
 
-["generator"]={item = "basic_machines:generator", description = "Generate power crystals", craft = {"default:diamondblock 5","basic_machines:battery"}, tex = "basic_machine_generator"},
+["generator"]={item = "basic_machines:generator", description = "Generate power crystals", craft = {"default:diamondblock 5","basic_machines:battery"}},
 
-["autocrafter"] = {item = "basic_machines:autocrafter", description = "Automate crafting", craft = { "default:steel_ingot 5", "default:mese_crystal 2", "default:diamondblock 2"}, tex = "pipeworks_autocrafter"},
+["autocrafter"] = {item = "basic_machines:autocrafter", description = "Automate crafting", craft = { "default:steel_ingot 5", "default:mese_crystal 2", "default:diamondblock 2"}},
 
-["grinder"] = {item = "basic_machines:grinder", description = "Makes dusts and grinds materials", craft = {"default:diamond 13","default:mese 4"}, tex = "grinder"},
+["grinder"] = {item = "basic_machines:grinder", description = "Makes dusts and grinds materials", craft = {"default:diamond 13","default:mese 4"}},
 
-["power_block"] = {item = "basic_machines:power_block 5", description = "Energy cell, contains 11 energy units", craft = {"basic_machines:power_rod"}, tex = "power_block"},
+["power_block"] = {item = "basic_machines:power_block 5", description = "Energy cell, contains 11 energy units", craft = {"basic_machines:power_rod"}},
 
-["power_cell"] = {item = "basic_machines:power_cell 5", description = "Energy cell, contains 1 energy unit", craft = {"basic_machines:power_block"}, tex = "power_cell"},
+["power_cell"] = {item = "basic_machines:power_cell 5", description = "Energy cell, contains 1 energy unit", craft = {"basic_machines:power_block"}},
 
-["coal_lump"] = {item = "default:coal_lump", description = "Coal lump, contains 1 energy unit", craft = {"basic_machines:power_cell 2"}, tex = "default_coal_lump"},
+["coal_lump"] = {item = "default:coal_lump", description = "Coal lump, contains 1 energy unit", craft = {"basic_machines:power_cell 2"}},
 
 }
 
@@ -70,12 +70,11 @@ local constructor_update_meta = function(pos)
 		local craft = meta:get_string("craft");
 		
 		local description = basic_machines.craft_recipes[craft];
-		local tex;
+		local item;
 		
 		if description then 
-			tex = description.tex;
+			item = description.item;
 			local i = 0;
-			local itex;
 			
 			local inv = meta:get_inventory(); -- set up craft list
 			for _,v in pairs(description.craft) do
@@ -91,7 +90,7 @@ local constructor_update_meta = function(pos)
 			
 		else 
 			description = "" 
-			tex = ""
+			item = ""
 		end
 		
 		
@@ -107,7 +106,7 @@ local constructor_update_meta = function(pos)
 			"size[8,10]"..
 			"textlist[0,0;3,1.5;craft;" .. textlist .. ";" .. selected .."]"..
 			"button[3.5,1;1.25,0.75;CRAFT;CRAFT]"..
-			"image[3.65,0;1,1;".. tex .. ".png]"..
+			"item_image[3.65,0;1,1;".. item .. "]"..
 			"label[0,1.85;".. description .. "]"..
 			"list[context;recipe;5,0;3,2;]"..
 			"label[0,2.3;Put crafting materials here]"..
