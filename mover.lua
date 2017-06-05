@@ -1300,7 +1300,7 @@ minetest.register_chatcommand("clockgen", { -- test: toggle machine running with
 	func = function(name, param)
 		local privs = minetest.get_player_privs(name);
 	--	if not privs.privs and name~="rnd" then return end
-		return end
+		if not privs.privs then return end
 		local player = minetest.get_player_by_name(name);
 		if basic_machines.clockgen == 0 then basic_machines.clockgen = 1 else basic_machines.clockgen = 0 end
 		minetest.chat_send_player(name, "#clockgen set to " .. basic_machines.clockgen);
