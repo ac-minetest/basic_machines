@@ -182,9 +182,18 @@ minetest.register_entity("basic_machines:ball",{
 								end
 								obj:set_hp(newhp)
 							else -- non player
+								local lua_entity = obj:get_luaentity();
+								if lua_entity and lua_entity.itemstring then
+									local entname = lua_entity.itemstring;
+									if entname == "robot" then 
+										self.object:remove()
+										return;
+									end
+								end
 								local hp = obj:get_hp()
 								local newhp = hp-self.hurt;
-								obj:set_hp(newhp)
+								minetest.chat_send_player(self.owner,"#ball: target hp " .. newhp)
+								if newhp<=0 then obj:remove() else obj:set_hp(newhp) end
 							end
 							
 							
@@ -536,7 +545,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 			end
 			
 			if fields.hp then
-				meta:set_float("hp", math.abs(tonumber(fields.hp)) or 0) 
+				meta:set_float("hp", math.abs(tonumber(fields.hp) or 0)) 
 			end
 			
 			if fields.texture then
@@ -544,7 +553,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 			end
 			
 			if fields.scale then
-				local scale = math.abs(tonumber(fields.scale)) or 100;
+				local scale = math.abs(tonumber(fields.scale) or 100);
 				if scale>1000 and not privs.privs then scale = 1000 end
 				meta:set_int("scale", scale) 
 			end

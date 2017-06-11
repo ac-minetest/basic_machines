@@ -951,6 +951,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 		"size[3,1]" ..  -- width, height
 		"button_exit[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter Password: ;".."".."]";
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
+	return
 
 end
 
@@ -1292,20 +1293,20 @@ minetest.register_node("basic_machines:detector", {
 })
 
 
-minetest.register_chatcommand("clockgen", { -- test: toggle machine running with clockgens
+minetest.register_chatcommand("clockgen", { -- test: toggle machine running with clockgens, useful for debugging
+-- i.e. seeing how machines running affect server performance
 	description = "",
 	privs = {
 		interact = true
 	},
 	func = function(name, param)
 		local privs = minetest.get_player_privs(name);
-		if not privs.privs and name~="rnd" then return end
+		if not privs.privs then return end
 		local player = minetest.get_player_by_name(name);
 		if basic_machines.clockgen == 0 then basic_machines.clockgen = 1 else basic_machines.clockgen = 0 end
 		minetest.chat_send_player(name, "#clockgen set to " .. basic_machines.clockgen);
 	end
-});
-
+})
 
 
 -- CLOCK GENERATOR : periodically activates machine on top of it
@@ -1375,9 +1376,6 @@ local get_distributor_form = function(pos,player)
 		active[i]=meta:get_int("active"..i);
 	end
 	
-	-- machines.pos1[player:get_player_name()] = {x=pos.x+x1,y=pos.y+y1,z=pos.z+z1};machines.mark_pos1(player:get_player_name()) -- mark pos1
-	-- machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
-			
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 	local form  = 
 	"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
@@ -1621,6 +1619,9 @@ punchset.known_nodes = {["basic_machines:mover"]=true,["basic_machines:keypad"]=
 -- SETUP BY PUNCHING
 minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
+	-- STRANGE PROBLEM: if player doesnt move it takes another punch at same block for this function to run again, and it works normally if player moved at least one block from his previous position
+	-- it only happens with keypad - maybe caused by formspec displayed..
+	
 	local name = puncher:get_player_name(); if name==nil then return end
 	if punchset[name]== nil then  -- set up punchstate
 		punchset[name] = {} 
@@ -1639,10 +1640,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			if node.name~="basic_machines:keypad" then -- keypad is supposed to be punch interactive!
 				if minetest.is_protected(pos, name) then return end
 			end
-			-- local meta = minetest.get_meta(pos);
-			-- if not (meta:get_int("public") == 1) then
-				-- if meta:get_string("owner")~= name then return end
-			-- end
 	end
 	
 	if node.name == "basic_machines:mover" then -- mover init code
@@ -1780,9 +1777,12 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 	-- KEYPAD
 	if node.name == "basic_machines:keypad" then -- keypad init/usage code
+		
 		local meta = minetest.get_meta(pos);
 		if not (meta:get_int("x0")==0 and meta:get_int("y0")==0 and meta:get_int("z0")==0) then -- already configured
 			check_keypad(pos,name)-- not setup, just standard operation
+			punchset[name].state = 0;
+			return;
 		else
 			if minetest.is_protected(pos, name) then return minetest.chat_send_player(name, "KEYPAD: You must be able to build to set up keypad.") end
 			--if meta:get_string("owner")~= name then minetest.chat_send_player(name, "KEYPAD: Only owner can set up keypad.") return end

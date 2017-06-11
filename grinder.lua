@@ -36,7 +36,6 @@ local es_gems = function()
 end
 minetest.after(0,es_gems);
 
-		
 
 local grinder_process = function(pos) 
 	
@@ -205,7 +204,7 @@ minetest.register_node("basic_machines:grinder", {
 		if fields.help then
 			--recipe list: [in] ={fuel cost, out, quantity of material required for processing}
 			--basic_machines.grinder_recipes 
-			text = "RECIPES\n\n";
+			local text = "RECIPES\n\n";
 			for key,v in pairs(basic_machines.grinder_recipes) do
 				text = text .. "INPUT ".. key .. " " .. v[3] .. " OUTPUT " ..  v[2] .. "\n"
 			end
