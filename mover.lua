@@ -408,6 +408,7 @@ minetest.register_node("basic_machines:mover", {
 							if inv:room_for_item("main", stack) then
 								teleport_any = true;
 								inv:add_item("main", stack);
+								obj:setpos({x=0,y=0,z=0}); -- patch for dupe, might not be needed if future minetest object management is better
 							end
 							obj:remove();
 						end
