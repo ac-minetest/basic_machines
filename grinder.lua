@@ -124,12 +124,11 @@ end
 
 
 local grinder_update_meta = function(pos)
-		local meta = minetest.get_meta(pos);
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
-		local inv_name = "nodemeta:" .. pos.x ..","..pos.y..","..pos.z ;
-		local form  = 
-		"size[8,8]" ..  -- width, height
-		--"size[6,10]" ..  -- width, height
+	local meta = minetest.get_meta(pos);
+	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+	local form  = 
+		"size[8,8]"..		-- width, height
+		--"size[6,10]"..	-- width, height
 		"label[0,0;IN] label[1,0;OUT] label[0,2;FUEL] "..
 		"list["..list_name..";src;0.,0.5;1,1;]".. 
 		"list["..list_name..";dst;1.,0.5;3,3;]"..
@@ -137,12 +136,13 @@ local grinder_update_meta = function(pos)
 		"list[current_player;main;0,4;8,4;]"..
 		"button[6.5,0.5;1,1;OK;OK]"..
 		"button[6.5,1.5;1,1;help;help]"..
-		"listring[" .. inv_name .. ";dst]"..
+		"listring["..list_name..";dst]"..
 		"listring[current_player;main]"..
-		"listring[" .. inv_name .. ";src]";
-
-
-		meta:set_string("formspec", form);
+		"listring["..list_name..";src]"..
+		"listring[current_player;main]"..
+		"listring["..list_name..";fuel]"..
+		"listring[current_player;main]"
+	meta:set_string("formspec", form)
 end
 
 minetest.register_node("basic_machines:grinder", {

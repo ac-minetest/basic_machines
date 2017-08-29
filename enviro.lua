@@ -16,8 +16,7 @@ local space_start = 1100;
 local enviro_update_form = function (pos)
 	
 		local meta = minetest.get_meta(pos);
-		
-		
+			
 		local x0,y0,z0;
 		x0=meta:get_int("x0");y0=meta:get_int("y0");z0=meta:get_int("z0");
 
@@ -37,21 +36,23 @@ local enviro_update_form = function (pos)
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z;
 		
 		local form  = 
-		"size[8,8.5]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"field[3.25,0.5;1,1;r;radius;"..r.."]"..
-		--speed, jump, gravity,sneak
-		"field[0.25,1.5;1,1;speed;speed;"..speed.."]"..
-		"field[1.25,1.5;1,1;jump;jump;".. jump.."]"..
-		"field[2.25,1.5;1,1;g;gravity;"..g.."]"..
-		"field[3.25,1.5;1,1;sneak;sneak;"..sneak.."]"..
-		"label[0.,3.0;Skybox selection]"..
-		"dropdown[0.,3.35;3,1;skybox;"..skylist..";".. sky_ind .."]"..
-		"button_exit[3.25,3.25;1,1;OK;OK]"..
-		"list["..list_name..";fuel;3.25,2.25;1,1;]"..
-		"list[current_player;main;0,4.5;8,4;]";
-		meta:set_string("formspec",form);
-
+			"size[8,8.5]"..	-- width, height
+			"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+			"field[3.25,0.5;1,1;r;radius;"..r.."]"..
+			--speed, jump, gravity,sneak
+			"field[0.25,1.5;1,1;speed;speed;"..speed.."]"..
+			"field[1.25,1.5;1,1;jump;jump;"..jump.."]"..
+			"field[2.25,1.5;1,1;g;gravity;"..g.."]"..
+			"field[3.25,1.5;1,1;sneak;sneak;"..sneak.."]"..
+			"label[0.,3.0;Skybox selection]"..
+			"dropdown[0.,3.35;3,1;skybox;"..skylist..";"..sky_ind.."]"..
+			"button_exit[3.25,3.25;1,1;OK;OK]"..
+			"list["..list_name..";fuel;3.25,2.25;1,1;]"..
+			"list[current_player;main;0,4.5;8,4;]"..
+			"listring[current_player;main]"..
+			"listring["..list_name..";fuel]"..
+			"listring[current_player;main]"
+		meta:set_string("formspec",form)
 end
 	
 -- enviroment changer

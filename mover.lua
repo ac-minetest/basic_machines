@@ -163,7 +163,11 @@ local get_mover_form = function(pos,player)
 	"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
 	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
 	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
-	"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
+	"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]"..
+	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
+	"listring[current_player;main]"..
+	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
+	"listring[current_player;main]"
 	return form
 end
 
@@ -1968,18 +1972,24 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 
 			
 			local form = "size[8,9.5]" ..  -- width, height
-			--"size[6,10]" ..  -- width, height
-			"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-			"field[3.25,0.5;1.5,1;inv1;inv1;" .. inv1 .."]"..
-			"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-			"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-			"field[3.25,2.5;1.5,1;inv2;inv2;" .. inv2 .."]"..
-			"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
-			"button[3,3.25;1,1;help;help]"..
-			"field[0.25,3.6;3,1;mode;mode;".. mode .."]"..
-			"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-			"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
-			"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]";
+				--"size[6,10]" ..  -- width, height
+				"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+				"field[3.25,0.5;1.5,1;inv1;inv1;" .. inv1 .."]"..
+				"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+				"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
+				"field[3.25,2.5;1.5,1;inv2;inv2;" .. inv2 .."]"..
+				"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+				"button[3,3.25;1,1;help;help]"..
+				"field[0.25,3.6;3,1;mode;mode;".. mode .."]"..
+				"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
+				"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]".. 
+				"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]".. 
+				"list[current_player;main;0,5.5;8,4;]"..
+				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
+				"listring[current_player;main]"..
+				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
+				"listring[current_player;main]"
+
 			-- minetest.after(1,
 				-- function()
 					minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)

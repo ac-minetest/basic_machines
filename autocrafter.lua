@@ -176,18 +176,25 @@ local function update_meta(meta, enabled)
 	--local state = enabled and "on" or "off"
 	--meta:set_int("enabled", enabled and 1 or 0)
 	meta:set_string("formspec",
-			"size[8,11]"..
-			"list[context;recipe;0,0;3,3;]"..
-			"image[3,1;1,1;gui_hb_bg.png^[colorize:#141318:255]"..
-			"list[context;output;3,1;1,1;]"..
-			--"image_button[3,2;1,1;pipeworks_button_" .. state .. ".png;" .. state .. ";;;false;pipeworks_button_interm.png]" .. -- rnd disable button
-			"list[context;src;0,3.5;8,3;]"..
-			"list[context;dst;4,0;4,3;]"..
-			default.gui_bg..
-			default.gui_bg_img..
-			default.gui_slots..
-			default.get_hotbar_bg(0,7) ..
-			"list[current_player;main;0,7;8,4;]")
+		"size[8,11]"..
+		"list[context;recipe;0,0;3,3;]"..
+		"image[3,1;1,1;gui_hb_bg.png^[colorize:#141318:255]"..
+		"list[context;output;3,1;1,1;]"..
+		--"image_button[3,2;1,1;pipeworks_button_" .. state .. ".png;" .. state .. ";;;false;pipeworks_button_interm.png]" .. -- rnd disable button
+		"list[context;src;0,3.5;8,3;]"..
+		"list[context;dst;4,0;4,3;]"..
+		default.gui_bg..
+		default.gui_bg_img..
+		default.gui_slots..
+		default.get_hotbar_bg(0,7)..
+		"list[current_player;main;0,7;8,4;]"..
+		"listring[context;dst]"..
+		"listring[current_player;main]"..
+		"listring[context;src]"..
+		"listring[current_player;main]"..
+		"listring[context;recipe]"..
+		"listring[current_player;main]"
+	)
 
 	-- toggling the button doesn't quite call for running a recipe change check
 	-- so instead we run a minimal version for infotext setting only

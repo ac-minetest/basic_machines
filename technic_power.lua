@@ -4,20 +4,24 @@ local machines_minstep = 1
 -- BATTERY
 
 local battery_update_meta = function(pos)
-		local meta = minetest.get_meta(pos);
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
-		local capacity = meta:get_float("capacity");
-		local maxpower = meta:get_float("maxpower");
-		local energy = math.ceil(10*meta:get_float("energy"))/10;
-		local form  = 
-		"size[8,6.5]" ..  -- width, height
+	local meta = minetest.get_meta(pos)
+	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+	local capacity = meta:get_float("capacity")
+	local maxpower = meta:get_float("maxpower")
+	local energy = math.ceil(10*meta:get_float("energy"))/10
+	local form  = 
+		"size[8,6.5]"..	-- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
 		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. maxpower .."]"..
 		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (mese and diamond block)]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
-		"button[4.5,0.35;1.5,1;OK;REFRESH]";
-		meta:set_string("formspec", form);
+		"button[4.5,0.35;1.5,1;OK;REFRESH]"..
+		"listring["..list_name..";upgrade]"..
+		"listring[current_player;main]"..
+		"listring["..list_name..";fuel]"..
+		"listring[current_player;main]"
+	meta:set_string("formspec", form)		
 end
 
 --[power crystal name] = energy provided
@@ -260,13 +264,19 @@ local generator_update_meta = function(pos)
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
 		
 		local form  = 
-		"size[8,6.5]" ..  -- width, height
-		"label[0,0;POWER CRYSTALS] ".."label[6,0;UPGRADE] "..
-		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (gold and diamond block)]"..
-		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
-		"list[current_player;main;0,2.5;8,4;]"..
-		"button[4.5,1.5;1.5,1;OK;REFRESH]" .. "button[6,1.5;1.5,1;help;help]";
-		meta:set_string("formspec", form);
+			"size[8,6.5]" ..  -- width, height
+			"label[0,0;POWER CRYSTALS] ".."label[6,0;UPGRADE] "..
+			"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade").." (gold and diamond block)]"..
+			"list["..list_name..";fuel;0.,0.5;1,1;]"..
+			"list["..list_name..";upgrade;6.,0.5;2,1;]"..
+			"list[current_player;main;0,2.5;8,4;]"..
+			"button[4.5,1.5;1.5,1;OK;REFRESH]"..
+			"button[6,1.5;1.5,1;help;help]"..
+			"listring["..list_name..";fuel]"..
+			"listring[current_player;main]"..
+			"listring["..list_name..";upgrade]"..
+			"listring[current_player;main]"	
+		meta:set_string("formspec", form)
 end
 
 
