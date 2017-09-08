@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "08/03/2017a";
+basic_machines.version = "09/08/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -267,14 +267,15 @@ minetest.register_node("basic_machines:mover", {
 			if type(ttl)~="number" then ttl = 1 end
 			local meta = minetest.get_meta(pos);
 			local fuel = meta:get_float("fuel");
-			
+
 			
 			local x0=meta:get_int("x0"); local y0=meta:get_int("y0"); local z0=meta:get_int("z0");
+			local x2=meta:get_int("x2"); local y2=meta:get_int("y2"); local z2=meta:get_int("z2");
 			
 			local mode = meta:get_string("mode");
 			local mreverse = meta:get_int("reverse")
 			local pos1 = {x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}; -- where to take from
-			local pos2 = {x=meta:get_int("x2")+pos.x,y=meta:get_int("y2")+pos.y,z=meta:get_int("z2")+pos.z}; -- where to put
+			local pos2 = {x=x2+pos.x,y=y2+pos.y,z=z2+pos.z}; -- where to put
 
 			local pc = meta:get_int("pc"); local dim = meta:get_int("dim");	pc = (pc+1) % dim;meta:set_int("pc",pc) -- cycle position
 			local x1=meta:get_int("x1")-x0+1;local y1=meta:get_int("y1")-y0+1;local z1=meta:get_int("z1")-z0+1; -- get dimensions
@@ -328,7 +329,7 @@ minetest.register_node("basic_machines:mover", {
 			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
 			if mode == "object" then  
 				fuel_cost=fuel_cost*0.1; 
-				if pos2.x==pos.x+x0 and pos2.z==pos.z+z0 then -- check if elevator mode
+				if x2==0 and z2==0 then -- check if elevator mode
 					local requirement = math.floor(math.abs(pos2.y-pos.y)/100)+1;
 					if upgrade-1<requirement then
 							meta:set_string("infotext","MOVER: Elevator error. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
@@ -1717,7 +1718,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 
 					local meta = minetest.get_meta(punchset[name].pos);
 					if meta:get_string("mode")=="object" then -- only if object mode
-						--count number of diamond blocks to determine elevator can be set up with this height distance
+						--count number of diamond blocks to determine if elevator can be set up with this height distance
 						local inv = meta:get_inventory();
 						local upgrade = 0;
 						if inv:get_stack("upgrade", 1):get_name() == "default:diamondblock" then
@@ -2050,6 +2051,20 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
+		
+			-- display battery
+			local r = 1;local positions = minetest.find_nodes_in_area( --find battery
+				{x=pos.x-r, y=pos.y-r, z=pos.z-r},
+				{x=pos.x+r, y=pos.y+r, z=pos.z+r},
+				"basic_machines:battery")
+			if #positions == 0 then 
+				minetest.chat_send_player(name,"MOVER: please put battery nearby") 
+			else
+				local fpos = positions[1];
+				minetest.chat_send_player(name,"MOVER: battery found - displaying mark 1") 
+				machines.pos1[name] = fpos;	machines.mark_pos1(name)
+			end
+			
 		end
 		return 
 	end

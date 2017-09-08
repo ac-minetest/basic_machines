@@ -11,7 +11,7 @@ enviro.skyboxes = {
 	};
 	
 local space_start = 1100;
-
+local ENABLE_SPACE_EFFECTS = false -- enable damage outside protected areas
 	
 local enviro_update_form = function (pos)
 	
@@ -267,7 +267,7 @@ minetest.register_globalstep(function(dtime)
 				enviro_adjust_physics(player);
 			end
 			
-			if inspace==1 then -- special space code
+			if ENABLE_SPACE_EFFECTS and inspace==1 then -- special space code
 				
 					
 					if pos.y<1500 and pos.y>1120 then
