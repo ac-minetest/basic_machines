@@ -139,21 +139,26 @@ end
 
 
 local recycler_update_meta = function(pos)
-		local meta = minetest.get_meta(pos);
-		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
-		local form  = 
-		"size[8,8]" ..  -- width, height
-		--"size[6,10]" ..  -- width, height
+	local meta = minetest.get_meta(pos)
+	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
+	local form  = 
+		"size[8,8]"..  -- width, height
+		--"size[6,10]"..  -- width, height
 		"label[0,0;IN] label[1,0;OUT] label[0,2;FUEL] "..
-		"list["..list_name..";src;0.,0.5;1,1;]".. 
+		"list["..list_name..";src;0.,0.5;1,1;]"..
 		"list["..list_name..";dst;1.,0.5;3,3;]"..
-		"list["..list_name..";fuel;0.,2.5;1,1;]".. 
+		"list["..list_name..";fuel;0.,2.5;1,1;]"..
 		"list[current_player;main;0,4;8,4;]"..
-		"field[4.5,0.75;2,1;recipe;select recipe: ;" .. (meta:get_int("recipe")) .. "]"..
-		"button[6.5,0.5;1,1;OK;OK]";
-		
-		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]";
-		meta:set_string("formspec", form);
+		"field[4.5,0.75;2,1;recipe;select recipe: ;"..(meta:get_int("recipe")).."]"..
+		"button[6.5,0.5;1,1;OK;OK]"..
+		"listring["..list_name..";dst]"..
+		"listring[current_player;main]"..
+		"listring["..list_name..";src]"..
+		"listring[current_player;main]"..
+		"listring["..list_name..";fuel]"..
+		"listring[current_player;main]"	
+		--"field[0.25,4.5;2,1;mode;mode;"..mode.."]"
+	meta:set_string("formspec", form)
 end
 
 minetest.register_node("basic_machines:recycler", {
