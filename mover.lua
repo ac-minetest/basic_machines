@@ -1713,8 +1713,8 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			local privs = minetest.get_player_privs(puncher:get_player_name());
 			
 			local elevator_mode = false;
-			if punchset[name].pos.x == pos.x and punchset[name].pos.z == pos.z then -- check if elevator mode
-				if math.abs(punchset[name].pos.y-pos.y)>10 then -- trying to make elevator?
+			if punchset[name].pos1.x == pos.x and punchset[name].pos1.z == pos.z then -- check if elevator mode
+				if math.abs(punchset[name].pos1.y-pos.y)>10 then -- trying to make elevator?
 
 					local meta = minetest.get_meta(punchset[name].pos);
 					if meta:get_string("mode")=="object" then -- only if object mode
@@ -1725,7 +1725,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 							upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
 						end
 						
-						local requirement = math.floor(math.abs(punchset[name].pos.y-pos.y)/100)+1;
+						local requirement = math.floor(math.abs(punchset[name].pos1.y-pos.y)/100)+1;
 						if upgrade<requirement then
 							minetest.chat_send_player(name, "MOVER: Error while trying to make elevator. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
 							punchset[name].state = 0; return
