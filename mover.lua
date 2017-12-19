@@ -156,7 +156,7 @@ local get_mover_form = function(pos,player)
 	"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 	"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
 	"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
-	"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+	"field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
 	"button[3,3.25;1,1;help;help]"..
 	"button[6,0.25;2,1;altgui;alternate gui]"..
 	"label[0.,3.0;MODE selection]"..
@@ -167,7 +167,7 @@ local get_mover_form = function(pos,player)
 	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
 	"listring[current_player;main]"..
 	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
-	"listring[current_player;main]"
+	"listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
 	return form
 end
 
@@ -947,7 +947,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 	if meta:get_string("text") == "@" then -- keypad works as a keyboard
 		local form  = 
 		"size[3,1]" ..  -- width, height
-		"button_exit[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter text: ;".."".."]";
+		"field[0.25,0.25;3,1;pass;Enter text: ;".."".."] button_exit[0.,0.5;1,1;OK;OK]";
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
 		return
 	end
@@ -955,7 +955,7 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 	pass = ""
 	local form  = 
 		"size[3,1]" ..  -- width, height
-		"button_exit[0.,0.5;1,1;OK;OK] field[0.25,0.25;3,1;pass;Enter Password: ;".."".."]";
+		"field[0.25,0.25;3,1;pass;Enter Password: ;".."".."] button_exit[0.,0.5;1,1;OK;OK]";
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
 	return
 
@@ -1004,10 +1004,10 @@ minetest.register_node("basic_machines:keypad", {
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
 		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"button_exit[3.25,3.25;1,1;OK;OK] field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;1,1;iter;;".. iter .."]"..
+		"field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;1,1;iter;;".. iter .."]"..
 		"label[0.,1.9;repeat]" .."field[1.25,2.5;3.25,1;text;text;".. text .."]" ..
 		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
-		"button_exit[3.25,0.25;1,1;help;help]"
+		"button_exit[3.25,0.25;1,1;help;help] button_exit[3.25,3.25;1,1;OK;OK]"
 		
 		;
 		-- if meta:get_string("owner")==player:get_player_name() then
@@ -1760,8 +1760,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			local y0 = punchset[name].pos1.y-punchset[name].pos.y;
 			local z0 = punchset[name].pos1.z-punchset[name].pos.z;
 			local meta = minetest.get_meta(punchset[name].pos);
-			
-			
+	
 			
 			local x1 = punchset[name].pos11.x-punchset[name].pos.x;
 			local y1 = punchset[name].pos11.y-punchset[name].pos.y;
@@ -1772,6 +1771,10 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			local y2 = punchset[name].pos2.y-punchset[name].pos.y;
 			local z2 = punchset[name].pos2.z-punchset[name].pos.z;
 
+			if x0>x1 then x0,x1 = x1,x0 end -- this ensures that x0<=x1
+			if y0>y1 then y0,y1 = y1,y0 end
+			if z0>z1 then z0,z1 = z1,z0 end
+			
 			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
 			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
 			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
@@ -1979,7 +1982,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
 				"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
 				"field[3.25,2.5;1.5,1;inv2;inv2;" .. inv2 .."]"..
-				"button_exit[4,3.25;1,1;OK;OK] field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+				"field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
 				"button[3,3.25;1,1;help;help]"..
 				"field[0.25,3.6;3,1;mode;mode;".. mode .."]"..
 				"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
@@ -1989,7 +1992,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
 				"listring[current_player;main]"..
 				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
-				"listring[current_player;main]"
+				"listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
 
 			-- minetest.after(1,
 				-- function()
