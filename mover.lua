@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "09/08/2017a";
+basic_machines.version = "12/20/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -122,7 +122,7 @@ local get_mover_form = function(pos,player)
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 	local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
 	
-	local mode = mode_list[meta:get_string("mode")] or "";
+	local mode_string = meta:get_string("mode") or "";
 	
 	local meta1 = minetest.get_meta({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0}); -- source meta
 	local meta2 = minetest.get_meta({x=pos.x+x2,y=pos.y+y2,z=pos.z+z2}); -- target meta
@@ -147,27 +147,92 @@ local get_mover_form = function(pos,player)
 	end
 
 	local upgrade = meta:get_float("upgrade"); if upgrade>0 then upgrade = upgrade - 1 end
+	local seltab = meta:get_int("seltab");
+	local form;
 	
-	local form  = 
-	"size[8,9.5]" ..  -- width, height
+	if seltab == 1 then -- MODE --xxx
+		local mode_description = {
+			["normal"] = "This will move blocks as they are - without change.",
+			["dig"] = "This will transform blocks as if player digged them.",
+			["drop"] = "This will take block/item out of chest (you need to set filter) and will drop it",
+			["object"] = "make TELEPORTER/ELEVATOR. This will move any object inside sphere (with center source1 and radius defined by source2) to target position. For ELEVATOR teleport points need to be placed exactly vertically in line with mover and you need to upgrade with 1 diamondblock for every 100 height difference. ",
+			["inventory"] = "This will move items from inventory of any block at source position to any inventory of block at target position",
+			["transport"] = "This will move all blocks at source area to new area starting at target position. This mode preserves all inventories and other metadata",
+		};
+		
+		local text = mode_description[mode_string] or "description";
+		local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
+		mode = mode_list[mode_string] or 1;
+		
+		form = "size[8,8.25]" ..  -- width, height
+		--"size[6,10]" ..  -- width, height
+		"tabheader[0,0;tabs;MODE OF OPERATION,WHERE TO MOVE;".. seltab .. ";true;true]"..
+		"label[0.,0;MODE selection]".."button[3,0.25;1,1;help;help]"..
+		"dropdown[0.,0.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
+		"textarea[0.25,1.25;8,2.;description;;".. text.."]"..
+		
+		"field[0.25,3.5;3,1;prefer;FILTER;"..prefer.."]"..
+		
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,3.4;1,1;]"..
+		"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;5,3.4;1,1;]".."label[4,3;UPGRADE LVL ".. upgrade .."]" .. 
+		"list[current_player;main;0,4.5;8,4;]"..
+		"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
+		"listring[current_player;main]"..
+		"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
+		"listring[current_player;main] button_exit[5,0.25;1,1;OK;OK]"
+		
+	else -- POSITIONS
+		
+		local inventory_list1,invetory_list2;
+		if mode_string == "inventory" then
+			inventory_list1 = "label[4.5,0.25;source inventory] dropdown[4.5,0.75;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"
+			inventory_list2 = "label[4.5,3.;target inventory] dropdown[4.5,3.5;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"
+		else
+			inventory_list1 = ""; inventory_list2 = ""
+		end
+		
+		
+		form = "size[6,5.5]" ..  -- width, height
+		--"size[6,10]" ..  -- width, height
+		"tabheader[0,0;tabs;MODE OF OPERATION,WHERE TO MOVE;".. seltab .. ";true;true]"..
+		
+		"label[0.,0;" .. minetest.colorize("green","INPUT AREA - mover will dig here").."]"..
+		"field[0.25,1.;1,1;x0;source1;"..x0.."] field[1.25,1.;1,1;y0;;"..y0.."] field[2.25,1.;1,1;z0;;"..z0.."]"..
+		"image[3,0.75;1,1;machines_pos1.png]"..
+		inventory_list1..
+		"field[0.25,2;1,1;x1;source2;"..x1.."] field[1.25,2;1,1;y1;;"..y1.."] field[2.25,2;1,1;z1;;"..z1.."]"..
+		"image[3,1.75;1,1;machines_pos11.png]"..
+		
+		"label[0.,2.75;" .. minetest.colorize("red","TARGET POSITION - mover will move to here").."]"..
+		
+		"field[0.25,3.75;1,1;x2;Target;"..x2.."] field[1.25,3.75;1,1;y2;;"..y2.."] field[2.25,3.75;1,1;z2;;"..z2.."]"..
+		"image[3,3.5;1,1;machines_pos2.png]"..
+		inventory_list2 ..
+		"label[0.,4.25;REVERSE source and target (0/1/2)]"..
+		"field[0.25,5;1.,1;reverse;;"..mreverse.."]" ..
+		"listring[current_player;main] button[4,4.75;1,1;help;help] button_exit[5,4.75;1,1;OK;OK]"
+	end
+	
+	-- local form  = 
+	-- "size[8,9.5]" ..  -- width, height
 	--"size[6,10]" ..  -- width, height
-	"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-	"dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
-	"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-	"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-	"dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
-	"field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
-	"button[3,3.25;1,1;help;help]"..
-	"button[6,0.25;2,1;altgui;alternate gui]"..
-	"label[0.,3.0;MODE selection]"..
-	"dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
-	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-	"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
-	"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]"..
-	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
-	"listring[current_player;main]"..
-	"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
-	"listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
+	-- "field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
+	-- "dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
+	-- "field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
+	-- "field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
+	-- "dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
+	-- "field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
+	-- "button[3,3.25;1,1;help;help]"..
+	-- "button[6,0.25;2,1;altgui;alternate gui]"..
+	-- "label[0.,3.0;MODE selection]"..
+	-- "dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
+	-- "list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
+	-- "list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
+	-- "field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]"..
+	-- "listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
+	-- "listring[current_player;main]"..
+	-- "listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
+	-- "listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
 	return form
 end
 
@@ -191,6 +256,7 @@ minetest.register_node("basic_machines:mover", {
 		meta:set_string("prefer", "");
 		meta:set_string("mode", "normal");
 		meta:set_float("upgrade", 1);
+		meta:set_int("seltab",1);
 		
 		local privs = minetest.get_player_privs(placer:get_player_name());
 		if privs.privs then meta:set_float("upgrade", -1); end -- means operation will be for free
@@ -252,7 +318,11 @@ minetest.register_node("basic_machines:mover", {
 				upgrade = upgrade + stack:get_count();
 				if upgrade > 10 then upgrade = 10 end -- not more than 10
 				meta:set_float("upgrade",upgrade+1);
+			
+				local form = get_mover_form(pos,player)
+				minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 			end	
+			
 			
 		end
 		
@@ -262,6 +332,8 @@ minetest.register_node("basic_machines:mover", {
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
 		local meta = minetest.get_meta(pos);
 		meta:set_float("upgrade",1); -- reset upgrade
+		local form = get_mover_form(pos,player)
+		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 		return stack:get_count();
 	end,
 	
@@ -1718,7 +1790,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			
 			local elevator_mode = false;
 			if punchset[name].pos.x == pos.x and punchset[name].pos.z == pos.z then -- check if elevator mode
-				if math.abs(punchset[name].pos.y-pos.y)>10 then -- trying to make elevator?
+				if math.abs(punchset[name].pos.y-pos.y)>3 then -- trying to make elevator?
 
 					local meta = minetest.get_meta(punchset[name].pos);
 					if meta:get_string("mode")=="object" then -- only if object mode
@@ -1737,6 +1809,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 							elevator_mode=true;
 							meta:set_int("upgrade",upgrade+1);
 							meta:set_int("elevator",1);
+							minetest.chat_send_player(name, "MOVER: elevator setup completed, upgrade level " .. upgrade);
 							meta:set_string("infotext", "ELEVATOR, activate to use.")
 						end
 						
@@ -1958,113 +2031,86 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			return
 		end
 		
-		if fields.altgui then -- alternate gui without dropdown menu which causes crash for ios tablet users
-		
-			local x0,y0,z0,x1,y1,z1,x2,y2,z2;
-			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
-			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
-			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
-			local range = meta:get_float("upgrade") or 1;	range = range * max_range;
-			
-			
-			local inv1 = meta:get_string("inv1");local inv2 = meta:get_string("inv2");
-			
-			local prefer =  meta:get_string("prefer");
-			local mode =  meta:get_string("mode");
-			local upgrade =  meta:get_int("upgrade");
-			local mreverse = meta:get_int("reverse");
-
-			
-			local form = "size[8,9.5]" ..  -- width, height
-				--"size[6,10]" ..  -- width, height
-				"field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-				"field[3.25,0.5;1.5,1;inv1;inv1;" .. inv1 .."]"..
-				"field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-				"field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-				"field[3.25,2.5;1.5,1;inv2;inv2;" .. inv2 .."]"..
-				"field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
-				"button[3,3.25;1,1;help;help]"..
-				"field[0.25,3.6;3,1;mode;mode;".. mode .."]"..
-				"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-				"list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]".. 
-				"field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]".. 
-				"list[current_player;main;0,5.5;8,4;]"..
-				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
-				"listring[current_player;main]"..
-				"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
-				"listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
-
-			-- minetest.after(1,
-				-- function()
-					minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
-				-- end
-				-- )
-			return 
+		if fields.tabs then
+			meta:set_int("seltab", tonumber(fields.tabs) or 1)
+			local form = get_mover_form(pos,player)
+			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
+			return
 		end
 		
-		
-		if fields.OK == "OK" then
-			local x0,y0,z0,x1,y1,z1,x2,y2,z2;
-			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
-			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
-			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
-			local range = meta:get_float("upgrade") or 1;	range = range * max_range;
+		if fields.OK == "OK" then --yyy
 			
-			-- did the numbers change from last time?
-			if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
-				meta:get_int("x1")~=x1 or meta:get_int("y1")~=y1 or meta:get_int("z1")~=z1 or 
-				meta:get_int("x2")~=x2 or meta:get_int("y2")~=y2 or meta:get_int("z2")~=z2 then
-				-- are new numbers inside bounds?
-				if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
-					minetest.chat_send_player(name,"#mover: all coordinates must be between ".. -max_range .. " and " .. max_range .. ". For increased range set up positions by punching"); return
+			local seltab = meta:get_int("seltab");
+			
+			if seltab == 2 then -- POSITIONS
+			
+				-- positions
+				local x0,y0,z0,x1,y1,z1,x2,y2,z2;
+				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
+				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
+				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
+			
+				-- did the numbers change from last time?
+				if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
+					meta:get_int("x1")~=x1 or meta:get_int("y1")~=y1 or meta:get_int("z1")~=z1 or 
+					meta:get_int("x2")~=x2 or meta:get_int("y2")~=y2 or meta:get_int("z2")~=z2 then
+					-- are new numbers inside bounds?
+					if not privs.privs and (math.abs(x1)>max_range or math.abs(y1)>max_range or math.abs(z1)>max_range or math.abs(x2)>max_range or math.abs(y2)>max_range or math.abs(z2)>max_range) then
+						minetest.chat_send_player(name,"#mover: all coordinates must be between ".. -max_range .. " and " .. max_range .. ". For increased range set up positions by punching"); return
+					end
+				end
+			
+				--local range = meta:get_float("upgrade") or 1;	range = range * max_range;
+				
+				local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);
+				local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
+				local z = z0; z0 = math.min(z,z1); z1 = math.max(z,z1);
+				
+				if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
+					minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
+					return
+				end
+
+				if minetest.is_protected({x=pos.x+x1,y=pos.y+y1,z=pos.z+z1},name) then
+					minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
+					return
+				end
+				
+				meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
+				meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
+				meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
+				meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
+			
+				if fields.reverse then
+					meta:set_string("reverse",fields.reverse);
+				end
+				
+				if fields.inv1 then
+				 meta:set_string("inv1",fields.inv1);
+				end
+			
+				if fields.inv2 then
+					 meta:set_string("inv2",fields.inv2);
+				end
+				
+				meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
+			
+			else -- MODE
+			
+				if fields.mode then
+					meta:set_string("mode",fields.mode);
+				end
+				
+			
+				--filter
+				local prefer = fields.prefer or "";
+				if meta:get_string("prefer")~=prefer then
+					meta:set_string("prefer",prefer);
 				end
 			end
 			
-			if fields.mode then
-				meta:set_string("mode",fields.mode);
-			end
-			
-			if fields.reverse then
-				meta:set_string("reverse",fields.reverse);
-			end
-			
-			if fields.inv1 then
-				 meta:set_string("inv1",fields.inv1);
-			end
-			
-			if fields.inv2 then
-				 meta:set_string("inv2",fields.inv2);
-			end
-
-		
-			local x = x0; x0 = math.min(x,x1); x1 = math.max(x,x1);
-			local y = y0; y0 = math.min(y,y1); y1 = math.max(y,y1);
-			local z = z0; z0 = math.min(z,z1); z1 = math.max(z,z1);
-			
-			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
-				minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
-				return
-			end
-
-			if minetest.is_protected({x=pos.x+x1,y=pos.y+y1,z=pos.z+z1},name) then
-				minetest.chat_send_player(name, "MOVER: position is protected. aborting.")
-				return
-			end
-			
-			meta:set_int("x0",x0);meta:set_int("y0",y0);meta:set_int("z0",z0);
-			meta:set_int("x1",x1);meta:set_int("y1",y1);meta:set_int("z1",z1);
-			meta:set_int("dim",(x1-x0+1)*(y1-y0+1)*(z1-z0+1))
-			meta:set_int("x2",x2);meta:set_int("y2",y2);meta:set_int("z2",z2);
-			
-			--filter
-			local prefer = fields.prefer or "";
-			if meta:get_string("prefer")~=prefer then
-				meta:set_string("prefer",prefer);
-			end
-			
-			meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
-		
+
 			-- display battery
 			local r = 1;local positions = minetest.find_nodes_in_area( --find battery
 				{x=pos.x-r, y=pos.y-r, z=pos.z-r},
@@ -2078,7 +2124,13 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				machines.pos1[name] = fpos;	machines.mark_pos1(name)
 			end
 			
+		elseif fields.mode then
+			meta:set_string("mode",fields.mode);
+			local form = get_mover_form(pos,player)
+			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
+			return
 		end
+		
 		return 
 	end
 	
