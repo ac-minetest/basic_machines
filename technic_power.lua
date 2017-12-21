@@ -74,6 +74,9 @@ battery_recharge = function(pos)
 		end
 	end
 	
+	local full_coef = math.floor(energy/capacity*3); if full_coef > 2 then full_coef = 2 end
+	minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef}) -- graphic energy
+	
 	return energy; -- new battery energy level
 end
 
@@ -123,6 +126,7 @@ minetest.register_node("basic_machines:battery", {
 		meta:set_int("upgrade",0); -- upgrade level determines energy storage capacity and max energy output
 		meta:set_float("capacity",10);meta:set_float("maxpower",1);
 		meta:set_float("energy",0);
+		minetest.swap_node(pos,{name = "basic_machines:battery_0"})
 	end,
 	
 	mesecons = {effector = { 
@@ -133,6 +137,7 @@ minetest.register_node("basic_machines:battery", {
 			local meta = minetest.get_meta(pos);
 			local energy = meta:get_float("energy");
 			local capacity = meta:get_float("capacity");
+			local full_coef = math.floor(energy/capacity*3); 
 			
 			-- try to power furnace on top of it
 			if energy>=1 then -- need at least 1 energy
@@ -174,6 +179,8 @@ minetest.register_node("basic_machines:battery", {
 					
 					
 					if energy>=1 then -- no need to recharge yet, will still work next time
+						local full_coef_new = math.floor(energy/capacity*3); pos.y = pos.y-1
+						if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 						return 
 					else
 						local infotext = meta:get_string("infotext");
@@ -193,7 +200,11 @@ minetest.register_node("basic_machines:battery", {
 			
 			if energy<capacity then -- not full, try to recharge
 				battery_recharge(pos);
+				return
 			end
+			
+			local full_coef_new = math.floor(energy/capacity*3);
+			if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 			
 		end
 		}},
@@ -413,15 +424,16 @@ minetest.register_abm({
 function basic_machines.check_power(pos, power_draw) -- mover checks power source - battery
 
 	--minetest.chat_send_all(" battery: check_power " .. minetest.pos_to_string(pos) .. " " .. power_draw)
-	
-	if minetest.get_node(pos).name ~= "basic_machines:battery"
-		then return 0 
+	local batname = "basic_machines:battery";
+	if not string.find(minetest.get_node(pos).name,batname) then
+		return 0 
 	end
 	
 	local meta = minetest.get_meta(pos);
 	local energy = meta:get_float("energy"); 
 	local capacity = meta:get_float("capacity"); 
 	local maxpower = meta:get_float("maxpower"); 
+	local full_coef = math.floor(energy/capacity*3); -- 0,1,2
 	
 	if power_draw>maxpower then 
 		meta:set_string("infotext", "Power draw required : " .. power_draw .. " maximum power output " .. maxpower .. ". Please upgrade battery") 
@@ -440,6 +452,11 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	meta:set_float("energy", energy);
 	-- update energy display
 	meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
+	local full_coef_new = math.floor(energy/capacity*3);
+	
+	if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end -- graphic energy level display
+	
+	
 	return power_draw;
 	
 end
@@ -485,3 +502,10 @@ minetest.register_craftitem("basic_machines:power_rod", {
 	inventory_image = "power_rod.png",
 	stack_max = 25
 })
+
+-- various battery levels: 0,1,2
+local batdef = minetest.registered_nodes["basic_machines:battery"];
+for i = 0,2 do
+	batdef.tiles[3] = "basic_machine_battery_" .. i ..".png"
+	minetest.register_node("basic_machines:battery_"..i, batdef)
+end

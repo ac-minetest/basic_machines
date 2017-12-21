@@ -75,5 +75,4 @@ minetest.register_craft({
 	burntime = 40, -- coal lump has 40, tree block 30, coal block 370 (9*40=360!)
 })
 
--- COMPATIBILITY
-print("[basic machines] loaded")
+print("[MOD] basic_machines " .. basic_machines.version .. " loaded.")
