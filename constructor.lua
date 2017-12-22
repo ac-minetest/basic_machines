@@ -123,7 +123,7 @@ end
 
 minetest.register_node("basic_machines:constructor", {
 	description = "Constructor: used to make machines",
-	tiles = {"grinder.png","default_furnace_top.png", "basic_machine_side.png","basic_machine_side.png","basic_machine_side.png","basic_machine_side.png"},
+	tiles = {"constructor.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)

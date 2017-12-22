@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "12/21/2017a";
+basic_machines.version = "12/22/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -183,7 +183,7 @@ local get_mover_form = function(pos,player)
 		
 	else -- POSITIONS
 		
-		local inventory_list1,invetory_list2;
+		local inventory_list1,inventory_list2;
 		if mode_string == "inventory" then
 			inventory_list1 = "label[4.5,0.25;source inventory] dropdown[4.5,0.75;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"
 			inventory_list2 = "label[4.5,3.;target inventory] dropdown[4.5,3.5;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"
