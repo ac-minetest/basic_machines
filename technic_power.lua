@@ -179,7 +179,7 @@ minetest.register_node("basic_machines:battery", {
 					
 					
 					if energy>=1 then -- no need to recharge yet, will still work next time
-						local full_coef_new = math.floor(energy/capacity*3); if fuel_coef_new>2 then fuel_coef_new = 2 end
+						local full_coef_new = math.floor(energy/capacity*3); if full_coef_new>2 then full_coef_new = 2 end
 						pos.y = pos.y-1;
 						if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 						return 
@@ -204,7 +204,7 @@ minetest.register_node("basic_machines:battery", {
 				return
 			end
 			
-			local full_coef_new = math.floor(energy/capacity*3); if fuel_coef_new>2 then fuel_coef_new = 2 end
+			local full_coef_new = math.floor(energy/capacity*3); if full_coef_new>2 then full_coef_new = 2 end
 			if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 			
 		end
@@ -454,7 +454,7 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	-- update energy display
 	meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 	
-	local full_coef_new = math.floor(energy/capacity*3); if fuel_coef_new>2 then fuel_coef_new = 2 end
+	local full_coef_new = math.floor(energy/capacity*3); if full_coef_new>2 then full_coef_new = 2 end
 	if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end -- graphic energy level display
 	
 	
