@@ -67,6 +67,7 @@ battery_recharge = function(pos)
 	if add_energy>0 then
 		if energy+add_energy<=capacity then
 			energy=energy+add_energy
+			if energy<0 then energy = 0 end
 			meta:set_float("energy",energy);
 			meta:set_string("infotext", "(R) energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 			--TODO2: add entity power status display
@@ -174,6 +175,7 @@ minetest.register_node("basic_machines:battery", {
 						-- update energy display
 					end
 					
+					if energy<0 then energy = 0 end
 					meta:set_float("energy",energy);
 					meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 					
