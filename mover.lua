@@ -150,7 +150,7 @@ local get_mover_form = function(pos,player)
 	local seltab = meta:get_int("seltab");
 	local form;
 	
-	if seltab == 1 then -- MODE --xxx
+	if seltab == 1 then -- MODE --
 		local mode_description = {
 			["normal"] = "This will move blocks as they are - without change.",
 			["dig"] = "This will transform blocks as if player digged them.",
@@ -234,6 +234,24 @@ local get_mover_form = function(pos,player)
 	-- "listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
 	-- "listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
 	return form
+end
+
+
+local find_and_connect_battery = function(pos)
+	local r = 1;
+	for i = 0,2 do
+		local positions = minetest.find_nodes_in_area( --find battery
+			{x=pos.x-r, y=pos.y-r, z=pos.z-r},
+			{x=pos.x+r, y=pos.y+r, z=pos.z+r},
+			"basic_machines:battery_" .. i )
+		if #positions>0 then 
+			local meta = minetest.get_meta(pos);
+			local fpos = positions[1] ;
+			meta:set_int("batx", fpos.x);meta:set_int("baty", fpos.y); meta:set_int("batz", fpos.z)
+			return fpos 
+		end -- pick first battery we found
+	end
+	return nil
 end
 
 
@@ -422,26 +440,27 @@ minetest.register_node("basic_machines:mover", {
 			
 		
 			-- FUEL OPERATIONS
-			if fuel<fuel_cost then -- needs fuel to operate, find nearby open chest with fuel within radius 1
+			if fuel<fuel_cost then -- needs fuel to operate, find nearby battery
 				
 				local found_fuel = 0;
 				
-				local r = 1;local positions = minetest.find_nodes_in_area( --find battery
-				{x=pos.x-r, y=pos.y-r, z=pos.z-r},
-				{x=pos.x+r, y=pos.y+r, z=pos.z+r},
-				"basic_machines:battery")
-				local fpos = nil;
-				if #positions>0 then fpos = positions[1] end -- pick first battery we found
+				-- cached battery position
+				local fpos = {x=meta:get_int("batx"), y=meta:get_int("baty"), z=meta:get_int("batz")};
 				
+				-- check battery for power
+		
+				local power_draw = fuel_cost;
+				if power_draw<1 then power_draw = 1 end -- at least 10 one block operations with 1 refuel
+				local supply = basic_machines.check_power(fpos, power_draw); 
 				
-				if fpos then  -- check battery for power
-			
-					local power_draw = fuel_cost;
-					if power_draw<1 then power_draw = 1 end -- at least 10 one block operations with 1 refuel
-					local supply = basic_machines.check_power(fpos, power_draw) or 0; 
-					
-					if supply>0 then
-						found_fuel=supply;
+				if supply>0 then
+					found_fuel=supply;
+				elseif supply<0 then -- no battery at target location, try to find it!
+					local fpos = find_and_connect_battery(pos);
+					if not fpos then
+						meta:set_string("infotext", "Can not find nearby battery to connect to!");
+						minetest.sound_play("default_cool_lava", {pos=pos,gain=1.0,max_hear_distance = 8,})
+						return
 					end
 					
 				end
@@ -2112,14 +2131,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
 
 			-- display battery
-			local r = 1;local positions = minetest.find_nodes_in_area( --find battery
-				{x=pos.x-r, y=pos.y-r, z=pos.z-r},
-				{x=pos.x+r, y=pos.y+r, z=pos.z+r},
-				"basic_machines:battery")
-			if #positions == 0 then 
+			local fpos = find_and_connect_battery(pos);
+			
+			if not fpos then 
 				minetest.chat_send_player(name,"MOVER: please put battery nearby") 
 			else
-				local fpos = positions[1];
 				minetest.chat_send_player(name,"MOVER: battery found - displaying mark 1") 
 				machines.pos1[name] = fpos;	machines.mark_pos1(name)
 			end

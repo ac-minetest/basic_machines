@@ -427,7 +427,7 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	--minetest.chat_send_all(" battery: check_power " .. minetest.pos_to_string(pos) .. " " .. power_draw)
 	local batname = "basic_machines:battery";
 	if not string.find(minetest.get_node(pos).name,batname) then
-		return 0 
+		return -1 -- battery not found!
 	end
 	
 	local meta = minetest.get_meta(pos);
