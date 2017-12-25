@@ -1,6 +1,8 @@
 BASIC_MACHINES: lightweight automation mod for minetest
-minetest 0.4.14
+minetest 0.4.14+
 (c) 2015-2016 rnd
+textures by rnd, new textures by by SaKeL (2016) and Jozet (2017)
+
 
 MANUAL:
 	1.WIKI PAGES: https://github.com/ac-minetest/basic_machines/wiki

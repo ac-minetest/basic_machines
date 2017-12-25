@@ -13,8 +13,9 @@ local battery_update_meta = function(pos)
 		"size[8,6.5]"..	-- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
 		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. maxpower .."]"..
-		"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade") .. " (mese and diamond block)]"..
-		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,1;]" ..
+		"label[0.25,1.5;UPGRADE: diamond block for power, and mese block for capacity]"..
+		"label[0.25,1.75;UPGRADE: POWER ".. meta:get_int("upgrade") .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
+		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,2;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
 		"button[4.5,0.35;1.5,1;OK;REFRESH]"..
 		"listring["..list_name..";upgrade]"..
@@ -86,7 +87,7 @@ battery_upgrade = function(pos)
 	local inv = meta:get_inventory();
 	local count1,count2;count1=0;count2=0;
 	local stack,item,count;
-	for i=1,2 do
+	for i=1,4 do
 		stack = inv:get_stack("upgrade", i);item = stack:get_name();count= stack:get_count();
 		if item == "default:mese" then 
 			count1=count1+count 
@@ -94,14 +95,16 @@ battery_upgrade = function(pos)
 			count2=count2+count 
 		end
 	end
-	if count1<count2 then count =count1 else count=count2 end
+	--if count1<count2 then count =count1 else count=count2 end
 	
-	if pos.y>1500 then count = 2*count end -- space increases efficiency
+	if pos.y>1500 then count1 = 2*count1; count2=2*count2 end -- space increases efficiency
 	
-	meta:set_int("upgrade",count);
+	
+	meta:set_int("upgrade",count2); -- diamond for power
 	-- adjust capacity
-	local capacity = 10+20*count;
-	local maxpower = capacity*0.1;
+	--yyy
+	local capacity = 3+3*count1; -- mese for capacity
+	local maxpower = 1+count2*2;  -- old 99 upgrade -> 200 power
 	
 	capacity = math.ceil(capacity*10)/10;
 	local energy = 0;
@@ -123,9 +126,9 @@ minetest.register_node("basic_machines:battery", {
 		meta:set_string("infotext","battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it when activated by keypad"); 
 		meta:set_string("owner",placer:get_player_name());
 		local inv = meta:get_inventory();inv:set_size("fuel", 1*1); -- place to put crystals
-		inv:set_size("upgrade", 2*1); 
+		inv:set_size("upgrade", 2*2); 
 		meta:set_int("upgrade",0); -- upgrade level determines energy storage capacity and max energy output
-		meta:set_float("capacity",10);meta:set_float("maxpower",1);
+		meta:set_float("capacity",3);meta:set_float("maxpower",1);
 		meta:set_float("energy",0);
 		minetest.swap_node(pos,{name = "basic_machines:battery_0"})
 	end,
@@ -162,10 +165,8 @@ minetest.register_node("basic_machines:battery", {
 					local src_time = fmeta:get_float("src_time") or 0
 					energy = energy - 0.25*upgrade; -- use energy to accelerate burning
 					
-					fmeta:set_float("src_time",src_time+machines_timer*upgrade); -- with max 99 upgrades battery furnace works 6x faster
-					--end
 					
-					if fuel_time>40 or fuel_totaltime == 0 or node=="default:furnace" then -- must burn for at least 40 secs or furnace out of fuel
+					if fuel_time>40 or fuel_totaltime == 0 or node=="default:furnace" then -- to add burn time: must burn for at least 40 secs or furnace out of fuel
 						
 						fmeta:set_float("fuel_totaltime",60);fmeta:set_float("fuel_time",0) -- add 60 second burn time to furnace
 						energy=energy-0.5; -- use up energy to add fuel
@@ -175,7 +176,12 @@ minetest.register_node("basic_machines:battery", {
 						-- update energy display
 					end
 					
-					if energy<0 then energy = 0 end
+					if energy<0 then 
+						energy = 0 
+					else  -- only accelerate if we had enough energy
+						fmeta:set_float("src_time",src_time+machines_timer*upgrade); -- accelerated smelt: with 99 upgrade battery furnace works 11x faster 
+					end
+					
 					meta:set_float("energy",energy);
 					meta:set_string("infotext", "energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
 					
@@ -280,7 +286,7 @@ local generator_update_meta = function(pos)
 		local form  = 
 			"size[8,6.5]" ..  -- width, height
 			"label[0,0;POWER CRYSTALS] ".."label[6,0;UPGRADE] "..
-			"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade").." (gold and diamond block)]"..
+			"label[1,1;UPGRADE LEVEL ".. meta:get_int("upgrade").." (generator)]"..
 			"list["..list_name..";fuel;0.,0.5;1,1;]"..
 			"list["..list_name..";upgrade;6.,0.5;2,1;]"..
 			"list[current_player;main;0,2.5;8,4;]"..
@@ -298,23 +304,20 @@ end
 generator_upgrade = function(pos)
 	local meta = minetest.get_meta(pos);
 	local inv = meta:get_inventory();
-	local count1,count2;count1=0;count2=0;
 	local stack,item,count;
+	count = 0
 	for i=1,2 do
-		stack = inv:get_stack("upgrade", i);item = stack:get_name();count= stack:get_count();
-		if item == "default:goldblock" then 
-			count1=count1+count 
-		elseif item == "default:diamondblock" then 
-			count2=count2+count 
+		stack = inv:get_stack("upgrade", i);item = stack:get_name();
+		if item == "basic_machines:generator" then 
+			count= count + stack:get_count();
 		end
 	end
-	if count1<count2 then count =count1 else count=count2 end
 	meta:set_int("upgrade",count);
 end
 
 minetest.register_node("basic_machines:generator", {
 	description = "Generator - very expensive, generates power crystals that provide power. Its upgradeable.",
-	tiles = {"basic_machine_side.png","basic_machine_side.png","basic_machine_generator.png"},
+	tiles = {"basic_machine_generator.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
@@ -338,7 +341,7 @@ minetest.register_node("basic_machines:generator", {
 		on_receive_fields = function(pos, formname, fields, sender) 
 			if fields.quit then return end
 			if fields.help then
-				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low (0-20), medium (20-99) and high level (99). Upgrading the generator will increase the rate at which the crystals are produces.\n\nYou can automate the process of recharging by using mover in inventory mode, taking from inventory \"fuel\"";
+				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low (0-4), medium (5-19) and high level (20+). Upgrading the generator (upgrade with generators) will increase the rate at which the crystals are produces.\n\nYou can automate the process of battery recharging by using mover in inventory mode, taking from inventory \"fuel\"";
 				local form = "size [6,7] textarea[0,0;6.5,8.5;help;GENERATOR HELP;".. text.."]"
 				minetest.show_formspec(sender:get_player_name(), "basic_machines:help_mover", form)
 				return
@@ -403,14 +406,14 @@ minetest.register_abm({
 		local stack = inv:get_stack("fuel", 1); 
 		local crystal, text;
 		
-		if upgrade >= 99 then 
-			crystal = "basic_machines:power_rod"
+		if upgrade >= 20 then 
+			crystal = "basic_machines:power_rod " .. math.floor(1+(upgrade-20)*9/178)
 			text = "high upgrade: power rod";
-			elseif upgrade >=20 then 
-				crystal ="basic_machines:power_block " .. math.floor(1+(upgrade-20)*9/79);
+			elseif upgrade >=5 then 
+				crystal ="basic_machines:power_block " .. math.floor(1+(upgrade-5)*9/15);
 				text = "medium upgrade: power block";
 			else 
-				crystal ="basic_machines:power_cell " .. math.floor(1+upgrade*9/20);
+				crystal ="basic_machines:power_cell " .. math.floor(1+2*upgrade);
 				text = "low upgrade: power cell";
 		end
 		local morecrystal = ItemStack(crystal)
@@ -458,7 +461,6 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	
 	local full_coef_new = math.floor(energy/capacity*3); if full_coef_new>2 then full_coef_new = 2 end
 	if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end -- graphic energy level display
-	
 	
 	return power_draw;
 	

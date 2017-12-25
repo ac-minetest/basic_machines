@@ -49,7 +49,7 @@ minetest.register_privilege("machines", {
 
 minetest.register_craftitem("basic_machines:charcoal", {
 	description = "Wood charcoal",
-	inventory_image = "default_coal_lump.png",
+	inventory_image = "charcoal.png",
 })
 
 
