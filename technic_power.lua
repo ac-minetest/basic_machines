@@ -13,7 +13,7 @@ local battery_update_meta = function(pos)
 		"size[8,6.5]"..	-- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
 		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. maxpower .."]"..
-		"label[0.25,1.5;UPGRADE: diamond block for power, and mese block for capacity]"..
+		"label[0.25,1.5;UPGRADE: diamond/mese block for power/capacity]"..
 		"label[0.25,1.75;UPGRADE: POWER ".. meta:get_int("upgrade") .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,2;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
@@ -341,7 +341,7 @@ minetest.register_node("basic_machines:generator", {
 		on_receive_fields = function(pos, formname, fields, sender) 
 			if fields.quit then return end
 			if fields.help then
-				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low (0-4), medium (5-19) and high level (20+). Upgrading the generator (upgrade with generators) will increase the rate at which the crystals are produces.\n\nYou can automate the process of battery recharging by using mover in inventory mode, taking from inventory \"fuel\"";
+				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low level (0-4), medium level (5-19) and high level (20+). Upgrading the generator (upgrade with generators) will increase the rate at which the crystals are produced.\n\nYou can automate the process of battery recharging by using mover in inventory mode, taking from inventory \"fuel\"";
 				local form = "size [6,7] textarea[0,0;6.5,8.5;help;GENERATOR HELP;".. text.."]"
 				minetest.show_formspec(sender:get_player_name(), "basic_machines:help_mover", form)
 				return

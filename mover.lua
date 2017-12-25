@@ -199,7 +199,7 @@ local get_mover_form = function(pos,player)
 		--"size[6,10]" ..  -- width, height
 		"tabheader[0,0;tabs;MODE OF OPERATION,WHERE TO MOVE;".. seltab .. ";true;true]"..
 		
-		"label[0.,0;" .. minetest.colorize("green","INPUT AREA - mover will dig here").."]"..
+		"label[0.,0;" .. minetest.colorize("lawngreen","INPUT AREA - mover will dig here").."]"..
 		"field[0.25,1.;1,1;x0;source1;"..x0.."] field[1.25,1.;1,1;y0;;"..y0.."] field[2.25,1.;1,1;z0;;"..z0.."]"..
 		"image[3,0.75;1,1;machines_pos1.png]"..
 		inventory_list1..
@@ -215,27 +215,7 @@ local get_mover_form = function(pos,player)
 		"field[0.25,5;1.,1;reverse;;"..mreverse.."]" ..
 		"listring[current_player;main] button[4,4.75;1,1;help;help] button_exit[5,4.75;1,1;OK;OK]"
 	end
-	
-	-- local form  = 
-	-- "size[8,9.5]" ..  -- width, height
-	--"size[6,10]" ..  -- width, height
-	-- "field[0.25,0.5;1,1;x0;source1;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-	-- "dropdown[3,0.25;1.5,1;inv1;".. inv_list1 ..";" .. inv1 .."]"..
-	-- "field[0.25,1.5;1,1;x1;source2;"..x1.."] field[1.25,1.5;1,1;y1;;"..y1.."] field[2.25,1.5;1,1;z1;;"..z1.."]"..
-	-- "field[0.25,2.5;1,1;x2;Target;"..x2.."] field[1.25,2.5;1,1;y2;;"..y2.."] field[2.25,2.5;1,1;z2;;"..z2.."]"..
-	-- "dropdown[3,2.25;1.5,1;inv2;".. inv_list2 .. ";" .. inv2 .."]"..
-	-- "field[0.25,4.5;3,1;prefer;filter;"..prefer.."]"..
-	-- "button[3,3.25;1,1;help;help]"..
-	-- "button[6,0.25;2,1;altgui;alternate gui]"..
-	-- "label[0.,3.0;MODE selection]"..
-	-- "dropdown[0.,3.35;3,1;mode;normal,dig,drop,object,inventory,transport;".. mode .."]"..
-	-- "list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter;3,4.4;1,1;]"..
-	-- "list[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade;4,4.4;1,1;]".."label[4,4;upgrade .. ".. upgrade .."]" .. 
-	-- "field[3.25,1.5;1.,1;reverse;reverse;"..mreverse.."]" .. "list[current_player;main;0,5.5;8,4;]"..
-	-- "listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";upgrade]"..
-	-- "listring[current_player;main]"..
-	-- "listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
-	-- "listring[current_player;main] button_exit[4,3.25;1,1;OK;OK]"
+
 	return form
 end
 
@@ -1097,11 +1077,16 @@ minetest.register_node("basic_machines:keypad", {
 		pass = meta:get_string("pass");
 		local form  = 
 		"size[4.25,3.75]" ..  -- width, height
-		"field[0.25,0.5;1,1;x0;target;"..x0.."] field[1.25,0.5;1,1;y0;;"..y0.."] field[2.25,0.5;1,1;z0;;"..z0.."]"..
-		"field[0.25,1.5;3.25,1;pass;Password: ;"..pass.."]" .. "field[0.25,2.5;1,1;iter;;".. iter .."]"..
-		"label[0.,1.9;repeat]" .."field[1.25,2.5;3.25,1;text;text;".. text .."]" ..
-		"field[0.25,3.5;3.25,1;mode;1=OFF/2=ON/3=TOGGLE;"..mode.."]"..
-		"button_exit[3.25,0.25;1,1;help;help] button_exit[3.25,3.25;1,1;OK;OK]"
+		"bgcolor[#888888BB; false]" ..
+		"field[2.25,0.25;2.25,1;pass;Password: ;"..pass.."]" .. 
+		"field[0.25,2.5;3.25,1;text;text;".. text .."]" ..
+		"field[0.25,0.25;1,1;mode;mode;"..mode.."]".. "field[1.25,0.25;1,1;iter;repeat;".. iter .."]"..
+		
+		"label[0.,0.75;".. minetest.colorize("lawngreen","MODE: 1=OFF/2=ON/3=TOGGLE").."]"..
+		"field[0.25,3.5;1,1;x0;target;"..x0.."] field[1.25,3.5;1,1;y0;;"..y0.."] field[2.25,3.5;1,1;z0;;"..z0.."]"..
+		"button_exit[3.25,3.25;1,1;help;help] button_exit[3.25,2.25;1,1;OK;OK]"
+
+
 		
 		;
 		-- if meta:get_string("owner")==player:get_player_name() then
@@ -1187,7 +1172,7 @@ minetest.register_node("basic_machines:detector", {
 		"field[0.25,3.5;2,1;node;Node/player/object: ;"..node.."]".."field[3.25,2.5;1,1;r;radius;"..r.."]"..
 		"dropdown[0,4.5;3,1;mode;node,player,object,inventory,infotext,light;".. mode .."]"..
 		"dropdown[0,5.5;3,1;inv1;"..inv_list1..";".. inv1 .."]"..
-		"label[0.,4.0;MODE selection]"..
+		"label[0.,4.0;" .. minetest.colorize("lawngreen", "MODE selection") .. "]"..
 		"label[0.,5.2;inventory selection]"..
 		"field[2.25,3.5;2,1;NOT;filter out -2/-1/0/1/2/3/4;"..NOT.."]"..
 		"button[3.,4.4;1,1;help;help] button_exit[3.,5.4;1,1;OK;OK] "
@@ -1479,7 +1464,7 @@ local get_distributor_form = function(pos,player)
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 	local form  = 
 	"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
-	"label[0,-0.25;target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON]";
+	"label[0,-0.25;" .. minetest.colorize("lawngreen","target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON") .. "]";
 	for i =1,n do
 		form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
 		form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
