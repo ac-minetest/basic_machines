@@ -12,9 +12,8 @@ local battery_update_meta = function(pos)
 	local form  = 
 		"size[8,6.5]"..	-- width, height
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
-		"label[1,0;ENERGY ".. energy .."/ ".. capacity..", maximum power output ".. maxpower .."]"..
-		"label[0.25,1.5;UPGRADE: diamond/mese block for power/capacity]"..
-		"label[0.25,1.75;UPGRADE: POWER ".. meta:get_int("upgrade") .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
+		"label[0.,1.5;UPGRADE: diamond/mese block for power/capacity]".. 
+		"label[0.,1.75;UPGRADE: maxpower ".. maxpower .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
 		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,2;]" ..
 		"list[current_player;main;0,2.5;8,4;]"..
 		"button[4.5,0.35;1.5,1;OK;REFRESH]"..

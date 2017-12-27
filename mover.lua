@@ -11,13 +11,13 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "12/25/2017a";
+basic_machines.version = "12/27/2017a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
 ["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pinetree"]=2,["default:acacia_tree"]=2,
-["default:lava_source"]=21890,["default:water_source"]=11000,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
+["default:lava_source"]=5950,["default:water_source"]=5950,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
 --move machines for free
 basic_machines.hardness["basic_machines:mover"]=0.;
 basic_machines.hardness["basic_machines:keypad"]=0.;
@@ -31,11 +31,11 @@ basic_machines.hardness["basic_machines:light_on"]=0.;
 basic_machines.hardness["basic_machines:light_off"]=0.;
 
 -- grief potential items need highest possible upgrades
-basic_machines.hardness["boneworld:acid_source_active"]=21890.;
-basic_machines.hardness["darkage:mud"]=21890.;
+basic_machines.hardness["boneworld:acid_source_active"]=5950.;
+basic_machines.hardness["darkage:mud"]=5950.;
 
-basic_machines.hardness["es:toxic_water_source"]=21890.;basic_machines.hardness["es:toxic_water_flowing"]=11000;
-basic_machines.hardness["default:river_water_source"]=21890.;
+basic_machines.hardness["es:toxic_water_source"]=5950.;basic_machines.hardness["es:toxic_water_flowing"]=5950;
+basic_machines.hardness["default:river_water_source"]=5950.;
 
 -- farming operations are much cheaper
 basic_machines.hardness["farming:wheat_8"]=1;basic_machines.hardness["farming:cotton_8"]=1;
@@ -1028,8 +1028,9 @@ local function check_keypad(pos,name,ttl) -- called only when manually activated
 	
 	pass = ""
 	local form  = 
-		"size[3,1]" ..  -- width, height
-		"field[0.25,0.25;3,1;pass;Enter Password: ;".."".."] button_exit[0.,0.5;1,1;OK;OK]";
+		"size[3,1.25]" ..  -- width, height
+		"bgcolor[#FF8888BB; false]" ..
+		"field[0.25,0.25;3,1;pass;Enter Password: ;".."".."] button_exit[0.,0.75;1,1;OK;OK]";
 		minetest.show_formspec(name, "basic_machines:check_keypad_"..minetest.pos_to_string(pos), form)
 	return
 
