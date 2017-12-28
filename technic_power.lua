@@ -115,9 +115,9 @@ end
 
 local machines_activate_furnace = minetest.registered_nodes["default:furnace"].on_metadata_inventory_put; -- this function will activate furnace
 
-minetest.register_node("basic_machines:battery", {
+minetest.register_node("basic_machines:battery_0", {
 	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it. Its upgradeable.",
-	tiles = {"basic_machine_outlet.png","basic_machine_side.png","basic_machine_battery.png"},
+	tiles = {"basic_machine_outlet.png","basic_machine_side.png","basic_machine_battery_0.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
@@ -129,7 +129,6 @@ minetest.register_node("basic_machines:battery", {
 		meta:set_int("upgrade",0); -- upgrade level determines energy storage capacity and max energy output
 		meta:set_float("capacity",3);meta:set_float("maxpower",1);
 		meta:set_float("energy",0);
-		minetest.swap_node(pos,{name = "basic_machines:battery_0"})
 	end,
 	
 	mesecons = {effector = { 
@@ -508,8 +507,8 @@ minetest.register_craftitem("basic_machines:power_rod", {
 })
 
 -- various battery levels: 0,1,2 (2 >= 66%, 1 >= 33%,0>=0%)
-local batdef = minetest.registered_nodes["basic_machines:battery"];
-for i = 0,2 do
+local batdef = minetest.registered_nodes["basic_machines:battery_0"];
+for i = 1,2 do
 	batdef.tiles[3] = "basic_machine_battery_" .. i ..".png"
 	minetest.register_node("basic_machines:battery_"..i, batdef)
 end

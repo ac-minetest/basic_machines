@@ -75,4 +75,12 @@ minetest.register_craft({
 	burntime = 40, -- coal lump has 40, tree block 30, coal block 370 (9*40=360!)
 })
 
+-- add since minetest doesnt have moreores tin ingot recipe
+minetest.register_craft({
+	output = "default:tin_ingot",
+	recipe = {
+		{"moreores:tin_ingot"},
+	}
+})
+
 print("[MOD] basic_machines " .. basic_machines.version .. " loaded.")
