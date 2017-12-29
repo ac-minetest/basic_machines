@@ -507,7 +507,9 @@ minetest.register_craftitem("basic_machines:power_rod", {
 })
 
 -- various battery levels: 0,1,2 (2 >= 66%, 1 >= 33%,0>=0%)
-local batdef = minetest.registered_nodes["basic_machines:battery_0"];
+local batdef = {};
+for k,v in pairs(minetest.registered_nodes["basic_machines:battery_0"]) do batdef[k] = v end
+
 for i = 1,2 do
 	batdef.tiles[3] = "basic_machine_battery_" .. i ..".png"
 	minetest.register_node("basic_machines:battery_"..i, batdef)
