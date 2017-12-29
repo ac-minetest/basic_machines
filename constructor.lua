@@ -19,7 +19,7 @@ basic_machines.craft_recipes = {
 
 ["ball_spawner"]={item = "basic_machines:ball_spawner", description = "Spawn moving energy balls", craft = {"basic_machines:power_cell","basic_machines:keypad"}, tex = "basic_machines_ball"},
 
-["battery"]={item = "basic_machines:battery", description = "Power for machines", craft = {"default:bronzeblock 2","default:mese","default:diamond"}, tex = "basic_machine_battery"},
+["battery"]={item = "basic_machines:battery_0", description = "Power for machines", craft = {"default:bronzeblock 2","default:mese","default:diamond"}, tex = "basic_machine_battery"},
 
 ["generator"]={item = "basic_machines:generator", description = "Generate power crystals", craft = {"default:diamondblock 5","basic_machines:battery 5","default:goldblock 5"}, tex = "basic_machine_generator"},
 

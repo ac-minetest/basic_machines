@@ -83,4 +83,8 @@ minetest.register_craft({
 	}
 })
 
+-- COMPATIBILITY
+minetest.register_alias("basic_machines:battery", "basic_machines:battery_0")
+
+
 print("[MOD] basic_machines " .. basic_machines.version .. " loaded.")
