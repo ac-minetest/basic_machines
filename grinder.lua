@@ -247,7 +247,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 		local purity = purity_table[i];
 		minetest.register_craftitem("basic_machines:"..name.."_dust_".. purity, {
 			description = name.. " dust purity " .. purity .. "%" ,
-			inventory_image = "basic_machines_dust.png^[colorize:#"..R..G..B..":180",
+			inventory_image = "basic_machines_dust.png^[colorize:#"..R..G..B..":"..purity * 2,
 		})
 	end
 	
