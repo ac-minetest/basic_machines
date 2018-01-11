@@ -1,3 +1,5 @@
+--todo: when grinding multiple items compare battery maxpower with number of items and attempt to grind as much as possible
+
 -- rnd 2016:
 
 -- this node works as technic grinder

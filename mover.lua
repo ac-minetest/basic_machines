@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "12/29/2017a";
+basic_machines.version = "01/11/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -82,6 +82,7 @@ basic_machines.limit_inventory_table = { -- node name = {list of bad inventories
 	["basic_machines:battery"] = {["upgrade"] = 1},
 	["basic_machines:generator"] = {["upgrade"] = 1},
 	["basic_machines:mover"] = {["upgrade"] = 1},
+	["moreblocks:circular_saw"] = {["input"]=1,["recycle"]=1,["micro"]=1,["output"]=1},
 }
 
 -- when activated with keypad these will be "punched" to update their text too
@@ -878,7 +879,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 
 	-- pass the signal on to target, depending on mode
 	
-	local tpos = {x=x0,y=y0,z=z0};
+	local tpos = {x=x0,y=y0,z=z0}; -- target position
 	local node = minetest.get_node(tpos);if not node.name then return end -- error
 	local text = meta:get_string("text"); 
 	
@@ -905,8 +906,9 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 		end
 		
 		local tmeta = minetest.get_meta(tpos);if not tmeta then return end
-		tmeta:set_string("infotext", text);
+		
 		if basic_machines.signs[node.name] then -- update text on signs with signs_lib
+			tmeta:set_string("infotext", text);
 			tmeta:set_string("text",text);
 			local table = minetest.registered_nodes[node.name];
 			if not table.on_punch then return end -- error
@@ -918,36 +920,47 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			return
 		end
 		
+		-- target is keypad, special functions: @, % that output to target keypad text
 		if node.name == "basic_machines:keypad" then -- special modify of target keypad text and change its target
-			local ttext = tmeta:get_string("text");
 			x0=tmeta:get_int("x0");y0=tmeta:get_int("y0");z0=tmeta:get_int("z0");
 			x0=tpos.x+x0;y0=tpos.y+y0;z0=tpos.z+z0;
 			tpos = {x=x0,y=y0,z=z0};
-			if string.byte(ttext) == 64 then -- target keypad's text starts with @ ( ascii code 64) -> character replacement
-				ttext =string.sub(ttext,2); if not ttext or ttext == "" then return end
-				ttext = string.gsub(ttext, "@", text); -- replace every @ in ttext with text
-				
-				-- set target keypad's target's infotext
-				tmeta = minetest.get_meta(tpos);if not tmeta then return end
-				tmeta:set_string("infotext", ttext);
-			elseif string.byte(ttext) == 37 then -- target keypad's text starts with % ( ascii code 37) -> word extraction
-				local i = tonumber(string.sub(ttext,2,2)) or 1; --read the number following the %
+			
+			if string.byte(text) == 64 then -- target keypad's text starts with @ ( ascii code 64) -> character replacement
+				text = string.sub(text,2); if not text or text == "" then return end
+				--read words[j] from blocks above keypad:
+				local j=0;
+				text = string.gsub(text, "@", 
+					function() 
+						j=j+1;
+						return minetest.get_meta({x=pos.x,y=pos.y+j,z=pos.z}):get_string("infotext")
+					end
+				) ; -- replace every @ in ttext with string on blocks above
 
+				-- set target keypad's target's text
+				tmeta = minetest.get_meta(tpos);if not tmeta then return end
+				tmeta:set_string("text", text);
+			elseif string.byte(text) == 37 then -- target keypad's text starts with % ( ascii code 37) -> word extraction
+			
+				local ttext = minetest.get_meta({x=pos.x,y=pos.y+1,z=pos.z}):get_string("infotext")
+				local i = tonumber(string.sub(text,2,2)) or 1; --read the number following the %
 				--extract i-th word from text 
 				 local j = 0; 
-				 for word in string.gmatch(text, "%S+") do 
-					j=j+1; if j == i then ttext = word; break; end
+				 for word in string.gmatch(ttext, "%S+") do 
+					j=j+1; if j == i then text = word; break; end
 				 end
-				-- set target keypad's target's infotext
-				tmeta = minetest.get_meta(tpos);if not tmeta then return end
-				tmeta:set_string("infotext", ttext);
-			else
+				 
+				-- set target keypad's target's text
+				tmeta = minetest.get_meta(tpos); if not tmeta then return end
+				tmeta:set_string("text", text);
+			else 
 				if string.byte(text) == 64 then -- if text starts with @ clear target keypad text
 					tmeta:set_string("text",""); 
 					return
 				end
-				tmeta = minetest.get_meta(tpos);if not tmeta then return end
-				tmeta:set_string("infotext", ttext);
+				-- just set text..
+				tmeta = minetest.get_meta(tpos); if not tmeta then return end
+				tmeta:set_string("infotext", text);
 			end
 			return
 		end
@@ -982,8 +995,11 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 		return
 		end
 		
+		tmeta:set_string("infotext", text); -- else just set text
 	end
-		
+	
+	
+	--activate target
 	local table = minetest.registered_nodes[node.name];
 	if not table then return end -- error
 	if not table.mesecons then return end -- error
@@ -2169,8 +2185,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				"\n\nplaying sound to nearby players : set text to \"$sound_name\""..
 
 				"\n\nadvanced: "..
-				"\ntext replacement : Suppose keypad A is set with text \"@some @. text @!\" and keypad B is set with text \"insertion\". Suppose we target A with B and activate B. Then text of keypad A will be set to \"some insertion. text insertion!\" insertion\""..
-				"\nword extraction: Suppose keypad A is set with text \"%1\". Then upon activation text of keypad A will be set to  1.st word of keypad B.";
+				"\ntext replacement : Suppose keypad A is set with text \"@some @. text @!\" and there are blocks on top of keypad A with infotext '1' and '2'. Suppose we target B with A and activate A. Then text of keypad B will be set to \"some 1. text 2!\""..
+				"\nword extraction: Suppose similiar setup but now keypad A is set with text \"%1\". Then upon activation text of keypad B will be set to 1.st word of infotext";
 			
 			local form = "size [6,7] textarea[0,0;6.5,8.5;help;KEYPAD HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_keypad", form)
