@@ -11,7 +11,7 @@ local machines_minstep = 1 -- minimal allowed activation timestep, if faster mac
 local max_range = 10; -- machines normal range of operation
 local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "01/11/2018a";
+basic_machines.version = "01/12/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -922,6 +922,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 		
 		-- target is keypad, special functions: @, % that output to target keypad text
 		if node.name == "basic_machines:keypad" then -- special modify of target keypad text and change its target
+			
 			x0=tmeta:get_int("x0");y0=tmeta:get_int("y0");z0=tmeta:get_int("z0");
 			x0=tpos.x+x0;y0=tpos.y+y0;z0=tpos.z+z0;
 			tpos = {x=x0,y=y0,z=z0};
@@ -937,8 +938,8 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 					end
 				) ; -- replace every @ in ttext with string on blocks above
 
-				-- set target keypad's target's text
-				tmeta = minetest.get_meta(tpos);if not tmeta then return end
+				-- set target keypad's text xxx
+				--tmeta = minetest.get_meta(tpos);if not tmeta then return end
 				tmeta:set_string("text", text);
 			elseif string.byte(text) == 37 then -- target keypad's text starts with % ( ascii code 37) -> word extraction
 			
@@ -951,15 +952,16 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 				 end
 				 
 				-- set target keypad's target's text
-				tmeta = minetest.get_meta(tpos); if not tmeta then return end
+				--tmeta = minetest.get_meta(tpos); if not tmeta then return end
 				tmeta:set_string("text", text);
 			else 
+			
 				if string.byte(text) == 64 then -- if text starts with @ clear target keypad text
 					tmeta:set_string("text",""); 
 					return
 				end
 				-- just set text..
-				tmeta = minetest.get_meta(tpos); if not tmeta then return end
+				--tmeta = minetest.get_meta(tpos); if not tmeta then return end
 				tmeta:set_string("infotext", text);
 			end
 			return

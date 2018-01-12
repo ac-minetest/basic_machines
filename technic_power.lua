@@ -47,10 +47,10 @@ battery_recharge = function(pos)
 	if add_energy>0 then
 		if pos.y>1500 then add_energy=2*add_energy end -- in space recharge is more efficient
 		crystal = true;
-		if energy+add_energy<=capacity then
+		if energy+add_energy<=capacity or add_energy<=capacity then
 			stack:take_item(1); 
 			inv:set_stack("fuel", 1, stack)
-		else 
+		else
 			meta:set_string("infotext", "recharge problem: capacity " .. capacity .. ", needed " .. energy+add_energy)
 		end
 	else -- try do determine caloric value
@@ -68,9 +68,10 @@ battery_recharge = function(pos)
 		if energy+add_energy<=capacity then
 			energy=energy+add_energy
 			if energy<0 then energy = 0 end
+			if energy>capacity then energy = capacity end
 			meta:set_float("energy",energy);
 			meta:set_string("infotext", "(R) energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
-			--TODO2: add entity power status display
+
 			minetest.sound_play("electric_zap", {pos=pos,gain=0.05,max_hear_distance = 8,})
 		end
 	end
@@ -174,9 +175,10 @@ minetest.register_node("basic_machines:battery_0", {
 						-- update energy display
 					end
 					
+					
 					if energy<0 then 
 						energy = 0 
-					else  -- only accelerate if we had enough energy
+					else  -- only accelerate if we had enough energy, note: upgrade*0.1*0.25<power_rod is limit upgrade, so upgrade = 40*100 = 4000
 						fmeta:set_float("src_time",src_time+machines_timer*upgrade); -- accelerated smelt: with 99 upgrade battery furnace works 11x faster 
 					end
 					

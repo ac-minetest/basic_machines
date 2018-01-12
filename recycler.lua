@@ -115,6 +115,9 @@ local recycler_process = function(pos)
 			-- inv:set_stack("dst", i, ItemStack(""));
 		-- end
 		
+		--take 1 item from src inventory for each activation
+		stack=stack:take_item(reqcount); inv:remove_item("src", stack)
+		
 		for _,  v in pairs(itemlist) do
 			if math.random(1, 4)<=3 then -- probability 3/4 = 75%
 				if not string.find(v,"group") then -- dont add if item described with group
@@ -127,8 +130,7 @@ local recycler_process = function(pos)
 			end
 		end
 	
-		--take 1 item from src inventory for each activation
-		stack=stack:take_item(reqcount); inv:remove_item("src", stack)
+		
 		
 		minetest.sound_play("recycler", {pos=pos,gain=0.5,max_hear_distance = 16,})
 		
