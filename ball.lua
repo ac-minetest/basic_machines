@@ -369,6 +369,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
+			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end
 			
 			local meta = minetest.get_meta(pos);
@@ -473,6 +474,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		end,
 		
 		action_off = function (pos, node,ttl) 
+			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end
 			pos.x = round(pos.x);pos.y = round(pos.y);pos.z = round(pos.z);
 			local obj = minetest.add_entity({x=pos.x,y=pos.y,z=pos.z}, "basic_machines:ball");

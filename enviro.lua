@@ -79,6 +79,7 @@ minetest.register_node("basic_machines:enviro", {
 		meta:set_string("owner",name);
 		local privs = minetest.get_player_privs(name);
 		if privs.privs then meta:set_int("admin",1) end
+		if privs.machines then meta:set_int("machines",1) end
 
 		local inv = meta:get_inventory();
 		inv:set_size("fuel",1*1);
@@ -89,6 +90,9 @@ minetest.register_node("basic_machines:enviro", {
 	mesecons = {effector = { 
 		action_on = function (pos, node,ttl) 
 			local meta = minetest.get_meta(pos);
+			local machines = meta:get_int("machines");
+			if not machines == 1 then meta:set_string("infotext","Error. You need machines privs.") return end
+			
 			local admin = meta:get_int("admin");
 			
 			local inv = meta:get_inventory(); local stack = ItemStack("default:diamond 1");
@@ -357,7 +361,7 @@ minetest.register_on_punchplayer( -- bring gravity closer to normal with each pu
 		
 		local gravity = player:get_physics_override().gravity;
 		if gravity<1 then
-			gravity = 0.5*gravity+0.5;
+			gravity = 1;
 			player:set_physics_override({gravity=gravity})
 		end
 	end

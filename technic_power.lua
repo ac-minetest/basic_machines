@@ -47,13 +47,13 @@ battery_recharge = function(pos)
 	if add_energy>0 then
 		if pos.y>1500 then add_energy=2*add_energy end -- in space recharge is more efficient
 		crystal = true;
-		if energy+add_energy<=capacity or add_energy<=capacity then
+		if add_energy<=capacity then
 			stack:take_item(1); 
 			inv:set_stack("fuel", 1, stack)
 		else
 			meta:set_string("infotext", "recharge problem: capacity " .. capacity .. ", needed " .. energy+add_energy)
 		end
-	else -- try do determine caloric value
+	else -- try do determine caloric value of fuel inside battery
 		local fuellist = inv:get_list("fuel");if not fuellist then return energy end
 		local fueladd, afterfuel = minetest.get_craft_result({method = "fuel", width = 1, items = fuellist}) 
 		if fueladd.time > 0 then 
@@ -65,15 +65,12 @@ battery_recharge = function(pos)
 	end
 		
 	if add_energy>0 then
-		if energy+add_energy<=capacity then
-			energy=energy+add_energy
-			if energy<0 then energy = 0 end
-			if energy>capacity then energy = capacity end
-			meta:set_float("energy",energy);
-			meta:set_string("infotext", "(R) energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
-
-			minetest.sound_play("electric_zap", {pos=pos,gain=0.05,max_hear_distance = 8,})
-		end
+		energy=energy+add_energy
+		if energy<0 then energy = 0 end
+		if energy>capacity then energy = capacity end -- excess energy is wasted
+		meta:set_float("energy",energy);
+		meta:set_string("infotext", "(R) energy: " .. math.ceil(energy*10)/10 .. " / ".. capacity);
+		minetest.sound_play("electric_zap", {pos=pos,gain=0.05,max_hear_distance = 8,})
 	end
 	
 	local full_coef = math.floor(energy/capacity*3); if full_coef > 2 then full_coef = 2 end

@@ -889,7 +889,8 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			meta:set_string("input",""); -- clear input again
 		end
 		
-		if string.byte(text) == 33 then -- if text starts with !, then we send chat text to all nearby players, radius 5
+		local bit = string.byte(text);
+		if bit == 33 then -- if text starts with !, then we send chat text to all nearby players, radius 5
 			text = string.sub(text,2) ; if not text or text == "" then return end
 			local players = minetest.get_connected_players();
 			for _,player in pairs(players) do
@@ -900,7 +901,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 				end
 			end
 			return
-		elseif string.byte(text) == 36 then-- text starts with $, play sound
+		elseif bit == 36 then-- text starts with $, play sound
 			text = string.sub(text,2) ; if not text or text == "" then return end
 			minetest.sound_play(text, {pos=pos,gain=1.0,max_hear_distance = 16,})
 		end
@@ -1566,10 +1567,11 @@ minetest.register_node("basic_machines:distributor", {
 							--ret = pcall(function() if not table.mesecons.effector then end end); -- exception handling to determine if structure exists
 														
 							local effector=table.mesecons.effector;
+							local active_i = active[i];
 							
-							if (active[i] == 1 or active[i] == 2) and effector.action_on then -- normal OR only forward input ON
+							if (active_i == 1 or active_i == 2) and effector.action_on then -- normal OR only forward input ON
 								effector.action_on(posf[i],node,ttl-1); 
-							elseif active[i] == -1 and effector.action_off then 
+							elseif active_i == -1 and effector.action_off then 
 								effector.action_off(posf[i],node,ttl-1)
 							end
 						end
@@ -1578,7 +1580,15 @@ minetest.register_node("basic_machines:distributor", {
 				end
 			end
 			
-			if delay>0 then minetest.after(delay, activate) else activate() end
+			if delay>0 then 
+				minetest.after(delay, activate) 
+			elseif delay == 0 then
+				activate()
+			else -- delay <0 - do random activation: delay = -500 means 500/1000 chance to activate
+				if math.random(1000)<=-delay then
+					activate()
+				end
+			end
 			
 	end,
 	
@@ -2438,7 +2448,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"Numbers in each row represent (from left to right) : first 3 numbers are target coordinates,\n"..
 			"last number controls how signal is passed to target. For example, to only pass OFF signal use -2,\n"..
 			"to only pass ON use 2, -1 negates the signal, 1 = pass original signal, 0 blocks signal\n"..
-			"delay option adds delay to activations, in seconds\n\n"..
+			"delay option adds delay to activations, in seconds. With negative delay activation is randomized with probability -delay/1000.\n\n"..
 			"ADVANCED: you can use distributor as an event handler. First you must deactivate first target by putting 0 at\n"..
 			"last place in first line. Meanings of first 2 numbers are as follows: first number 0/1 controls if node/n".. "listens to failed interact attempts around it, second number -1/1 listens to chat and can mute it";
 			local form = "size [5.5,5.5] textarea[0,0;6,7;help;DISTRIBUTOR HELP;".. text.."]"
