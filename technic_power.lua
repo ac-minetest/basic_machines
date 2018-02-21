@@ -52,6 +52,7 @@ battery_recharge = function(pos)
 			inv:set_stack("fuel", 1, stack)
 		else
 			meta:set_string("infotext", "recharge problem: capacity " .. capacity .. ", needed " .. energy+add_energy)
+			return energy
 		end
 	else -- try do determine caloric value of fuel inside battery
 		local fuellist = inv:get_list("fuel");if not fuellist then return energy end
@@ -445,6 +446,7 @@ function basic_machines.check_power(pos, power_draw) -- mover checks power sourc
 	
 	if power_draw>energy then
 		energy = battery_recharge(pos); -- try recharge battery and continue operation immidiately
+		if not energy then return 0 end
 	end 
 	
 	energy = energy-power_draw;
