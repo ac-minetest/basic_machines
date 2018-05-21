@@ -795,8 +795,11 @@ minetest.register_node("basic_machines:mover", {
 			if type(ttl)~="number" then ttl = 1 end
 			local meta = minetest.get_meta(pos);
 			local mreverse = meta:get_int("reverse");
-			if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
-			meta:set_int("reverse",mreverse);			
+			local mode = meta:get_string("mode");
+			if mode ~= "dig" then
+			  if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
+			  meta:set_int("reverse",mreverse);			
+			end
 		end
 		
 		
