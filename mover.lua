@@ -49,8 +49,8 @@ basic_machines.hardness["mese_crystals:mese_crystal_ore4"] = 10;
 
 
 -- define which nodes are dug up completely, like a tree
-basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,
-["default:acacia_tree"]=true,["default:papyrus"]=true};
+basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pine_tree"]=true,
+["default:acacia_tree"]=true,["default:aspen_tree"]=true,["default:papyrus"]=true};
 				
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {
