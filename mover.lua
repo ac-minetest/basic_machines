@@ -703,7 +703,9 @@ minetest.register_node("basic_machines:mover", {
 				
 				if dig_up == true then -- dig up to 16 nodes
 					
-					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
+					local r = 1; 
+					if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
+					if node1.name == "default:acacia_tree" then r = 2 end -- acacia trees grow wider than others
 					
 					local positions = minetest.find_nodes_in_area( --
 					{x=pos1.x-r, y=pos1.y, z=pos1.z-r},
@@ -796,7 +798,7 @@ minetest.register_node("basic_machines:mover", {
 			local meta = minetest.get_meta(pos);
 			local mreverse = meta:get_int("reverse");
 			local mode = meta:get_string("mode");
-			if mode ~= "dig" then
+			if mode ~= "dig" then -- reverse switching is not very helpful when auto harvest trees for example
 			  if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
 			  meta:set_int("reverse",mreverse);			
 			end
