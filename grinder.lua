@@ -8,6 +8,7 @@
 -- recipe list: [in] ={fuel cost, out, quantity of material required for processing}
 basic_machines.grinder_recipes = {
 	["default:stone"] = {2,"default:sand",1},
+	["default:desert_stone"] = {2,"default:desert_sand 4",1},
 	["default:cobble"] = {1,"default:gravel",1},
 	["default:gravel"] = {0.5,"default:dirt",1},
 	["default:dirt"] = {0.5,"default:clay_lump 4",1},
