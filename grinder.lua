@@ -218,6 +218,16 @@ minetest.register_node("basic_machines:grinder", {
 		end
 		grinder_update_meta(pos);
 	end,
+	
+	can_dig = function(pos)
+			local meta = minetest.get_meta(pos);
+			local inv = meta:get_inventory();
+			
+			if not (inv:is_empty("fuel")) or not (inv:is_empty("src")) or not (inv:is_empty("dst")) then return false end -- all inv must be empty to be dug
+			
+			return true
+			
+		end
 
 })
 

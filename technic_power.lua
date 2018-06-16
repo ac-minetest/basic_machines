@@ -268,7 +268,12 @@ minetest.register_node("basic_machines:battery_0", {
 		
 		can_dig = function(pos)
 			local meta = minetest.get_meta(pos);
-			if meta:get_int("upgrade")~=0 then return false else return true end
+			local inv = meta:get_inventory();
+			
+			if not (inv:is_empty("fuel")) or not (inv:is_empty("upgrade")) then return false end -- fuel AND upgrade inv must be empty to be dug
+			
+			return true
+			
 		end
 	
 })
@@ -386,7 +391,12 @@ minetest.register_node("basic_machines:generator", {
 		
 		can_dig = function(pos)
 			local meta = minetest.get_meta(pos);
-			if meta:get_int("upgrade")~=0 then return false else return true end
+			local inv = meta:get_inventory();
+			
+			if not inv:is_empty("upgrade") then return false end  -- fuel inv is not so important as generator generates it
+			
+			return true
+			
 		end
 	
 })

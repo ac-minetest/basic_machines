@@ -144,7 +144,7 @@ local recycler_update_meta = function(pos)
 	local meta = minetest.get_meta(pos)
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
 	local form  = 
-		"size[8,8]"..  -- width, height
+		"size[8,8]"..  -- width, heightinv:get_stack
 		--"size[6,10]"..  -- width, height
 		"label[0,0;IN] label[1,0;OUT] label[0,2;FUEL] "..
 		"list["..list_name..";src;0.,0.5;1,1;]"..
@@ -229,6 +229,17 @@ minetest.register_node("basic_machines:recycler", {
 		meta:set_string("node",""); -- this will force to reread recipe on next use
 		recycler_update_meta(pos);
 	end,
+	
+	can_dig = function(pos)
+	
+			local meta = minetest.get_meta(pos);
+			local inv = meta:get_inventory();
+			
+			if not (inv:is_empty("fuel")) or not (inv:is_empty("src")) or not (inv:is_empty("dst")) then return false end -- all inv must be empty to be dug
+		  			
+			return true
+			
+		end
 
 })
 

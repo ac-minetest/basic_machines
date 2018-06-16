@@ -204,6 +204,17 @@ minetest.register_node("basic_machines:constructor", {
 		
 		constructor_update_meta(pos);
 	end,
+	
+		can_dig = function(pos)
+			local meta = minetest.get_meta(pos);
+			local inv = meta:get_inventory();
+			
+			if not (inv:is_empty("main"))  then return false end -- main inv must be empty to be dug
+			
+			return true
+			
+		end
+
 
 })
 
