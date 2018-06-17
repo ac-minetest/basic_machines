@@ -49,8 +49,8 @@ basic_machines.hardness["mese_crystals:mese_crystal_ore4"] = 10;
 
 
 -- define which nodes are dug up completely, like a tree
-basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pinetree"]=true,
-["default:acacia_tree"]=true,["default:papyrus"]=true};
+basic_machines.dig_up_table = {["default:cactus"]=true,["default:tree"]=true,["default:jungletree"]=true,["default:pine_tree"]=true,
+["default:acacia_tree"]=true,["default:aspen_tree"]=true,["default:papyrus"]=true};
 				
 -- set up nodes for harvest when digging: [nodename] = {what remains after harvest, harvest result}
 basic_machines.harvest_table = {
@@ -282,7 +282,7 @@ minetest.register_node("basic_machines:mover", {
 	can_dig = function(pos, player) -- dont dig if upgrades inside, cause they will be destroyed
 		local meta = minetest.get_meta(pos);
 		local inv = meta:get_inventory();
-		return not(inv:contains_item("upgrade", ItemStack({name="default:mese"})));
+		return inv:is_empty("upgrade")
 	end,
 	
 	
@@ -703,7 +703,9 @@ minetest.register_node("basic_machines:mover", {
 				
 				if dig_up == true then -- dig up to 16 nodes
 					
-					local r = 1; if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
+					local r = 1; 
+					if node1.name == "default:cactus" or node1.name == "default:papyrus" then r = 0 end
+					if node1.name == "default:acacia_tree" then r = 2 end -- acacia trees grow wider than others
 					
 					local positions = minetest.find_nodes_in_area( --
 					{x=pos1.x-r, y=pos1.y, z=pos1.z-r},
@@ -795,8 +797,11 @@ minetest.register_node("basic_machines:mover", {
 			if type(ttl)~="number" then ttl = 1 end
 			local meta = minetest.get_meta(pos);
 			local mreverse = meta:get_int("reverse");
-			if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
-			meta:set_int("reverse",mreverse);			
+			local mode = meta:get_string("mode");
+			if mode ~= "dig" then -- reverse switching is not very helpful when auto harvest trees for example
+			  if mreverse == 1 then mreverse = 0 elseif mreverse==0 then mreverse = 1 end
+			  meta:set_int("reverse",mreverse);			
+			end
 		end
 		
 		

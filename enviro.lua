@@ -206,6 +206,12 @@ minetest.register_node("basic_machines:enviro", {
 		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
 		return stack:get_count();
 	end,
+		
+	can_dig = function(pos, player) -- dont dig if fuel is inside, cause it will be destroyed
+		local meta = minetest.get_meta(pos);
+		local inv = meta:get_inventory();
+		return inv:is_empty("fuel")
+	end,
 	
 })
 
