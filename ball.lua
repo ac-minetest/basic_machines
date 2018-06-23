@@ -223,6 +223,7 @@ minetest.register_entity("basic_machines:ball",{
 				end
 				local effector = table.mesecons.effector;
 				
+				local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 				self.object:remove();
 				
 				if energy>0 then
@@ -400,7 +401,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 				if not count or count<0 then count = 0 end
 				
 				if count>=2 then 
-					if t1-t0>20 then count = 0 
+					if t1-t0>10 then count = 0 
 						else return 
 					end
 				end
