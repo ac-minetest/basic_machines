@@ -79,7 +79,9 @@ basic_machines.no_teleport_table = {
 basic_machines.limit_inventory_table = { -- node name = {list of bad inventories to take from}
 	["basic_machines:autocrafter"]= {["recipe"]=1, ["output"]=1},
 	["basic_machines:constructor"]= {["recipe"]=1},
-	["basic_machines:battery"] = {["upgrade"] = 1},
+	["basic_machines:battery_0"] = {["upgrade"] = 1},
+	["basic_machines:battery_1"] = {["upgrade"] = 1},
+	["basic_machines:battery_2"] = {["upgrade"] = 1},
 	["basic_machines:generator"] = {["upgrade"] = 1},
 	["basic_machines:mover"] = {["upgrade"] = 1},
 	["moreblocks:circular_saw"] = {["input"]=1,["recycle"]=1,["micro"]=1,["output"]=1},
