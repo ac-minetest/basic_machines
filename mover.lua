@@ -2394,7 +2394,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 					meta:set_int("active"..i,active[i]);
 				end
 				if fields.delay then
-					meta:set_float("delay", fields.delay);
+					meta:set_float("delay", tonumber(fields.delay) or 0);
 				end
 			end
 		end

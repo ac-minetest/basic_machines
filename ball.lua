@@ -363,7 +363,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		meta:set_float("gravity",0);  -- gravity
 		meta:set_int("puncheable",0); -- if 0 not puncheable, if 1 can be punched by players in protection, if 2 can be punched by anyone
 		meta:set_int("scale",100);
-		meta:set_string("visual","sprite");
+		meta:set_string("visual","sprite"); -- sprite/cube OR particle
 		ball_spawner_update_form(pos);
 		
 	end,

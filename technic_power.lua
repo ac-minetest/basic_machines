@@ -116,7 +116,7 @@ local machines_activate_furnace = minetest.registered_nodes["default:furnace"].o
 
 minetest.register_node("basic_machines:battery_0", {
 	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it. Its upgradeable.",
-	tiles = {"basic_machine_outlet.png","basic_machine_side.png","basic_machine_battery_0.png"},
+	tiles = {"basic_machine_outlet.png","basic_machine_battery.png","basic_machine_battery_0.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
