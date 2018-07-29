@@ -223,6 +223,7 @@ minetest.register_entity("basic_machines:ball",{
 				end
 				local effector = table.mesecons.effector;
 				
+				local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 				self.object:remove();
 				
 				if energy>0 then
@@ -362,7 +363,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		meta:set_float("gravity",0);  -- gravity
 		meta:set_int("puncheable",0); -- if 0 not puncheable, if 1 can be punched by players in protection, if 2 can be punched by anyone
 		meta:set_int("scale",100);
-		meta:set_string("visual","sprite");
+		meta:set_string("visual","sprite"); -- sprite/cube OR particle
 		ball_spawner_update_form(pos);
 		
 	end,
@@ -400,7 +401,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 				if not count or count<0 then count = 0 end
 				
 				if count>=2 then 
-					if t1-t0>20 then count = 0 
+					if t1-t0>10 then count = 0 
 						else return 
 					end
 				end
