@@ -127,6 +127,17 @@ local get_mover_form = function(pos,player)
 	machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
 	
 	prefer = meta:get_string("prefer");
+	
+	if prefer and prefer ~= "" then
+	    local stack = ItemStack(prefer)
+	    local item = stack:get_name()
+	    local count= stack:get_count()
+	    if count > basic_machines.maxstack then
+	      prefer = item.." "..tostring(basic_machines.maxstack)
+	      meta:set_string("prefer",prefer)
+	    end
+	end
+		
 	local mreverse = meta:get_int("reverse");
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 	local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
@@ -189,6 +200,7 @@ local get_mover_form = function(pos,player)
 		"listring[current_player;main]"..
 		"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
 		"listring[current_player;main] button_exit[5,0.25;1,1;OK;OK]"
+		
 		
 	else -- POSITIONS
 		
@@ -364,7 +376,7 @@ minetest.register_node("basic_machines:mover", {
 			local x1=meta:get_int("x1")-x0+1;local y1=meta:get_int("y1")-y0+1;local z1=meta:get_int("z1")-z0+1; -- get dimensions
 			
 			--pc = z*a*b+x*b+y, from x,y,z to pc
-			-- set current input position
+			-- set current input positionstack = inv:get_stack("upgrade", i);item = stack:get_name();count= stack:get_count();
 			pos1.y = y0 + (pc % y1); pc = (pc - (pc % y1))/y1;
 			pos1.x = x0 + (pc % x1); pc = (pc - (pc % x1))/x1;
 			pos1.z = z0 + pc;
