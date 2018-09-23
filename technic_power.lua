@@ -9,18 +9,43 @@ local battery_update_meta = function(pos)
 	local capacity = meta:get_float("capacity")
 	local maxpower = meta:get_float("maxpower")
 	local energy = math.ceil(10*meta:get_float("energy"))/10
-	local form  = 
+
+	local form = 
 		"size[8,6.5]"..	-- width, height
+		"bgcolor[#333333;false]"..
 		"label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
-		"label[0.,1.5;UPGRADE: diamond/mese block for power/capacity]".. 
-		"label[0.,1.75;UPGRADE: maxpower ".. maxpower .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
-		"list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,2;]" ..
+		"box[1.45,0.48;2.15,1.01;#222222]"..
+		"list["..list_name..";fuel;0.,0.5;1,1;]"..
+		"list["..list_name..";upgrade;6.,0.5;2,2;]"..
 		"list[current_player;main;0,2.5;8,4;]"..
-		"button[4.5,0.35;1.5,1;OK;REFRESH]"..
-		"listring["..list_name..";upgrade]"..
-		"listring[current_player;main]"..
+
+		"image_button[4.3,0.5;1.6,0.5;wool_black.png;help;help]"..
+		"image_button[4.3,1;1.6,0.5;wool_black.png;OK;refresh]"..
+
+		"image[1.5,0.5;0.5,0.5;basic_machine_generator.png]"..
+		"image[1.5,1;0.5,0.5;power_cell.png]"..
+
+		"label[2,0.5;Power: 10]"..
+		"label[2,1;Capacity: 30]"..
+
+		"button_exit[4.1,7.4;2,0.5;OK;close]"..
 		"listring["..list_name..";fuel]"..
+		"listring[current_player;main]"..
+		"listring["..list_name..";upgrade]"..
 		"listring[current_player;main]"
+	
+	-- local form  = 
+		-- "size[8,6.5]"..	-- width, height
+		-- "label[0,0;FUEL] ".."label[6,0;UPGRADE] "..
+		-- "label[0.,1.5;UPGRADE: diamond/mese block for power/capacity]".. 
+		-- "label[0.,1.75;UPGRADE: maxpower ".. maxpower .. " / CAPACITY " .. meta:get_int("capacity") .. "]"..
+		-- "list["..list_name..";fuel;0.,0.5;1,1;]".. "list["..list_name..";upgrade;6.,0.5;2,2;]" ..
+		-- "list[current_player;main;0,2.5;8,4;]"..
+		-- "button[4.5,0.35;1.5,1;OK;REFRESH]"..
+		-- "listring["..list_name..";upgrade]"..
+		-- "listring[current_player;main]"..
+		-- "listring["..list_name..";fuel]"..
+		-- "listring[current_player;main]"
 	meta:set_string("formspec", form)		
 end
 
@@ -61,6 +86,9 @@ battery_recharge = function(pos)
 			add_energy = fueladd.time/40;
 			if energy+add_energy<=capacity then
 				inv:set_stack("fuel", 1, afterfuel.items[1]);
+			else 
+				meta:set_string("infotext", "recharge problem: capacity " .. capacity .. ", needed " .. energy+add_energy)
+				return energy
 			end
 		end
 	end
@@ -123,6 +151,7 @@ minetest.register_node("basic_machines:battery_0", {
 	tiles = {"basic_machine_outlet.png","basic_machine_battery.png","basic_machine_battery_0.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
+	
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
 		meta:set_string("infotext","battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it when activated by keypad"); 
@@ -230,7 +259,19 @@ minetest.register_node("basic_machines:battery_0", {
 		on_receive_fields = function(pos, formname, fields, sender) 
 			if fields.quit then return end
 			local meta = minetest.get_meta(pos);
-			battery_update_meta(pos);
+			
+			
+			if fields.OK then battery_update_meta(pos) return end
+			if fields.help then
+				local name = sender:get_player_name();
+				local text = "Battery provides power to machines or furnace. It can either "..
+				"use power cells or convert ordinary furnace fuels into energy. 1 coal lump gives 1 energy.\n\n"..
+				"UPGRADE with diamondblocks for more available power output or with "..
+				"meseblocks for more power storage capacity"
+				
+				local form = "size [6,7] textarea[0,0;6.5,8.5;help;BATTERY HELP;".. text.."]"
+				minetest.show_formspec(name, "basic_machines:help_battery", form)
+			end
 		end,
 		
 		allow_metadata_inventory_put = function(pos, listname, index, stack, player)
