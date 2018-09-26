@@ -370,7 +370,7 @@ minetest.register_node("basic_machines:generator", {
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext","generator - generates power crystals that provide power. Upgrade with up to 99 gold/diamond blocks."); 
+		meta:set_string("infotext","generator - generates power crystals that provide power. Upgrade with up to 50 generators."); 
 		meta:set_string("owner",placer:get_player_name());
 		local inv = meta:get_inventory();
 		inv:set_size("fuel", 1*1); -- here generated power crystals are placed
@@ -446,6 +446,7 @@ minetest.register_node("basic_machines:generator", {
 	
 })
 
+local genstat = {}; -- generator statistics for each player
 
 minetest.register_abm({ 
 	nodenames = {"basic_machines:generator"},
@@ -454,10 +455,30 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
+		
+		-- checks
+		local owner = meta:get_string("owner");
+		local gendata = genstat[owner];
+		local t = minetest.get_gametime();
+		if not gendata then genstat[owner] = {t,0} gendata = genstat[owner] end -- init: time, count
+		
+		if t-gendata[1] >= 19 then -- more than 19s elapsed since last time
+			gendata[1] = t; -- reset timer
+			gendata[2] = 0; -- reset activation count		
+		end
+		
+		gendata[2] = gendata[2] + 1 -- increase activation count
+		if gendata[2]>5 then
+			meta:set_string("infotext","error: more than 5 active generators")
+			return
+		end
+		
 		local upgrade = meta:get_int("upgrade");
 		local inv = meta:get_inventory();
 		local stack = inv:get_stack("fuel", 1); 
 		local crystal, text;
+		
+		if upgrade > 50 then meta:set_string("infotext","error: max upgrade is 50"); return end
 		
 		if upgrade >= 20 then 
 			crystal = "basic_machines:power_rod " .. math.floor(1+(upgrade-20)*9/178)
