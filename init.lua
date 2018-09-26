@@ -18,6 +18,8 @@
 
 basic_machines = {};
 
+-- define your maxstacksize here !
+basic_machines.maxstack = 99
 
 
 dofile(minetest.get_modpath("basic_machines").."/mark.lua") -- used for markings, borrowed and adapted from worldedit mod

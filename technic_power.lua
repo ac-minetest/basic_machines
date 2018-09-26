@@ -122,6 +122,10 @@ battery_upgrade = function(pos)
 		end
 	end
 	--if count1<count2 then count =count1 else count=count2 end
+	-- this is the quick and dirty solution :)
+	if count1 > basic_machines.maxstack*4 then count1 = basic_machines.maxstack*4 end
+	if count2 > basic_machines.maxstack*4 then count2 = basic_machines.maxstack*4 end
+	
 	
 	if pos.y>1500 then count1 = 2*count1; count2=2*count2 end -- space increases efficiency
 	
