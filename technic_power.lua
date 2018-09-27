@@ -468,8 +468,8 @@ minetest.register_abm({
 		end
 		
 		gendata[2] = gendata[2] + 1 -- increase activation count
-		if gendata[2]>5 then
-			meta:set_string("infotext","error: more than 5 active generators")
+		if gendata[2]>50 then
+			meta:set_string("infotext","error: more than 50 active generators")
 			return
 		end
 		

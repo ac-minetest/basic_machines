@@ -114,6 +114,21 @@ minetest.register_on_joinplayer(function(player)
 	punchset[name].state = 0;
 end)
 
+local function check_abuse(prefer)
+      if prefer and prefer ~= "" then
+	    local stack = ItemStack(prefer)
+	    local item = stack:get_name()
+	    local count= stack:get_count()
+	    if count > basic_machines.maxstack then
+	      prefer = item.." "..tostring(basic_machines.maxstack)
+	      --meta:set_string("prefer",prefer)
+	    end
+	end
+	return prefer
+end
+
+
+
 local get_mover_form = function(pos,player)
 	
 	if not player then return end
@@ -128,15 +143,9 @@ local get_mover_form = function(pos,player)
 	
 	prefer = meta:get_string("prefer");
 	
-	if prefer and prefer ~= "" then
-	    local stack = ItemStack(prefer)
-	    local item = stack:get_name()
-	    local count= stack:get_count()
-	    if count > basic_machines.maxstack then
-	      prefer = item.." "..tostring(basic_machines.maxstack)
-	      meta:set_string("prefer",prefer)
-	    end
-	end
+	prefer = check_abuse(prefer) 
+	meta:set_string("prefer",prefer)
+	
 		
 	local mreverse = meta:get_int("reverse");
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
@@ -408,6 +417,8 @@ minetest.register_node("basic_machines:mover", {
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 			local prefer = meta:get_string("prefer"); 
+			prefer = check_abuse(prefer) 
+			meta:set_string("prefer",prefer)
 		
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
@@ -2163,6 +2174,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				--filter
 				local prefer = fields.prefer or "";
 				if meta:get_string("prefer")~=prefer then
+					prefer = check_abuse(prefer) 
 					meta:set_string("prefer",prefer);
 				end
 			end
