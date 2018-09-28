@@ -456,7 +456,8 @@ minetest.register_abm({
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
 		
-		-- checks
+		-- checks *** that is not the solution ***
+		--[[
 		local owner = meta:get_string("owner");
 		local gendata = genstat[owner];
 		local t = minetest.get_gametime();
@@ -472,6 +473,7 @@ minetest.register_abm({
 			meta:set_string("infotext","error: more than 50 active generators")
 			return
 		end
+]]
 		
 		local upgrade = meta:get_int("upgrade");
 		local inv = meta:get_inventory();
