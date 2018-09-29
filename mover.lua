@@ -517,7 +517,7 @@ minetest.register_node("basic_machines:mover", {
 								teleport_any = true;
 								inv:add_item("main", stack);
 							end
-							obj:setpos({x=0,y=0,z=0}); -- patch for dupe, might not be needed if future minetest object management is better
+							--obj:setpos({x=0,y=0,z=0}); --Gundul says:management was fixed--  patch for dupe, might not be needed if future minetest object management is better
 							obj:remove();
 						end
 					end
@@ -555,7 +555,8 @@ minetest.register_node("basic_machines:mover", {
 				
 					local lua_entity = obj:get_luaentity();
 					local detected_obj = lua_entity.name or "" 
-					if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list 
+					if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list https://bitbucket.org/kingarthursteam/beer-test/wiki/Home
+
 						if times > 0 then
 							local finalmove = true;
 							-- move objects with set velocity in target direction
