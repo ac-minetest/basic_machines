@@ -1,5 +1,5 @@
-local machines_timer=5
-local machines_minstep = 1
+local machines_timer = basic_machines.machines_timer or 5
+local machines_minstep = basic_machines.machines_minstep or 1
 
 -- BATTERY
 

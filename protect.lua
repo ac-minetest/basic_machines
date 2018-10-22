@@ -5,7 +5,7 @@
 
 local old_is_protected = minetest.is_protected
 local round = math.floor;
-local machines_TTL=16
+local machines_TTL = basic_machines.machines_TTL or 16
 
 function minetest.is_protected(pos, digger)
 	
