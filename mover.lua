@@ -2097,9 +2097,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 				-- positions
 				local x0,y0,z0,x1,y1,z1,x2,y2,z2;
-				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
-				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
-				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
+				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0 = tonumber(fields.z0) or 0
+				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1 = tonumber(fields.z1) or 0
+				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2 = tonumber(fields.z2) or 0;
 			
 				-- did the numbers change from last time?
 				if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
@@ -2161,7 +2161,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				end
 				
 				--notification
-				meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
+				meta:set_string("infotext", "Mover block. Mode or filter changed.");
 			end
 			
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block
