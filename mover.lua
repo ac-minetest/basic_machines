@@ -6,12 +6,14 @@
 
 
 --  *** SETTINGS *** --
-local machines_timer = 5 -- main timestep
-local machines_minstep = 1 -- minimal allowed activation timestep, if faster machines overheat
-local max_range = 10; -- machines normal range of operation
-local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
-local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
-basic_machines.version = "09/25/2018a";
+basic_machines.timer = 5 -- main timestep
+basic_machines.machines_minstep = 1 -- minimal allowed activation timestep, if faster machines overheat
+
+basic_machines.max_range = 10 -- machines normal range of operation
+basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
+basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
+
+basic_machines.version = "10/22/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -104,6 +106,12 @@ basic_machines.signs = {
 
 --  *** END OF SETTINGS *** --
 
+
+local machines_timer = basic_machines.timer
+local machines_minstep = basic_machines.machines_minstep
+local max_range = basic_machines.max_range
+local machines_operations = basic_machines.machines_operations
+local machines_TTL = basic_machines.machines_TTL
 
 
 local punchset = {}; 
@@ -2116,9 +2124,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 				-- positions
 				local x0,y0,z0,x1,y1,z1,x2,y2,z2;
-				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
-				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
-				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
+				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0 = tonumber(fields.z0) or 0
+				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1 = tonumber(fields.z1) or 0
+				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2 = tonumber(fields.z2) or 0;
 			
 				-- did the numbers change from last time?
 				if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
@@ -2162,10 +2170,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				if fields.inv2 then
 					 meta:set_string("inv2",fields.inv2);
 				end
-				
+
+				--notification
 				meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			
-			else -- MODE
+			else -- MODE 1
 			
 				if fields.mode then
 					meta:set_string("mode",fields.mode);
@@ -2178,6 +2187,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 					prefer = check_abuse(prefer) 
 					meta:set_string("prefer",prefer);
 				end
+				
+				--notification
+				meta:set_string("infotext", "Mover block. Mode or filter changed.");
 			end
 			
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block

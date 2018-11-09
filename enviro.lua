@@ -6,7 +6,8 @@
 local enviro = {};
 enviro.skyboxes = {
 	["default"]={type = "regular", tex = {}}, 
-	["space"]={type="skybox", tex={"sky_pos_y.png","sky_neg_y.png","sky_pos_z.png","sky_neg_z.png","sky_neg_x.png","sky_pos_x.png",}}, -- need textures installed!
+	--["space"]={type="skybox", tex={"sky_pos_y.jpg","sky_neg_y.jpg","sky_pos_z.jpg","sky_neg_z.jpg","sky_neg_x.jpg","sky_pos_x.jpg",}}, -- need textures installed!
+	["space"]={type="skybox", tex={"basic_machines_stars.png","basic_machines_stars.png","basic_machines_stars.png","basic_machines_stars.png","basic_machines_stars.png","basic_machines_stars.png",}}, -- need textures installed!
 	["caves"]={type = "cavebox", tex = {"black.png","black.png","black.png","black.png","black.png","black.png",}},
 	};
 	
