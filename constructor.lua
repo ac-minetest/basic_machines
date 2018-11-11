@@ -39,6 +39,8 @@ basic_machines.craft_recipe_order = { -- order in which nodes appear
 	"keypad","light","grinder","mover", "battery","generator","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment", "power_block", "power_cell", "coal_lump",
 }
 
+
+
 		
 
 local constructor_process = function(pos) 

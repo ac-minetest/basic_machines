@@ -8,6 +8,7 @@
 --  *** SETTINGS *** --
 basic_machines.timer = 5 -- main timestep
 basic_machines.machines_minstep = 1 -- minimal allowed activation timestep, if faster machines overheat
+local machines_clockradius = math.floor(basic_machines.activeblocks / basic_machines.maxclock)
 
 basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
@@ -1492,13 +1493,26 @@ minetest.register_node("basic_machines:clockgen", {
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
-		local meta =  minetest.get_meta(pos);
-		local owner = placer:get_player_name() or "";
-		local privs = minetest.get_player_privs(owner);
-		if privs.machines then meta:set_int("machines",1) end
+	
 		
-		meta:set_string("owner",owner);
-		meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
+		local name = placer:get_player_name()
+		local pinv = placer:get_inventory()
+		local match = minetest.find_node_near(pos, machines_clockradius, {"basic_machines:clockgen"})
+		      if match then
+			    
+			    local distance = math.floor(vector.distance(pos, match))
+			    minetest.chat_send_player(name,core.colorize('#FF0000',"##### Clockgens disturb each other. Place next one at least "..machines_clockradius.." nodes away #####"))
+			    minetest.set_node(pos,{name="air"})
+			    minetest.spawn_item(pos, "basic_machines:clockgen 1")
+		      else
+			    local meta =  minetest.get_meta(pos);
+			    local owner = placer:get_player_name() or "";
+			    local privs = minetest.get_player_privs(owner);
+			    if privs.machines then meta:set_int("machines",1) end
+			    
+			    meta:set_string("owner",owner);
+			    meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
+		      end
 	end
 })	
 	

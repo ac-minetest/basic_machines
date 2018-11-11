@@ -1,5 +1,7 @@
 local machines_timer = basic_machines.machines_timer or 5
 local machines_minstep = basic_machines.machines_minstep or 1
+local machines_genradius = math.floor(basic_machines.activeblocks / basic_machines.maxgen)
+
 
 -- BATTERY
 
@@ -369,14 +371,27 @@ minetest.register_node("basic_machines:generator", {
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
-		local meta = minetest.get_meta(pos);
-		meta:set_string("infotext","generator - generates power crystals that provide power. Upgrade with up to 50 generators."); 
-		meta:set_string("owner",placer:get_player_name());
-		local inv = meta:get_inventory();
-		inv:set_size("fuel", 1*1); -- here generated power crystals are placed
-		inv:set_size("upgrade", 2*1); 
-		meta:set_int("upgrade",0); -- upgrade level determines quality of produced crystals
 		
+		local name = placer:get_player_name()
+		local pinv = placer:get_inventory()
+		local match = minetest.find_node_near(pos, machines_genradius, {"basic_machines:generator"})
+		      if match then
+			    
+			    local distance = math.floor(vector.distance(pos, match))
+			    minetest.chat_send_player(name,core.colorize('#FF0000',"##### Magnetic field problem. Distance to next generator must be at least "..machines_genradius.." nodes #####"))
+			    minetest.set_node(pos,{name="air"})
+			    minetest.spawn_item(pos, "basic_machines:generator 1")
+		      else
+			
+			local meta = minetest.get_meta(pos);
+			meta:set_string("infotext","generator - generates power crystals that provide power. Upgrade with up to 50 generators."); 
+			meta:set_string("owner",placer:get_player_name());
+			local inv = meta:get_inventory();
+			inv:set_size("fuel", 1*1); -- here generated power crystals are placed
+			inv:set_size("upgrade", 2*1); 
+			meta:set_int("upgrade",0); -- upgrade level determines quality of produced crystals
+			
+		      end
 	end,
 	
 		on_rightclick = function(pos, node, player, itemstack, pointed_thing)
@@ -451,7 +466,7 @@ local genstat = {}; -- generator statistics for each player
 minetest.register_abm({ 
 	nodenames = {"basic_machines:generator"},
 	neighbors = {""},
-	interval = 19,
+	interval = 30,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
