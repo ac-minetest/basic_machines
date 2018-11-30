@@ -128,8 +128,9 @@ local function check_abuse(prefer)
 	    local stack = ItemStack(prefer)
 	    local item = stack:get_name()
 	    local count= stack:get_count()
-	    if count > basic_machines.maxstack then
-	      prefer = item.." "..tostring(basic_machines.maxstack)
+	    local maxs = stack:get_stack_max()
+	    if count > maxs then
+	      prefer = item.." "..tostring(maxs)
 	      --meta:set_string("prefer",prefer)
 	    end
 	end

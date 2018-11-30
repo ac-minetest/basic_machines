@@ -19,11 +19,11 @@
 basic_machines = {};
 
 -- define your maxstacksize here !
-basic_machines.maxstack = 1024
+--basic_machines.maxstack = 1024
 basic_machines.activeblocks = minetest.settings:get("active_block_range") or 2
 basic_machines.activeblocks = math.floor((vector.distance({x=0,y=0,z=0}, {x=basic_machines.activeblocks,y=basic_machines.activeblocks,z=basic_machines.activeblocks})*16))
-basic_machines.maxgen = 4                              -- max number of allowed generators per active mapblock
-basic_machines.maxclock = 2                              -- max number of allowed clockgens per active mapblock
+basic_machines.maxgen = 4                              -- max number of allowed generators per active mapblocks
+basic_machines.maxclock = 2                              -- max number of allowed clockgens per active mapblocks
 
 
 dofile(minetest.get_modpath("basic_machines").."/mark.lua") -- used for markings, borrowed and adapted from worldedit mod
