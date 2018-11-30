@@ -6,15 +6,12 @@
 
 
 --  *** SETTINGS *** --
-basic_machines.timer = 5 -- main timestep
-basic_machines.machines_minstep = 1 -- minimal allowed activation timestep, if faster machines overheat
-local machines_clockradius = math.floor(basic_machines.activeblocks / basic_machines.maxclock)
-
-basic_machines.max_range = 10 -- machines normal range of operation
-basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
-basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
-
-basic_machines.version = "10/22/2018a";
+local machines_timer = 5 -- main timestep
+local machines_minstep = 2 --1 -- minimal allowed activation timestep, if faster machines overheat
+local max_range = 10; -- machines normal range of operation
+local machines_operations = 10; -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
+local machines_TTL = 16; -- time to live for signals, how many hops before signal dissipates
+basic_machines.version = "08/23/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -27,8 +24,8 @@ basic_machines.hardness["basic_machines:keypad"]=0.;
 basic_machines.hardness["basic_machines:distributor"]=0.;
 basic_machines.hardness["basic_machines:battery"]=0.;
 basic_machines.hardness["basic_machines:detector"]=0.;
-basic_machines.hardness["basic_machines:generator"]=999999.;
-basic_machines.hardness["basic_machines:clockgen"]=999999.;
+basic_machines.hardness["basic_machines:generator"]=0.;
+basic_machines.hardness["basic_machines:clockgen"]=0.;
 basic_machines.hardness["basic_machines:ball_spawner"]=0.;
 basic_machines.hardness["basic_machines:light_on"]=0.;
 basic_machines.hardness["basic_machines:light_off"]=0.;
@@ -108,12 +105,6 @@ basic_machines.signs = {
 --  *** END OF SETTINGS *** --
 
 
-local machines_timer = basic_machines.timer
-local machines_minstep = basic_machines.machines_minstep
-local max_range = basic_machines.max_range
-local machines_operations = basic_machines.machines_operations
-local machines_TTL = basic_machines.machines_TTL
-
 
 local punchset = {}; 
 
@@ -122,21 +113,6 @@ minetest.register_on_joinplayer(function(player)
 	punchset[name] = {};
 	punchset[name].state = 0;
 end)
-
-local function check_abuse(prefer)
-      if prefer and prefer ~= "" then
-	    local stack = ItemStack(prefer)
-	    local item = stack:get_name()
-	    local count= stack:get_count()
-	    if count > basic_machines.maxstack then
-	      prefer = item.." "..tostring(basic_machines.maxstack)
-	      --meta:set_string("prefer",prefer)
-	    end
-	end
-	return prefer
-end
-
-
 
 local get_mover_form = function(pos,player)
 	
@@ -151,11 +127,6 @@ local get_mover_form = function(pos,player)
 	machines.pos2[player:get_player_name()] = {x=pos.x+x2,y=pos.y+y2,z=pos.z+z2};machines.mark_pos2(player:get_player_name()) -- mark pos2
 	
 	prefer = meta:get_string("prefer");
-	
-	prefer = check_abuse(prefer) 
-	meta:set_string("prefer",prefer)
-	
-		
 	local mreverse = meta:get_int("reverse");
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
 	local mode_list = {["normal"]=1,["dig"]=2, ["drop"]=3, ["object"]=4, ["inventory"]=5, ["transport"]=6};
@@ -218,7 +189,6 @@ local get_mover_form = function(pos,player)
 		"listring[current_player;main]"..
 		"listring[nodemeta:"..pos.x..','..pos.y..','..pos.z ..";filter]"..
 		"listring[current_player;main] button_exit[5,0.25;1,1;OK;OK]"
-		
 		
 	else -- POSITIONS
 		
@@ -394,7 +364,7 @@ minetest.register_node("basic_machines:mover", {
 			local x1=meta:get_int("x1")-x0+1;local y1=meta:get_int("y1")-y0+1;local z1=meta:get_int("z1")-z0+1; -- get dimensions
 			
 			--pc = z*a*b+x*b+y, from x,y,z to pc
-			-- set current input positionstack = inv:get_stack("upgrade", i);item = stack:get_name();count= stack:get_count();
+			-- set current input position
 			pos1.y = y0 + (pc % y1); pc = (pc - (pc % y1))/y1;
 			pos1.x = x0 + (pc % x1); pc = (pc - (pc % x1))/x1;
 			pos1.z = z0 + pc;
@@ -426,8 +396,6 @@ minetest.register_node("basic_machines:mover", {
 			
 			local node1 = minetest.get_node(pos1);local node2 = minetest.get_node(pos2);
 			local prefer = meta:get_string("prefer"); 
-			prefer = check_abuse(prefer) 
-			meta:set_string("prefer",prefer)
 		
 			-- FUEL COST: calculate
 			local dist = math.abs(pos2.x-pos1.x)+math.abs(pos2.y-pos1.y)+math.abs(pos2.z-pos1.z);
@@ -526,7 +494,7 @@ minetest.register_node("basic_machines:mover", {
 								teleport_any = true;
 								inv:add_item("main", stack);
 							end
-							--obj:setpos({x=0,y=0,z=0}); --Gundul says:management was fixed--  patch for dupe, might not be needed if future minetest object management is better
+							obj:setpos({x=0,y=0,z=0}); -- patch for dupe, might not be needed if future minetest object management is better
 							obj:remove();
 						end
 					end
@@ -564,8 +532,7 @@ minetest.register_node("basic_machines:mover", {
 				
 					local lua_entity = obj:get_luaentity();
 					local detected_obj = lua_entity.name or "" 
-					if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list https://bitbucket.org/kingarthursteam/beer-test/wiki/Home
-
+					if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list 
 						if times > 0 then
 							local finalmove = true;
 							-- move objects with set velocity in target direction
@@ -1493,26 +1460,13 @@ minetest.register_node("basic_machines:clockgen", {
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
-	
+		local meta =  minetest.get_meta(pos);
+		local owner = placer:get_player_name() or "";
+		local privs = minetest.get_player_privs(owner);
+		if privs.machines then meta:set_int("machines",1) end
 		
-		local name = placer:get_player_name()
-		local pinv = placer:get_inventory()
-		local match = minetest.find_node_near(pos, machines_clockradius, {"basic_machines:clockgen"})
-		      if match then
-			    
-			    local distance = math.floor(vector.distance(pos, match))
-			    minetest.chat_send_player(name,core.colorize('#FF0000',"##### Clockgens disturb each other. Place next one at least "..machines_clockradius.." nodes away #####"))
-			    minetest.set_node(pos,{name="air"})
-			    minetest.spawn_item(pos, "basic_machines:clockgen 1")
-		      else
-			    local meta =  minetest.get_meta(pos);
-			    local owner = placer:get_player_name() or "";
-			    local privs = minetest.get_player_privs(owner);
-			    if privs.machines then meta:set_int("machines",1) end
-			    
-			    meta:set_string("owner",owner);
-			    meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
-		      end
+		meta:set_string("owner",owner);
+		meta:set_string("infotext","clock generator (owned by " .. owner .. "): place machine to be activated on top of generator");
 	end
 })	
 	
@@ -2138,9 +2092,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			
 				-- positions
 				local x0,y0,z0,x1,y1,z1,x2,y2,z2;
-				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0 = tonumber(fields.z0) or 0
-				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1 = tonumber(fields.z1) or 0
-				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2 = tonumber(fields.z2) or 0;
+				x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or -1;z0=tonumber(fields.z0) or 0
+				x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or -1;z1=tonumber(fields.z1) or 0
+				x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 1;z2=tonumber(fields.z2) or 0;
 			
 				-- did the numbers change from last time?
 				if meta:get_int("x0")~=x0 or meta:get_int("y0")~=y0 or meta:get_int("z0")~=z0 or 
@@ -2184,11 +2138,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				if fields.inv2 then
 					 meta:set_string("inv2",fields.inv2);
 				end
-
-				--notification
+				
 				meta:set_string("infotext", "Mover block. Set up with source coordinates ".. x0 ..","..y0..","..z0.. " -> ".. x1 ..","..y1..","..z1.. " and target coord ".. x2 ..","..y2..",".. z2 .. ". Put charged battery next to it and start it with keypad/mese signal.");
 			
-			else -- MODE 1
+			else -- MODE
 			
 				if fields.mode then
 					meta:set_string("mode",fields.mode);
@@ -2198,12 +2151,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				--filter
 				local prefer = fields.prefer or "";
 				if meta:get_string("prefer")~=prefer then
-					prefer = check_abuse(prefer) 
 					meta:set_string("prefer",prefer);
 				end
-				
-				--notification
-				meta:set_string("infotext", "Mover block. Mode or filter changed.");
 			end
 			
 			if meta:get_float("fuel")<0 then meta:set_float("fuel",0) end -- reset block

@@ -466,7 +466,7 @@ local genstat = {}; -- generator statistics for each player
 minetest.register_abm({ 
 	nodenames = {"basic_machines:generator"},
 	neighbors = {""},
-	interval = 30,
+	interval = 25,
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);

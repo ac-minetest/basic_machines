@@ -117,7 +117,7 @@ local grinder_process = function(pos)
 		--take 1 item from src inventory for each activation
 		stack=stack:take_item(1); inv:remove_item("src", stack)
 		
-		minetest.sound_play("grinder", {pos=pos,gain=0.5,max_hear_distance = 16,})
+		--minetest.sound_play("grinder", {pos=pos,gain=0.5,max_hear_distance = 16,})
 		
 		fuel = fuel-def[1]; -- burn fuel
 		meta:set_float("fuel",fuel);
@@ -171,7 +171,7 @@ minetest.register_node("basic_machines:grinder", {
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
 		local meta = minetest.get_meta(pos);
 		local privs = minetest.get_player_privs(player:get_player_name());
-		if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
+	if meta:get_string("owner")~=player:get_player_name() and not privs.privs then return 0 end
 		return stack:get_count();
 	end,
 	
