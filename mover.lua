@@ -1333,7 +1333,7 @@ minetest.register_node("basic_machines:detector", {
 						trigger = true
 						local size = inv:get_size(inv1m);
 						for i = 1, size do -- find item to move in inventory
-							stack = inv:get_stack(inv1m, i);
+							local stack = inv:get_stack(inv1m, i);
 							if not stack:is_empty() then detected_obj = stack:to_string() break end
 						end
 					end 
