@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "10/22/2018a";
+basic_machines.version = "12/04/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -954,7 +954,7 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 					end
 				) ; -- replace every @ in ttext with string on blocks above
 
-				-- set target keypad's text xxx
+				-- set target keypad's text
 				--tmeta = minetest.get_meta(tpos);if not tmeta then return end
 				tmeta:set_string("text", text);
 			elseif string.byte(text) == 37 then -- target keypad's text starts with % ( ascii code 37) -> word extraction
@@ -1323,9 +1323,25 @@ minetest.register_node("basic_machines:detector", {
 			elseif mode=="inventory" then
 				local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
 				local inv = cmeta:get_inventory();
-				local stack = ItemStack(node); 
+				
 				local inv1m =meta:get_string("inv1");
-				if inv:contains_item(inv1m, stack) then trigger = true end
+				
+				if node == "" then -- if there is item report name and trigger
+					if inv:is_empty(inv1m) then 
+						trigger = false  
+					else -- nonempty
+						trigger = true
+						local size = inv:get_size(inv1m);
+						for i = 1, size do -- find item to move in inventory
+							stack = inv:get_stack(inv1m, i);
+							if not stack:is_empty() then detected_obj = stack:to_string() break end
+						end
+					end 
+				else -- node name was set
+					local stack = ItemStack(node); 
+					if inv:contains_item(inv1m, stack) then trigger = true end
+				end
+				
 			elseif mode == "infotext" then
 				local cmeta = minetest.get_meta({x=x0,y=y0,z=z0});
 				detected_obj = cmeta:get_string("infotext");
