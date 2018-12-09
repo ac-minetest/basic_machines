@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "12/04/2018a";
+basic_machines.version = "12/09/2018a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -169,7 +169,7 @@ local get_mover_form = function(pos,player)
 			["normal"] = "This will move blocks as they are - without change.",
 			["dig"] = "This will transform blocks as if player digged them.",
 			["drop"] = "This will take block/item out of chest (you need to set filter) and will drop it",
-			["object"] = "make TELEPORTER/ELEVATOR. This will move any object inside sphere (with center source1 and radius defined by source2) to target position. For ELEVATOR teleport points need to be placed exactly vertically in line with mover and you need to upgrade with 1 diamondblock for every 100 height difference. ",
+			["object"] = "make TELEPORTER/ELEVATOR. This will move any object inside sphere (with center source1 and radius defined by source2) to target position. For ELEVATOR teleport points need to be placed exactly in same coordinate line with mover and you need to upgrade with 1 diamondblock for every 100 height difference. ",
 			["inventory"] = "This will move items from inventory of any block at source position to any inventory of block at target position",
 			["transport"] = "This will move all blocks at source area to new area starting at target position. This mode preserves all inventories and other metadata",
 		};
@@ -417,11 +417,11 @@ minetest.register_node("basic_machines:mover", {
 			fuel_cost=fuel_cost*dist/machines_operations; -- machines_operations=10 by default, so 10 basic operations possible with 1 coal
 			if mode == "object" then  
 				fuel_cost=fuel_cost*0.1; 
-				if x2==0 and z2==0 then -- check if elevator mode
-					local requirement = math.floor(math.abs(pos2.y-pos.y)/100)+1;
+				if (x2 == 0 and y2 == 0) or (x2==0 and z2==0) or (y2==0 and z2 == 0) then -- check if elevator mode
+					local requirement = math.floor((math.abs(pos2.x-pos.x)+math.abs(pos2.y-pos.y)+math.abs(pos2.z-pos.z))/100)+1;
 					if upgrade-1<requirement then
-							meta:set_string("infotext","MOVER: Elevator error. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
-							return;
+						meta:set_string("infotext","MOVER: Elevator error. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 distance). ");
+						return;
 					end
 					fuel_cost = 0 
 				end
@@ -1850,14 +1850,15 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			return
 		end
 		
-		
 		if punchset[name].state == 3 then 
 			if punchset[name].node~="basic_machines:mover" then punchset[name].state = 0 return end
 			local privs = minetest.get_player_privs(puncher:get_player_name());
-			
 			local elevator_mode = false;
-			if punchset[name].pos.x == pos.x and punchset[name].pos.z == pos.z then -- check if elevator mode
-				if math.abs(punchset[name].pos.y-pos.y)>3 then -- trying to make elevator?
+			if	(punchset[name].pos.x == pos.x and punchset[name].pos.z == pos.z) or
+				(punchset[name].pos.x == pos.x and punchset[name].pos.y == pos.y) or
+				(punchset[name].pos.y == pos.y and punchset[name].pos.z == pos.z) then -- check if elevator mode
+				local ecost = math.abs(punchset[name].pos.y-pos.y) + math.abs(punchset[name].pos.x-pos.x) + math.abs(punchset[name].pos.z-pos.z)
+				if ecost>3 then -- trying to make elevator?
 
 					local meta = minetest.get_meta(punchset[name].pos);
 					if meta:get_string("mode")=="object" then -- only if object mode
@@ -1868,9 +1869,9 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 							upgrade = (inv:get_stack("upgrade", 1):get_count()) or 0;
 						end
 						
-						local requirement = math.floor(math.abs(punchset[name].pos.y-pos.y)/100)+1;
+						local requirement = math.floor(ecost/100)+1;
 						if upgrade<requirement then
-							minetest.chat_send_player(name, "MOVER: Error while trying to make elevator. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 height). ");
+							minetest.chat_send_player(name, "MOVER: Error while trying to make elevator. Need at least "..requirement .. " diamond block(s) in upgrade (1 for every 100 distance). ");
 							punchset[name].state = 0; return
 						else
 							elevator_mode=true;
