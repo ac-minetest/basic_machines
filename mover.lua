@@ -2353,7 +2353,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			x1=tonumber(fields.x1) or 0;y1=tonumber(fields.y1) or 0;z1=tonumber(fields.z1) or 0
 			x2=tonumber(fields.x2) or 0;y2=tonumber(fields.y2) or 0;z2=tonumber(fields.z2) or 0
 			r=tonumber(fields.r) or 1;
-			NOT = tonumber(fields.NOT)
+			NOT = tonumber(fields.NOT) or 0;
 			
 			
 			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
