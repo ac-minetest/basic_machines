@@ -359,6 +359,7 @@ generator_upgrade = function(pos)
 	meta:set_int("upgrade",count);
 end
 
+local genstat = {}; -- generator statistics for each player
 minetest.register_node("basic_machines:generator", {
 	description = "Generator - very expensive, generates power crystals that provide power. Its upgradeable.",
 	tiles = {"basic_machine_generator.png"},
@@ -438,11 +439,26 @@ minetest.register_node("basic_machines:generator", {
 			
 			return true
 			
-		end
+		end,
+		
+		 on_punch = function(pos, node, puncher, pointed_thing) -- owner can activate/deactivate generator with a punch
+			local meta = minetest.get_meta(pos);
+			local owner = meta:get_string("owner");
+			local pname = puncher:get_player_name();
+			if pname~=owner then return end
+			
+			local off = meta:get_int("off")
+			if off == 1 then
+				meta:set_int("off",0)
+				meta:set_string("infotext","ACTIVATED")
+				genstat[owner] = {minetest.get_gametime(),0} -- reset monitoring
+			else
+				meta:set_int("off",1)
+				meta:set_string("infotext","DEACTIVATED")
+			end
+		 end,
 	
 })
-
-local genstat = {}; -- generator statistics for each player
 
 minetest.register_abm({ 
 	nodenames = {"basic_machines:generator"},
@@ -451,21 +467,31 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
-		
+
 		-- checks
+		if meta:get_int("off") == 1 then return end
 		local owner = meta:get_string("owner");
 		local gendata = genstat[owner];
 		local t = minetest.get_gametime();
 		if not gendata then genstat[owner] = {t,0} gendata = genstat[owner] end -- init: time, count
 		
-		if t-gendata[1] >= 19 then -- more than 19s elapsed since last time
+		if gendata[1] ~= -1 and t - gendata[1] >= 19 then -- more than 19s elapsed since last time
 			gendata[1] = t; -- reset timer
 			gendata[2] = 0; -- reset activation count		
 		end
 		
 		gendata[2] = gendata[2] + 1 -- increase activation count
+		
+		
 		if gendata[2]>5 then
-			meta:set_string("infotext","error: more than 5 active generators")
+			if gendata[1]~=-1 then
+				minetest.chat_send_player(owner,"#generator: more than 5 active generators, position " .. pos.x .. " " .. pos.y .. " " .. pos.z ..". shutting down all generators. Select up to 5 of generators you want and turn them on by punching.")
+			else
+				minetest.chat_send_player(owner,"#generator: forced shutdown, position " .. pos.x .. " " .. pos.y .. " " .. pos.z)
+			end
+			meta:set_int("off",1)
+			gendata[1] = -1; -- forced turnoff active
+			meta:set_string("infotext","DEACTIVATED (automatic)")
 			return
 		end
 		
