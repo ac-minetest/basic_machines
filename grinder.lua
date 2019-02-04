@@ -1,8 +1,3 @@
---todo: when grinding multiple items compare battery maxpower with number of items and attempt to grind as much as possible
-
--- rnd 2016:
-
--- this node works as technic grinder
 -- There is a certain fuel cost to operate
 
 -- recipe list: [in] ={fuel cost, out, quantity of material required for processing}
@@ -12,32 +7,11 @@ basic_machines.grinder_recipes = {
 	["default:cobble"] = {1,"default:gravel",1},
 	["default:gravel"] = {0.5,"default:dirt",1},
 	["default:dirt"] = {0.5,"default:clay_lump 4",1},
-	["es:aikerum_crystal"] ={16,"es:aikerum_dust 2",1}, -- added for es mod
-	["es:ruby_crystal"] = {16,"es:ruby_dust 2",1},
-	["es:emerald_crystal"] = {16,"es:emerald_dust 2",1},
-	["es:purpellium_lump"] = {16,"es:purpellium_dust 2",1},
 	["default:obsidian_shard"] = {199,"default:lava_source",1},
 	["gloopblocks:basalt"] = {1, "default:cobble",1}, -- enable coble farms with gloopblocks mod
 	["default:ice"] = {1, "default:snow 4",1},
 	["darkage:silt_lump"]={1,"darkage:chalk_powder",1},
 };
-
--- es gems dust cooking
-local es_gems = function()
-	local es_gems = {
-	{name = "emerald", cooktime = 1200},{name = "ruby", cooktime = 1500},{name = "purpellium", cooktime = 1800}, 
-	{name = "aikerum", cooktime = 2000}}
-
-	for _,v in pairs(es_gems) do
-		minetest.register_craft({
-			type = "cooking",
-			recipe = "es:"..v.name.."_dust",
-			output = "es:"..v.name .."_crystal",
-			cooktime = v.cooktime 
-		})
-	end
-end
-minetest.after(0,es_gems);
 
 
 local grinder_process = function(pos) 
@@ -278,7 +252,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 	if not G then G = "FF" end 
 	if not B then B = "FF" end 
 	
-	local purity_table = {"33","66"};
+	local purity_table = {"00","33","66"};
 	
 	for i = 1,#purity_table do
 		local purity = purity_table[i];
@@ -292,7 +266,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 	
 	if ingot~="" then
 		
-		for i = 1,#purity_table-1 do
+		for i = 2,#purity_table-1 do
 			minetest.register_craft({
 				type = "cooking",
 				recipe = "basic_machines:"..name.."_dust_".. purity_table[i],
@@ -319,10 +293,10 @@ register_dust("tin","default:tin_lump","default:tin_ingot",4,8,"9F","9F","9F")
 register_dust("gold","default:gold_lump","default:gold_ingot",6,25,"FF","FF","00")
 
 --  grinding ingots gives dust too
-basic_machines.grinder_recipes["default:steel_ingot"] = {4,"basic_machines:iron_dust_33 2",1};
-basic_machines.grinder_recipes["default:copper_ingot"] = {4,"basic_machines:copper_dust_33 2",1};
-basic_machines.grinder_recipes["default:gold_ingot"] = {6,"basic_machines:gold_dust_33 2",1};
-basic_machines.grinder_recipes["default:tin_ingot"] = {4,"basic_machines:tin_dust_33 2",1};
+basic_machines.grinder_recipes["default:steel_ingot"] = {4,"basic_machines:iron_dust_00 2",1};
+basic_machines.grinder_recipes["default:copper_ingot"] = {4,"basic_machines:copper_dust_00 2",1};
+basic_machines.grinder_recipes["default:gold_ingot"] = {6,"basic_machines:gold_dust_00 2",1};
+basic_machines.grinder_recipes["default:tin_ingot"] = {4,"basic_machines:tin_dust_00 2",1};
 
 -- are moreores (tin, silver, mithril) present?
 
@@ -331,8 +305,8 @@ local table = minetest.registered_items["moreores:tin_lump"]; if table then
 	register_dust("silver","moreores:silver_lump","moreores:silver_ingot",5,15,"BB","BB","BB")
 	register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750,"00","00","FF")
 	
-	basic_machines.grinder_recipes["moreores:tin_ingot"] = {4,"basic_machines:tin_dust_33 2",1};
-	basic_machines.grinder_recipes["moreores:silver_ingot"] = {5,"basic_machines:silver_dust_33 2",1};
+	basic_machines.grinder_recipes["moreores:tin_ingot"] = {4,"basic_machines:tin_dust_00 2",1};
+	basic_machines.grinder_recipes["moreores:silver_ingot"] = {5,"basic_machines:silver_dust_00 2",1};
 	basic_machines.grinder_recipes["moreores:mithril_ingot"] = {16,"basic_machines:mithril_dust_33 2",1};
 end
 
@@ -386,3 +360,69 @@ minetest.register_craft({
 		{"default:dirt","default:water_flowing"}
 	}
 })
+
+
+-- dust_33 from dust_00 recipe xxx
+
+minetest.register_craft({
+	output = 'basic_machines:iron_dust_33',
+	recipe = {
+		{'default:leaves','default:leaves','basic_machines:iron_dust_00'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:copper_dust_33',
+	recipe = {
+		{'default:papyrus','default:papyrus','basic_machines:copper_dust_00'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:tin_dust_33',
+	recipe = {
+		{'farming:cocoa_beans','farming:cocoa_beans','basic_machines:tin_dust_00'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:gold_dust_33',
+	recipe = {
+		{'basic_machines:tin_extractor','basic_machines:copper_extractor','basic_machines:gold_dust_00'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:mese_dust_33',
+	recipe = {
+		{'farming:rhubarb','farming:rhubarb','basic_machines:mese_dust_00'},
+	}
+})
+
+
+minetest.register_craft({
+	output = 'basic_machines:diamond_dust_33',
+	recipe = {
+		{'farming:wheat','farming:cotton','basic_machines:diamond_dust_00'},
+	}
+})
+
+local function register_extractor(name,R,G,B)
+	
+	if not R then R = "FF" end 
+	if not G then G = "FF" end 
+	if not B then B = "FF" end 
+
+	minetest.register_craftitem("basic_machines:"..name.."_extractor", {
+		description = "chemical used in extraction of " .. name ,
+		inventory_image = "ore_extractor.png^[colorize:#"..R..G..B..":180",
+	})
+end
+
+register_extractor("iron","99","99","99")
+register_extractor("copper","C8","80","0D")
+register_extractor("tin","C8","9F","9F")
+register_extractor("gold","FF","FF","00")
+register_extractor("mese","CC","CC","00")
+register_extractor("diamond","00","EE","FF")
+register_extractor("mithril","00","00","FF")

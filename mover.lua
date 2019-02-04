@@ -249,6 +249,8 @@ local find_and_connect_battery = function(pos)
 	return nil
 end
 
+local check_for_falling = minetest.check_for_falling or nodeupdate; -- 1st for mt 5.0.0+, 2nd for 0.4.17.1 and older
+
 
 -- MOVER --
 minetest.register_node("basic_machines:mover", {
@@ -798,7 +800,7 @@ minetest.register_node("basic_machines:mover", {
 			end
 		end 
 		if not(source_chest) and not(harvest) then
-			if dig then nodeupdate(pos1) end
+			if dig then check_for_falling(pos1) end -- pre 5.0.0 nodeupdate(pos1)
 			minetest.set_node(pos1, {name = "air"});
 			end
 		end,
@@ -1449,7 +1451,7 @@ minetest.register_chatcommand("clockgen", { -- test: toggle machine running with
 -- CLOCK GENERATOR : periodically activates machine on top of it
 minetest.register_abm({ 
 	nodenames = {"basic_machines:clockgen"},
-	neighbors = {""},
+	neighbors = {},
 	interval = machines_timer,
 	chance = 1,
 	
