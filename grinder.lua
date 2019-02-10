@@ -426,3 +426,45 @@ register_extractor("gold","FF","FF","00")
 register_extractor("mese","CC","CC","00")
 register_extractor("diamond","00","EE","FF")
 register_extractor("mithril","00","00","FF")
+
+minetest.register_craft({
+	output = 'basic_machines:iron_extractor',
+	recipe = {
+		{'default:leaves','default:leaves','default:iron_lump'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:copper_extractor',
+	recipe = {
+		{'default:papyrus','default:papyrus','default:copper_lump'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:tin_extractor',
+	recipe = {
+		{'farming:cocoa_beans','farming:cocoa_beans','default:tin_lump'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:gold_extractor',
+	recipe = {
+		{'basic_machines:tin_extractor','basic_machines:copper_extractor','default:gold_lump'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:mese_extractor',
+	recipe = {
+		{'farming:rhubarb','farming:rhubarb','default:mese_crystal'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:diamond_extractor',
+	recipe = {
+		{'farming:wheat','farming:cotton','default:diamond'},
+	}
+})
