@@ -2247,7 +2247,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields.OK == "OK" then
 			local x0,y0,z0,pass,mode;
 			x0=tonumber(fields.x0) or 0;y0=tonumber(fields.y0) or 1;z0=tonumber(fields.z0) or 0
-			pass = fields.pass or ""; mode = fields.mode or 1;
+			pass = fields.pass or ""; mode = tonumber(fields.mode) or 1;
 			
 			if minetest.is_protected({x=pos.x+x0,y=pos.y+y0,z=pos.z+z0},name) then
 				minetest.chat_send_player(name, "KEYPAD: position is protected. aborting.")
