@@ -471,3 +471,10 @@ minetest.register_craft({
 	output = "basic_machines:diamond_dust_33",
 	cooktime = 10
 })
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:mithril_dust_00",
+	output = "basic_machines:mithril_dust_dust_33",
+	cooktime = 10
+})
