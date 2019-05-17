@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "12/28/2018a";
+basic_machines.version = "05/17/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -2485,12 +2485,15 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		if fields.help == "help" then
 			local text = "SETUP: to select target nodes for activation click SET then click target node.\n"..
 			"You can add more targets with ADD. To see where target node is click SHOW button next to it.\n"..
-			"Numbers in each row represent (from left to right) : first 3 numbers are target coordinates,\n"..
-			"last number controls how signal is passed to target. For example, to only pass OFF signal use -2,\n"..
+			"4 numbers in each row represent (from left to right) : first 3 numbers are target coordinates x y z,\n"..
+			"last number (MODE) controls how signal is passed to target. For example, to only pass OFF signal use -2,\n"..
 			"to only pass ON use 2, -1 negates the signal, 1 = pass original signal, 0 blocks signal\n"..
 			"delay option adds delay to activations, in seconds. With negative delay activation is randomized with probability -delay/1000.\n\n"..
-			"ADVANCED: you can use distributor as an event handler. First you must deactivate first target by putting 0 at\n"..
-			"last place in first line. Meanings of first 2 numbers are as follows: first number 0/1 controls if node/n".. "listens to failed interact attempts around it, second number -1/1 listens to chat and can mute it";
+			"ADVANCED: you can use distributor as an event handler - it listens to events like interact attempts and chat around distributor.\n"..
+			"First you need to place distributor at position (x,y,z) in world, such that the coordinates are of the form (20*i,20*j+1,20*k) for\n"..
+			"some integers i,j,k. Then you need to configure first row of numbers in distributor:\n"..
+			"by putting 0 as MODE it will start to listen. First number x = 0/1 controls if node listens to failed interact attempts around it, second\n".. 
+			"number y= -1/0/1 controls listening to chat (-1 additionaly mutes chat)";
 			local form = "size [5.5,5.5] textarea[0,0;6,7;help;DISTRIBUTOR HELP;".. text.."]"
 			minetest.show_formspec(name, "basic_machines:help_distributor", form)
 		end

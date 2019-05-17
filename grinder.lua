@@ -244,7 +244,7 @@ minetest.register_node("basic_machines:grinder", {
 
 
 -- REGISTER DUSTS
-
+-- dust_00 (mix)-> extractor (smelt) -> dust_33 (smelt) -> dust_66 (smelt) -> ingot
 
 local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B)
 	
@@ -257,7 +257,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 	for i = 1,#purity_table do
 		local purity = purity_table[i];
 		minetest.register_craftitem("basic_machines:"..name.."_dust_".. purity, {
-			description = name.. " dust purity " .. purity .. "%" ,
+			description = name.. " dust purity " .. purity .. "%" .. (purity=="00" and " (combine with chemicals to create " .. name .. " extractor )" or " (smelt to increase purity)") ,
 			inventory_image = "basic_machines_dust.png^[colorize:#"..R..G..B..":180",
 		})
 	end
@@ -266,7 +266,7 @@ local function register_dust(name,input_node_name,ingot,grindcost,cooktime,R,G,B
 	
 	if ingot~="" then
 		
-		for i = 2,#purity_table-1 do
+		for i = 2,#purity_table-1 do -- all dusts but first one are cookable
 			minetest.register_craft({
 				type = "cooking",
 				recipe = "basic_machines:"..name.."_dust_".. purity_table[i],
@@ -362,61 +362,20 @@ minetest.register_craft({
 })
 
 
--- dust_33 from dust_00 recipe xxx
+-- EXTRACTORS, their recipes and smelting recipes
 
-minetest.register_craft({
-	output = 'basic_machines:iron_dust_33',
-	recipe = {
-		{'default:leaves','default:leaves','basic_machines:iron_dust_00'},
-	}
-})
-
-minetest.register_craft({
-	output = 'basic_machines:copper_dust_33',
-	recipe = {
-		{'default:papyrus','default:papyrus','basic_machines:copper_dust_00'},
-	}
-})
-
-minetest.register_craft({
-	output = 'basic_machines:tin_dust_33',
-	recipe = {
-		{'farming:cocoa_beans','farming:cocoa_beans','basic_machines:tin_dust_00'},
-	}
-})
-
-minetest.register_craft({
-	output = 'basic_machines:gold_dust_33',
-	recipe = {
-		{'basic_machines:tin_extractor','basic_machines:copper_extractor','basic_machines:gold_dust_00'},
-	}
-})
-
-minetest.register_craft({
-	output = 'basic_machines:mese_dust_33',
-	recipe = {
-		{'farming:rhubarb','farming:rhubarb','basic_machines:mese_dust_00'},
-	}
-})
-
-
-minetest.register_craft({
-	output = 'basic_machines:diamond_dust_33',
-	recipe = {
-		{'farming:wheat','farming:cotton','basic_machines:diamond_dust_00'},
-	}
-})
-
-local function register_extractor(name,R,G,B)
+local function register_extractor(name, R,G,B)
 	
 	if not R then R = "FF" end 
 	if not G then G = "FF" end 
 	if not B then B = "FF" end 
 
 	minetest.register_craftitem("basic_machines:"..name.."_extractor", {
-		description = "chemical used in extraction of " .. name ,
+		description = "smelt to get " .. name ,
 		inventory_image = "ore_extractor.png^[colorize:#"..R..G..B..":180",
 	})
+	
+	
 end
 
 register_extractor("iron","99","99","99")
@@ -430,41 +389,85 @@ register_extractor("mithril","00","00","FF")
 minetest.register_craft({
 	output = 'basic_machines:iron_extractor',
 	recipe = {
-		{'default:leaves','default:leaves','default:steel_ingot'},
+		{'default:leaves','default:leaves','basic_machines:iron_dust_00'},
 	}
+})
+
+--  extractor smelts to dust_33
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:iron_extractor",
+	output = "basic_machines:iron_dust_33",
+	cooktime = 10
 })
 
 minetest.register_craft({
 	output = 'basic_machines:copper_extractor',
 	recipe = {
-		{'default:papyrus','default:papyrus','default:copper_ingot'},
+		{'default:papyrus','default:papyrus','basic_machines:copper_dust_00'},
 	}
+})
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:copper_extractor",
+	output = "basic_machines:copper_dust_33",
+	cooktime = 10
 })
 
 minetest.register_craft({
 	output = 'basic_machines:tin_extractor',
 	recipe = {
-		{'farming:cocoa_beans','farming:cocoa_beans','default:tin_ingot'},
+		{'farming:cocoa_beans','farming:cocoa_beans','basic_machines:tin_dust_00'},
 	}
+})
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:tin_extractor",
+	output = "basic_machines:tin_dust_33",
+	cooktime = 10
 })
 
 minetest.register_craft({
 	output = 'basic_machines:gold_extractor',
 	recipe = {
-		{'basic_machines:tin_extractor','basic_machines:copper_extractor','default:gold_ingot'},
+		{'basic_machines:tin_extractor','basic_machines:copper_extractor','basic_machines:gold_dust_00'},
 	}
+})
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:gold_extractor",
+	output = "basic_machines:gold_dust_33",
+	cooktime = 10
 })
 
 minetest.register_craft({
 	output = 'basic_machines:mese_extractor',
 	recipe = {
-		{'farming:rhubarb','farming:rhubarb','default:mese_crystal'},
+		{'farming:rhubarb','farming:rhubarb', 'basic_machines:mese_dust_00'},
 	}
+})
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:mese_extractor",
+	output = "basic_machines:mese_dust_33",
+	cooktime = 10
 })
 
 minetest.register_craft({
 	output = 'basic_machines:diamond_extractor',
 	recipe = {
-		{'farming:wheat','farming:cotton','default:diamond'},
+		{'farming:wheat','farming:cotton', 'basic_machines:diamond_dust_00'},
 	}
+})
+
+minetest.register_craft({ 
+	type = "cooking",
+	recipe = "basic_machines:diamond_extractor",
+	output = "basic_machines:diamond_dust_33",
+	cooktime = 10
 })
