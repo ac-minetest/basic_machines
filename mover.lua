@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "05/17/2019a";
+basic_machines.version = "05/19/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -1248,6 +1248,8 @@ minetest.register_node("basic_machines:detector", {
 	
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl)
+			
+			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end
 			
 			local meta = minetest.get_meta(pos);
@@ -1531,6 +1533,7 @@ local get_distributor_form = function(pos,player)
 end
 
 
+
 minetest.register_node("basic_machines:distributor", {
 	description = "Distributor - can forward signal up to 16 different targets",
 	tiles = {"distributor.png"},
@@ -1553,6 +1556,7 @@ minetest.register_node("basic_machines:distributor", {
 		
 	mesecons = {effector = {
 		action_on = function (pos, node,ttl) 
+
 			if type(ttl)~="number" then ttl = 1 end
 			if not(ttl>0) then return end
 			local meta = minetest.get_meta(pos);
