@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "05/19/2019a";
+basic_machines.version = "05/21/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -822,6 +822,19 @@ minetest.register_node("basic_machines:mover", {
 	}
 })
 
+-- anal retentive change in minetest 5.0.0 to minetest 5.1.0 changing unknown node warning into crash
+-- forcing many checks with all possible combinations + adding many new crash combinations
+
+local check_mover_filter = function(mode, filter, mreverse) -- mover input validation, is it correct node
+	if mode == "normal" or mode == "dig" then
+		local nodedef = minetest.registered_nodes[filter]
+		if mreverse==1 and basic_machines.plant_table[filter] then return true end -- allow farming
+		if not nodedef then return false end
+	end
+	return true
+end
+
+
 -- KEYPAD --
 
 local function use_keypad(pos,ttl, again) -- position, time to live ( how many times can signal travel before vanishing to prevent infinite recursion ), do we want to activate again
@@ -999,7 +1012,9 @@ local function use_keypad(pos,ttl, again) -- position, time to live ( how many t
 			if string.byte(text) == 64 then -- if text starts with @ clear the filter
 				tmeta:set_string("prefer","");
 			else
-				tmeta:set_string("prefer",text);
+				if check_mover_filter(tmeta:get_string("mode"), text,tmeta:get_int("reverse")) then -- mover input validate
+					tmeta:set_string("prefer",text);
+				end
 			end
 			return
 		end
@@ -1432,7 +1447,6 @@ minetest.register_node("basic_machines:detector", {
 		}
 	}
 })
-
 
 minetest.register_chatcommand("clockgen", { -- test: toggle machine running with clockgens, useful for debugging
 -- i.e. seeing how machines running affect server performance
@@ -2077,7 +2091,6 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 	
 end)
 
-
 -- FORM PROCESSING for all machines
 minetest.register_on_player_receive_fields(function(player,formname,fields)
 	
@@ -2113,7 +2126,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			return
 		end
 		
-		if fields.OK == "OK" then --yyy
+		if fields.OK == "OK" then
 			
 			local seltab = meta:get_int("seltab");
 			
@@ -2181,7 +2194,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				--filter
 				local prefer = fields.prefer or "";
 				if meta:get_string("prefer")~=prefer then
-					meta:set_string("prefer",prefer);
+					-- input validation
+					if check_mover_filter(meta:get_string("mode"), prefer, meta:get_int("reverse")) then
+						meta:set_string("prefer",prefer);
+					end
 				end
 				
 				--notification
