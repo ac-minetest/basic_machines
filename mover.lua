@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "05/21/2019a";
+basic_machines.version = "05/27/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -69,7 +69,7 @@ basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farm
 ["farming:seed_cotton"]="farming:cotton_1",["farming:cucumber"]="farming:cucumber_1",["farming:grapes"]="farming:grapes_1",
 ["farming:melon_slice"]="farming:melon_1",["farming:potato"]="farming:potato_1",["farming:pumpkin_slice"]="farming:pumpkin_1",
 ["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
-["farming:seed_wheat"]="farming:wheat_1"}
+["farming:seed_wheat"]="farming:wheat_1",["farming:seed_rice"]="farming:rice_1"}
 
 -- list of objects that cant be teleported with mover
 basic_machines.no_teleport_table = {
@@ -1749,6 +1749,14 @@ minetest.register_node("basic_machines:light_on", {
 		local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z 
 		local deactivate = meta:get_int("deactivate");
 		local form  = "size[2,2] field[0.25,0.5;2,1;deactivate;deactivate after ;"..deactivate.."]".."button_exit[0.,1;1,1;OK;OK]";
+		
+		minetest.after(5, -- fixes mesecons turning light off
+			function()
+				if minetest.get_node(pos).name == "basic_machines:light_off" then
+					minetest.swap_node(pos,{name = "basic_machines:light_on"})
+				end
+			end
+		)
 		meta:set_string("formspec", form);
 	end,	
 	on_receive_fields = function(pos, formname, fields, player)

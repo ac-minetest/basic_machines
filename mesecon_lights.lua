@@ -4,9 +4,7 @@ local function enable_toggle_light(name)
 
 local table = minetest.registered_nodes[name]; if not table then return end
 	local table2 = {}
-	for i,v in pairs(table) do
-		table2[i] = v
-	end
+	for i,v in pairs(table) do table2[i] = v end
 	
 	if table2.mesecons then return end -- we dont want to overwrite existing stuff!
 	
@@ -18,6 +16,17 @@ local table = minetest.registered_nodes[name]; if not table then return end
 		end
 		}
 	};
+	
+	table2.after_place_node = function(pos, placer)
+		minetest.after(5, -- fixes mesecons turning light off after place
+			function()
+				if minetest.get_node(pos).name == offname then
+					minetest.swap_node(pos,{name = name})
+				end
+			end
+		)
+	end
+	
 	minetest.register_node(":"..name, table2) -- redefine item
 
 	-- STRANGE BUG1: if you dont make new table table3 and reuse table2 definition original node (definition one line above) is changed by below code too!???
