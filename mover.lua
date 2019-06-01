@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "05/27/2019a";
+basic_machines.version = "06/01/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -24,7 +24,9 @@ basic_machines.hardness = {
 basic_machines.hardness["basic_machines:mover"]=0.;
 basic_machines.hardness["basic_machines:keypad"]=0.;
 basic_machines.hardness["basic_machines:distributor"]=0.;
-basic_machines.hardness["basic_machines:battery"]=0.;
+basic_machines.hardness["basic_machines:battery_0"]=0.;
+basic_machines.hardness["basic_machines:battery_1"]=0.;
+basic_machines.hardness["basic_machines:battery_2"]=0.;
 basic_machines.hardness["basic_machines:detector"]=0.;
 basic_machines.hardness["basic_machines:generator"]=0.;
 basic_machines.hardness["basic_machines:clockgen"]=0.;
@@ -100,6 +102,21 @@ basic_machines.signs = {
 ["signs:sign_wall_red"] = true,
 ["signs:sign_wall_white_black"] = true,
 ["signs:sign_yard"] = true
+}
+
+basic_machines.connectables = { -- list of machines that distributor can connect to, used for distributor scan feature
+	["basic_machines:mover"]=0;
+	["basic_machines:keypad"]=0;
+	["basic_machines:distributor"]=0;
+	["basic_machines:battery_0"]=0;
+	["basic_machines:battery_1"]=0;
+	["basic_machines:battery_2"]=0;
+	["basic_machines:detector"]=0;
+	["basic_machines:generator"]=0;
+	["basic_machines:clockgen"]=0;
+	["basic_machines:ball_spawner"]=0;
+	["basic_machines:light_on"]=0;
+	["basic_machines:light_off"]=0;
 }
 
 --  *** END OF SETTINGS *** --
@@ -826,6 +843,7 @@ minetest.register_node("basic_machines:mover", {
 -- forcing many checks with all possible combinations + adding many new crash combinations
 
 local check_mover_filter = function(mode, filter, mreverse) -- mover input validation, is it correct node
+	if filter == "" then return true end -- allow clearing filter
 	if mode == "normal" or mode == "dig" then
 		local nodedef = minetest.registered_nodes[filter]
 		if mreverse==1 and basic_machines.plant_table[filter] then return true end -- allow farming
@@ -1511,7 +1529,6 @@ minetest.register_node("basic_machines:clockgen", {
 })	
 	
 
-
 -- DISTRIBUTOR --
 local get_distributor_form = function(pos,player)
 	if not player then return end
@@ -1532,18 +1549,41 @@ local get_distributor_form = function(pos,player)
 	end
 	
 	local list_name = "nodemeta:"..pos.x..','..pos.y..','..pos.z
-	local form  = 
-	"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
-	"label[0,-0.25;" .. minetest.colorize("lawngreen","target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON") .. "]";
-	for i =1,n do
-		form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
-		form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
-	end
+	local view = meta:get_int("view")
 	
-	form=form.."button_exit[4.25,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]".."button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
-	form = form.."button[6.25,"..(0.25+(n)*0.75)..";1,1;help;help]";
-	return form
-
+	if view == 0 then
+		local form  = 
+		"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
+		"label[0,-0.25;" .. minetest.colorize("lawngreen","target: x y z, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON") .. "]";
+		for i =1,n do
+			form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";1,1;x"..i..";;"..p[i].x.."] field[1.25,"..(0.5+(i-1)*0.75)..";1,1;y"..i..";;"..p[i].y.."] field[2.25,"..(0.5+(i-1)*0.75)..";1,1;z"..i..";;"..p[i].z.."] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
+			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
+		end
+		
+		form=form.."button[4.0,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]"..
+		"button[5.25,"..(0.25+(n)*0.75)..";1,1;view;view]"..
+		"button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
+		form = form.."button[6.25,"..(0.25+(n)*0.75)..";1,1;help;help]";
+		return form
+	else 
+		local form  = 
+		"size[7,"..(0.75+(n)*0.75).."]" ..  -- width, height
+		"label[0,-0.25;" .. minetest.colorize("lawngreen","target name, MODE -2=only OFF, -1=NOT input/0/1=input, 2 = only ON") .. "]";
+		for i =1,n do
+			local tname = minetest.get_node({x=p[i].x+pos.x,y=p[i].y+pos.y,z=p[i].z+pos.z}).name;
+			local ti = string.find(tname,":") or 0; tname = p[i].x .. " " .. p[i].y .. " " .. p[i].z .. " " .. string.sub(tname,ti+1);
+			
+			form = form.."field[0.25,"..(0.5+(i-1)*0.75)..";3,1;text;;" .. tname .. "] field [ 3.25,"..(0.5+(i-1)*0.75)..";1,1;active"..i..";;" .. active[i] .. "]"
+			form = form .. "button[4.,"..(0.25+(i-1)*0.75)..";1.5,1;SHOW"..i..";SHOW "..i.."]".."button_exit[5.25,"..(0.25+(i-1)*0.75)..";1,1;SET"..i..";SET]".."button[6.25,"..(0.25+(i-1)*0.75)..";1,1;X"..i..";X]"
+		end
+		
+		form=form.."button[4.0,"..(0.25+(n)*0.75)..";1,1;ADD;ADD]"..
+		"button_exit[2.0,"..(0.25+(n)*0.75)..";1,1;scan;scan]"..
+		"button[5.25,"..(0.25+(n)*0.75)..";1,1;view;view]"..
+		"button_exit[3.,"..(0.25+(n)*0.75)..";1,1;OK;OK]".."field[0.25,"..(0.5+(n)*0.75)..";1,1;delay;delay;"..delay .. "]";
+		form = form.."button[6.25,"..(0.25+(n)*0.75)..";1,1;help;help]";
+		return form
+	end
 end
 
 
@@ -2442,8 +2482,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 				posf[i]={x=tonumber(fields["x"..i]) or 0,y=tonumber(fields["y"..i]) or 0,z=tonumber(fields["z"..i]) or 0};
 				active[i]=tonumber(fields["active"..i]) or 0;
 			
-				if (not (privs.privs) and math.abs(posf[i].x)>max_range or math.abs(posf[i].y)>max_range or math.abs(posf[i].z)>max_range) then
-					minetest.chat_send_player(name,"#distributor: all coordinates must be between ".. -max_range .. " and " .. max_range); 
+				if (not (privs.privs) and math.abs(posf[i].x)>2*max_range or math.abs(posf[i].y)>2*max_range or math.abs(posf[i].z)>2*max_range) then
+					minetest.chat_send_player(name,"#distributor: all coordinates must be between ".. -2*max_range .. " and " .. 2*max_range); 
 					return
 				end
 			
@@ -2459,6 +2499,49 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 		end
 		
+		if fields["view"] then -- change view mode
+			meta:set_int("view",1-meta:get_int("view"))
+			local form = get_distributor_form(pos,player)
+			minetest.show_formspec(player:get_player_name(), "basic_machines:distributor_"..minetest.pos_to_string(pos), form)
+			return
+		end
+		
+		if fields["scan"] then -- scan for connectable nodes
+			local connectables = basic_machines.connectables;
+			local x1 = (meta:get_int("x1") or 0)+pos.x;
+			local y1 = (meta:get_int("y1") or 0)+pos.y;
+			local z1 = (meta:get_int("z1") or 0)+pos.z;
+			
+			local x2 = (meta:get_int("x2") or 0)+pos.x;
+			local y2 = (meta:get_int("y2") or 0)+pos.y;
+			local z2 = (meta:get_int("z2") or 0)+pos.z;
+			
+			if x1>x2 then x1,x2 = x2,x1 end
+			if y1>y2 then y1,y2 = y2,y1 end
+			if z1>z2 then z1,z2 = z2,z1 end
+			
+			local count = 0;
+			
+			for x = x1,x2 do
+				for y = y1,y2 do
+					for z = z1,z2 do
+						if count>=16 then break end
+						local nname = minetest.get_node({x=x,y=y,z=z}).name;
+						if connectables[nname] then
+							count = count +1;
+							meta:set_int("x"..count, x - pos.x)
+							meta:set_int("y"..count, y - pos.y)
+							meta:set_int("z"..count, z - pos.z)
+						end
+					end
+				end
+			end
+			meta:set_int("n", count)
+			minetest.chat_send_player(name,"[DISTRIBUTOR] connected " .. count .. " targets."); 
+			return
+		end
+		
+		
 		if fields["ADD"] then
 			local n = meta:get_int("n");
 			if n<16 then meta:set_int("n",n+1);	end -- max 16 outputs
@@ -2470,9 +2553,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		-- SHOWING TARGET
 		local j=-1;local n = meta:get_int("n");
 		for i = 1,n do if fields["SHOW"..i] then j = i end end
+		
 		--show j-th point
 		if j>0 then 
-			local posf={x=tonumber(fields["x"..j]) or 0,y=tonumber(fields["y"..j]) or 0,z=tonumber(fields["z"..j]) or 0};
+			local posf={x=meta:get_int("x"..j) or 0,y=meta:get_int("y"..j) or 0,z=meta:get_int("z"..j) or 0};
 			machines.pos1[player:get_player_name()] = {x=posf.x+pos.x,y=posf.y+pos.y,z=posf.z+pos.z};
 			machines.mark_pos1(player:get_player_name())
 			return;
@@ -2516,7 +2600,9 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			"4 numbers in each row represent (from left to right) : first 3 numbers are target coordinates x y z,\n"..
 			"last number (MODE) controls how signal is passed to target. For example, to only pass OFF signal use -2,\n"..
 			"to only pass ON use 2, -1 negates the signal, 1 = pass original signal, 0 blocks signal\n"..
-			"delay option adds delay to activations, in seconds. With negative delay activation is randomized with probability -delay/1000.\n\n"..
+			"delay option adds delay to activations, in seconds. With negative delay activation is randomized with probability -delay/1000.\n"..
+			"view button toggles view of target names, in names view there is button scan which automatically scans for valid\n"..
+			"targets in a box defined by first and second target\n\n"..
 			"ADVANCED: you can use distributor as an event handler - it listens to events like interact attempts and chat around distributor.\n"..
 			"First you need to place distributor at position (x,y,z) in world, such that the coordinates are of the form (20*i,20*j+1,20*k) for\n"..
 			"some integers i,j,k. Then you need to configure first row of numbers in distributor:\n"..
