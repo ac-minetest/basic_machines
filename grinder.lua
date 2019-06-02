@@ -306,8 +306,8 @@ local table = minetest.registered_items["moreores:tin_lump"]; if table then
 	register_dust("mithril","moreores:mithril_lump","moreores:mithril_ingot",16,750,"00","00","FF")
 	
 	basic_machines.grinder_recipes["moreores:tin_ingot"] = {4,"basic_machines:tin_dust_00 2",1};
-	basic_machines.grinder_recipes["moreores:silver_ingot"] = {5,"basic_machines:silver_dust_00 2",1};
-	basic_machines.grinder_recipes["moreores:mithril_ingot"] = {16,"basic_machines:mithril_dust_33 2",1};
+	basic_machines.grinder_recipes["moreores:silver_ingot"] = {5,"basic_machines:silver_dust_33 2",1}; -- silver doesnt need extractor yet
+	basic_machines.grinder_recipes["moreores:mithril_ingot"] = {16,"basic_machines:mithril_dust_00 2",1};
 end
 
 
@@ -462,6 +462,13 @@ minetest.register_craft({
 	output = 'basic_machines:diamond_extractor',
 	recipe = {
 		{'farming:wheat','farming:cotton', 'basic_machines:diamond_dust_00'},
+	}
+})
+
+minetest.register_craft({
+	output = 'basic_machines:mithril_extractor',
+	recipe = {
+		{'flowers:geranium','flowers:geranium', 'basic_machines:mithril_dust_00'}, -- blue flowers
 	}
 })
 
