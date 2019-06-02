@@ -359,13 +359,22 @@ generator_upgrade = function(pos)
 	meta:set_int("upgrade",count);
 end
 
-local genstat = {}; -- generator statistics for each player
+--local genstat = {}; -- generator statistics for each player
 minetest.register_node("basic_machines:generator", {
 	description = "Generator - very expensive, generates power crystals that provide power. Its upgradeable.",
 	tiles = {"basic_machine_generator.png"},
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
+
+		--check to prevent too many generators being placed at one place
+		if minetest.find_node_near(pos, 15, {"basic_machines:generator"}) then
+			minetest.set_node(pos,{name="air"})
+			minetest.add_item(pos,"basic_machines:generator")
+			minetest.chat_send_player(placer:get_player_name(),"#generator: interference from nearby generator detected.")
+			return
+		end
+		
 		local meta = minetest.get_meta(pos);
 		meta:set_string("infotext","generator - generates power crystals that provide power. Upgrade with up to 50 generators."); 
 		meta:set_string("owner",placer:get_player_name());
@@ -376,88 +385,67 @@ minetest.register_node("basic_machines:generator", {
 		
 	end,
 	
-		on_rightclick = function(pos, node, player, itemstack, pointed_thing)
-			local meta = minetest.get_meta(pos);
-			local privs = minetest.get_player_privs(player:get_player_name());
-			if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return end -- only owner can interact with recycler
+	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
+		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return end -- only owner can interact with recycler
+		generator_update_meta(pos);
+	end,
+	
+	on_receive_fields = function(pos, formname, fields, sender) 
+		if fields.quit then return end
+		if fields.help then
+			local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low level (0-4), medium level (5-19) and high level (20+). Upgrading the generator (upgrade with generators) will increase the rate at which the crystals are produced.\n\nYou can automate the process of battery recharging by using mover in inventory mode, taking from inventory \"fuel\"";
+			local form = "size [6,7] textarea[0,0;6.5,8.5;help;GENERATOR HELP;".. text.."]"
+			minetest.show_formspec(sender:get_player_name(), "basic_machines:help_mover", form)
+			return
+		end
+		local meta = minetest.get_meta(pos);
+		generator_update_meta(pos);
+	end,
+	
+	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
+		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return 0 end
+		return stack:get_count();
+	end,
+
+	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
+		local meta = minetest.get_meta(pos);
+		local privs = minetest.get_player_privs(player:get_player_name());
+		if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return 0 end
+		return stack:get_count();
+	end,
+
+	on_metadata_inventory_put = function(pos, listname, index, stack, player) 
+		if listname == "upgrade" then
+			generator_upgrade(pos);
 			generator_update_meta(pos);
-		end,
-		
-		on_receive_fields = function(pos, formname, fields, sender) 
-			if fields.quit then return end
-			if fields.help then
-				local text = "Generator slowly produces power crystals. Those can be used to recharge batteries and come in 3 flavors:\n\n low level (0-4), medium level (5-19) and high level (20+). Upgrading the generator (upgrade with generators) will increase the rate at which the crystals are produced.\n\nYou can automate the process of battery recharging by using mover in inventory mode, taking from inventory \"fuel\"";
-				local form = "size [6,7] textarea[0,0;6.5,8.5;help;GENERATOR HELP;".. text.."]"
-				minetest.show_formspec(sender:get_player_name(), "basic_machines:help_mover", form)
-				return
-			end
-			local meta = minetest.get_meta(pos);
-			
-			
+		end
+		return stack:get_count();
+	end,
+	
+	on_metadata_inventory_take = function(pos, listname, index, stack, player) 
+		if listname == "upgrade" then
+			generator_upgrade(pos);
 			generator_update_meta(pos);
-		end,
-		
-		allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-			local meta = minetest.get_meta(pos);
-			local privs = minetest.get_player_privs(player:get_player_name());
-			if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return 0 end
-			return stack:get_count();
-		end,
+		end
+		return stack:get_count();
+	end,
+
+	allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
+		return 0;
+	end,
 	
-		allow_metadata_inventory_take = function(pos, listname, index, stack, player)
-			local meta = minetest.get_meta(pos);
-			local privs = minetest.get_player_privs(player:get_player_name());
-			if minetest.is_protected(pos,player:get_player_name()) and not privs.privs then return 0 end
-			return stack:get_count();
-		end,
-	
-		on_metadata_inventory_put = function(pos, listname, index, stack, player) 
-			if listname == "upgrade" then
-				generator_upgrade(pos);
-				generator_update_meta(pos);
-			end
-			return stack:get_count();
-		end,
+	can_dig = function(pos)
+		local meta = minetest.get_meta(pos);
+		local inv = meta:get_inventory();
 		
-		on_metadata_inventory_take = function(pos, listname, index, stack, player) 
-			if listname == "upgrade" then
-				generator_upgrade(pos);
-				generator_update_meta(pos);
-			end
-			return stack:get_count();
-		end,
-	
-		allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-			return 0;
-		end,
+		if not inv:is_empty("upgrade") then return false end  -- fuel inv is not so important as generator generates it
 		
-		can_dig = function(pos)
-			local meta = minetest.get_meta(pos);
-			local inv = meta:get_inventory();
-			
-			if not inv:is_empty("upgrade") then return false end  -- fuel inv is not so important as generator generates it
-			
-			return true
-			
-		end,
-		
-		 on_punch = function(pos, node, puncher, pointed_thing) -- owner can activate/deactivate generator with a punch
-			local meta = minetest.get_meta(pos);
-			local owner = meta:get_string("owner");
-			local pname = puncher:get_player_name();
-			if pname~=owner then return end
-			
-			local off = meta:get_int("off")
-			if off == 1 then
-				meta:set_int("off",0)
-				meta:set_string("infotext","ACTIVATED")
-				genstat[owner] = {minetest.get_gametime(),0} -- reset monitoring
-			else
-				meta:set_int("off",1)
-				meta:set_string("infotext","DEACTIVATED")
-			end
-		 end,
-	
+		return true
+	end,
 })
 
 minetest.register_abm({ 
@@ -467,33 +455,6 @@ minetest.register_abm({
 	chance = 1,
 	action = function(pos, node, active_object_count, active_object_count_wider)
 		local meta = minetest.get_meta(pos);
-
-		-- checks
-		if meta:get_int("off") == 1 then return end
-		local owner = meta:get_string("owner");
-		local gendata = genstat[owner];
-		local t = minetest.get_gametime();
-		if not gendata then genstat[owner] = {t,0} gendata = genstat[owner] end -- init: time, count
-		
-		if gendata[1] ~= -1 and t - gendata[1] >= 19 then -- more than 19s elapsed since last time
-			gendata[1] = t; -- reset timer
-			gendata[2] = 0; -- reset activation count		
-		end
-		
-		gendata[2] = gendata[2] + 1 -- increase activation count
-		
-		
-		if gendata[2]>5 then
-			if gendata[1]~=-1 then
-				minetest.chat_send_player(owner,"#generator: more than 5 active generators, position " .. pos.x .. " " .. pos.y .. " " .. pos.z ..". shutting down all generators. Select up to 5 of generators you want and turn them on by punching.")
-			else
-				minetest.chat_send_player(owner,"#generator: forced shutdown, position " .. pos.x .. " " .. pos.y .. " " .. pos.z)
-			end
-			meta:set_int("off",1)
-			gendata[1] = -1; -- forced turnoff active
-			meta:set_string("infotext","DEACTIVATED (automatic)")
-			return
-		end
 		
 		local upgrade = meta:get_int("upgrade");
 		local inv = meta:get_inventory();
@@ -525,9 +486,8 @@ minetest.register_abm({
 -- API for power distribution
 function basic_machines.check_power(pos, power_draw) -- mover checks power source - battery
 
-	--minetest.chat_send_all(" battery: check_power " .. minetest.pos_to_string(pos) .. " " .. power_draw)
 	local batname = "basic_machines:battery";
-	if not string.find(minetest.get_node(pos).name,batname) then
+	if not string.find(minetest.get_node(pos).name,batname) then -- check with hashtables probably faster?
 		return -1 -- battery not found!
 	end
 	

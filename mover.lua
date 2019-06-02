@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "06/01/2019a";
+basic_machines.version = "06/02/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -28,7 +28,7 @@ basic_machines.hardness["basic_machines:battery_0"]=0.;
 basic_machines.hardness["basic_machines:battery_1"]=0.;
 basic_machines.hardness["basic_machines:battery_2"]=0.;
 basic_machines.hardness["basic_machines:detector"]=0.;
-basic_machines.hardness["basic_machines:generator"]=0.;
+basic_machines.hardness["basic_machines:generator"]=999999.; -- can only place generator by hand
 basic_machines.hardness["basic_machines:clockgen"]=0.;
 basic_machines.hardness["basic_machines:ball_spawner"]=0.;
 basic_machines.hardness["basic_machines:light_on"]=0.;
@@ -328,7 +328,7 @@ minetest.register_node("basic_machines:mover", {
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
 		if listname == "filter" then
 			local meta = minetest.get_meta(pos);
-			local itemname = stack:get_name() or "";
+			local itemname = stack:to_string() or "";
 			meta:set_string("prefer",itemname);
 			--minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
 			local form = get_mover_form(pos,player)
@@ -1518,6 +1518,13 @@ minetest.register_node("basic_machines:clockgen", {
 	groups = {cracky=3, mesecon_effector_on = 1},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
+		if minetest.find_node_near(pos, 15, {"basic_machines:clockgen"}) then
+			minetest.set_node(pos,{name="air"})
+			minetest.add_item(pos,"basic_machines:clockgen")
+			minetest.chat_send_player(placer:get_player_name(),"#clock generator: interference from nearby clock generator detected.")
+			return
+		end
+		
 		local meta =  minetest.get_meta(pos);
 		local owner = placer:get_player_name() or "";
 		local privs = minetest.get_player_privs(owner);
@@ -2115,7 +2122,7 @@ minetest.register_on_punchnode(function(pos, node, puncher, pointed_thing)
 			end
 			
 			if punchset[name].state > 0 then 
-				if math.abs(punchset[name].pos.x - pos.x)>max_range or math.abs(punchset[name].pos.y - pos.y)>max_range or math.abs(punchset[name].pos.z - pos.z)>max_range then
+				if math.abs(punchset[name].pos.x - pos.x)>2*max_range or math.abs(punchset[name].pos.y - pos.y)>2*max_range or math.abs(punchset[name].pos.z - pos.z)>2*max_range then
 					minetest.chat_send_player(name, "DISTRIBUTOR: Punch closer to distributor. aborting.")
 					punchset[name].state = 0; return
 				end
@@ -2476,10 +2483,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		
 		if fields.OK == "OK" then
 			
+			local posmode = (meta:get_int("view") == 0);
 			local posf = {}; local active = {};
 			local n = meta:get_int("n");
 			for i = 1,n do
-				posf[i]={x=tonumber(fields["x"..i]) or 0,y=tonumber(fields["y"..i]) or 0,z=tonumber(fields["z"..i]) or 0};
+				posf[i]={x=tonumber(fields["x"..i]) or meta:get_int("x"..i),y=tonumber(fields["y"..i]) or meta:get_int("y"..i),z=tonumber(fields["z"..i]) or meta:get_int("z"..i)};
 				active[i]=tonumber(fields["active"..i]) or 0;
 			
 				if (not (privs.privs) and math.abs(posf[i].x)>2*max_range or math.abs(posf[i].y)>2*max_range or math.abs(posf[i].z)>2*max_range) then
@@ -2487,7 +2495,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 					return
 				end
 			
-				meta:set_int("x"..i,posf[i].x);meta:set_int("y"..i,posf[i].y);meta:set_int("z"..i,posf[i].z);
+				if posmode then meta:set_int("x"..i,posf[i].x);meta:set_int("y"..i,posf[i].y);meta:set_int("z"..i,posf[i].z); end
 				if posf[i].x==0 and posf[i].y==0 and posf[i].z==0 then
 					meta:set_int("active"..i,0); -- no point in activating itself
 					else
@@ -2532,6 +2540,7 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 							meta:set_int("x"..count, x - pos.x)
 							meta:set_int("y"..count, y - pos.y)
 							meta:set_int("z"..count, z - pos.z)
+							meta:set_int("active"..count,1) -- turns the connection on
 						end
 					end
 				end
