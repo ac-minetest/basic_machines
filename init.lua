@@ -34,8 +34,8 @@ dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- enable interac
 
 dofile(minetest.get_modpath("basic_machines").."/ball.lua") -- interactive flying ball, can activate blocks or be used as a weapon
 dofile(minetest.get_modpath("basic_machines").."/enviro.lua") -- enviro blocks that can change surrounding enviroment physics, uncomment spawn/join code to change global physics, disabled by default
+dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua") -- if you want open/close doors with signal, also steel doors are made impervious to dig through, removal by repeat punch
 minetest.after(0, function() 
-	dofile(minetest.get_modpath("basic_machines").."/mesecon_doors.lua") -- if you want open/close doors with signal, also steel doors are made impervious to dig through, removal by repeat punch
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_lights.lua") -- adds ability for other light blocks to toggle light
 end)
 
