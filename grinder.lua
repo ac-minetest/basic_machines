@@ -346,7 +346,6 @@ minetest.register_craft({
 })
 
 
-
 minetest.register_craft({
 	output = "darkage:serpentine",
 	recipe = {
@@ -465,13 +464,6 @@ minetest.register_craft({
 	}
 })
 
-minetest.register_craft({
-	output = 'basic_machines:mithril_extractor',
-	recipe = {
-		{'flowers:geranium','flowers:geranium', 'basic_machines:mithril_dust_00'}, -- blue flowers
-	}
-})
-
 minetest.register_craft({ 
 	type = "cooking",
 	recipe = "basic_machines:diamond_extractor",
@@ -479,9 +471,17 @@ minetest.register_craft({
 	cooktime = 10
 })
 
+minetest.register_craft({
+	output = 'basic_machines:mithril_extractor',
+	recipe = {
+		{'flowers:geranium','flowers:geranium', 'basic_machines:mithril_dust_00'}, -- blue flowers
+	}
+})
+
+
 minetest.register_craft({ 
 	type = "cooking",
-	recipe = "basic_machines:mithril_dust_00",
-	output = "basic_machines:mithril_dust_dust_33",
+	recipe = "basic_machines:mithril_extractor",
+	output = "basic_machines:mithril_dust_33",
 	cooktime = 10
 })

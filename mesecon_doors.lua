@@ -14,7 +14,7 @@ end
 
 local function door_signal_overwrite(name)
 	local table = minetest.registered_nodes[name]; if not table then return end
-	if table.mesecons then return end -- already exists, don't change
+	--if table.mesecons then return end -- already exists, don't change
 	local door_on_rightclick = table.on_rightclick;	
 	
 	
