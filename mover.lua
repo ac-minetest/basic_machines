@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "06/04/2019a";
+basic_machines.version = "06/22/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -80,16 +80,17 @@ basic_machines.no_teleport_table = {
 }
 
 -- list of nodes mover cant take from in inventory mode
-basic_machines.limit_inventory_table = { -- node name = {list of bad inventories to take from}
+basic_machines.limit_inventory_table = { -- node name = {list of bad inventories to take from} OR node name = true to ban all inventories
 	["basic_machines:autocrafter"]= {["recipe"]=1, ["output"]=1},
 	["basic_machines:constructor"]= {["recipe"]=1},
 	["basic_machines:battery_0"] = {["upgrade"] = 1},
 	["basic_machines:battery_1"] = {["upgrade"] = 1},
 	["basic_machines:battery_2"] = {["upgrade"] = 1},
 	["basic_machines:generator"] = {["upgrade"] = 1},
-	["basic_machines:mover"] = {["upgrade"] = 1},
+	["basic_machines:mover"] = true,
 	["basic_machines:grinder"] = {["upgrade"] = 1},
-	["moreblocks:circular_saw"] = {["input"]=1,["recycle"]=1,["micro"]=1,["output"]=1},
+	["moreblocks:circular_saw"] = true,
+	["smartshop:shop"] = true,
 }
 
 -- when activated with keypad these will be "punched" to update their text too
@@ -511,15 +512,15 @@ minetest.register_node("basic_machines:mover", {
 				for _,obj in pairs(minetest.get_objects_inside_radius({x=x0+pos.x,y=y0+pos.y,z=z0+pos.z}, r)) do
 					local lua_entity = obj:get_luaentity() 
 					if not obj:is_player() and lua_entity and lua_entity.itemstring ~= "" then
-						local detected_obj = lua_entity.name or "" 
-						if not basic_machines.no_teleport_table[detected_obj] then -- object on no teleport list 
+						local detected_obj = lua_entity.itemstring or ""
+						if not basic_machines.no_teleport_table[detected_obj] and (prefer=="" or prefer==detected_obj)  then -- object on no teleport list 
 							-- put item in chest
 							local stack = ItemStack(lua_entity.itemstring) 
 							if inv:room_for_item("main", stack) then
 								teleport_any = true;
 								inv:add_item("main", stack);
 							end
-							obj:setpos({x=0,y=0,z=0}); -- patch for dupe, might not be needed if future minetest object management is better
+							obj:setpos({x=0,y=0,z=0});
 							obj:remove();
 						end
 					end
@@ -629,8 +630,9 @@ minetest.register_node("basic_machines:mover", {
 					--if prefer == "" then meta:set_string("infotext", "Mover block. must set nodes to move (filter) in inventory mode."); return; end
 					
 					-- forbidden nodes to take from in inventory mode - to prevent abuses :
-					if basic_machines.limit_inventory_table[node1.name] then
-						if basic_machines.limit_inventory_table[node1.name][invName1] then -- forbidden to take from this inventory
+					local limit_inventory = basic_machines.limit_inventory_table[node1.name]
+					if limit_inventory then
+						if limit_inventory == true or limit_inventory[invName1] then -- forbidden to take from this inventory
 							return 
 						end 
 					end
