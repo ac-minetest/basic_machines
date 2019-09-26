@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "06/22/2019a";
+basic_machines.version = "09/26/2019a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -2244,7 +2244,15 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			else -- MODE 1
 			
 				if fields.mode then
-					meta:set_string("mode",fields.mode);
+					local mode = fields.mode;
+					if meta:get_string("mode")~=mode then
+						-- input validation
+						if check_mover_filter(meta:get_string("mode"), fields.prefer or "", meta:get_int("reverse")) then
+							meta:set_string("mode",fields.mode);
+						else
+							minetest.chat_send_player(name,"MOVER: wrong filter - must be name of existing minetest block") 
+						end
+					end
 				end
 				
 			
@@ -2254,6 +2262,8 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 					-- input validation
 					if check_mover_filter(meta:get_string("mode"), prefer, meta:get_int("reverse")) then
 						meta:set_string("prefer",prefer);
+					else
+						minetest.chat_send_player(name,"MOVER: wrong filter - must be name of existing minetest block") 
 					end
 				end
 				
@@ -2274,6 +2284,11 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 			end
 			
 		elseif fields.mode then
+			if not check_mover_filter(fields.mode, meta:get_string("prefer"), meta:get_string("reverse")) then
+				minetest.chat_send_player(name,"MOVER: wrong filter - must be name of existing minetest block") 
+				return -- input validation
+			end
+			
 			meta:set_string("mode",fields.mode);
 			local form = get_mover_form(pos,player)
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
