@@ -102,7 +102,9 @@ battery_recharge = function(pos)
 		minetest.sound_play("electric_zap", {pos=pos,gain=0.05,max_hear_distance = 8,})
 	end
 	
-	local full_coef = math.floor(energy/capacity*3); if full_coef > 2 then full_coef = 2 end
+	local full_coef = math.floor(energy/capacity*3);
+    if capacity == 0 then full_coef = 0 end
+    if full_coef > 2 then full_coef = 2 end
 	minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef}) -- graphic energy
 	
 	return energy; -- new battery energy level
@@ -215,6 +217,7 @@ minetest.register_node("basic_machines:battery_0", {
 					
 					if energy>=1 then -- no need to recharge yet, will still work next time
 						local full_coef_new = math.floor(energy/capacity*3); if full_coef_new>2 then full_coef_new = 2 end
+                        if capacity == 0 then full_coef_new = 0 end
 						pos.y = pos.y-1;
 						if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 						return 
