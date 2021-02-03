@@ -25,8 +25,8 @@ local battery_update_meta = function(pos)
 		"image[1.5,0.5;0.5,0.5;basic_machine_generator.png]"..
 		"image[1.5,1;0.5,0.5;power_cell.png]"..
 
-		"label[2,0.5;Power: 10]"..
-		"label[2,1;Capacity: 30]"..
+		"label[2,0.5;Power: " .. maxpower .. "]"..
+		"label[2,1;Capacity: " .. capacity .. "]"..
 
 		"button_exit[4.1,7.4;2,0.5;OK;close]"..
 		"listring["..list_name..";fuel]"..

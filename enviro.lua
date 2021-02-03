@@ -12,6 +12,8 @@ enviro.skyboxes = {
 	};
 	
 local space_start = 1100;
+local exclusion_height = 6666; -- above all players without privs die and get teleported to spawn
+
 local ENABLE_SPACE_EFFECTS = false -- enable damage outside protected areas
 	
 local enviro_update_form = function (pos)
@@ -113,7 +115,7 @@ minetest.register_node("basic_machines:enviro", {
 			
 			local players = minetest.get_connected_players();
 			for _,player in pairs(players) do
-				local pos1 = player:getpos();
+				local pos1 = player:get_pos();
 				local dist = math.sqrt((pos1.x-pos.x)^2 + (pos1.y-pos.y)^2 + (pos1.z-pos.z)^2 );
 				if dist<=r then
 					
@@ -231,7 +233,7 @@ end
 enviro_adjust_physics = function(player) -- adjust players physics/skybox 1 second after various events
 	minetest.after(1, function()
 		if player then
-			local pos = player:getpos(); if not pos then return end
+			local pos = player:get_pos(); if not pos then return end
 			if pos.y > space_start then -- is player in space or not?
 				player:set_physics_override({speed=1,jump=0.5,gravity=0.1}) -- value set for extreme test space spawn
 				local skybox = enviro.skyboxes["space"];
@@ -264,6 +266,9 @@ end
 
 local stimer = 0
 local enviro_space = {};
+local exclusion_zone = {};
+local moderator = {};
+
 minetest.register_globalstep(function(dtime)
 	stimer = stimer + dtime;
 	if stimer >= 5 then
@@ -271,8 +276,23 @@ minetest.register_globalstep(function(dtime)
 		local players = minetest.get_connected_players();
 		for _,player in pairs(players) do
 			local name = player:get_player_name();
-			local pos = player:getpos();
-			local inspace=0; if pos.y>space_start then inspace = 1 end
+			local pos = player:get_pos();
+			local inspace=0; 
+			if pos.y>space_start then 
+				inspace = 1
+				if pos.y > exclusion_height then
+					local exclude = exclusion_zone[name];
+					if exclude == nil then
+						exclusion_zone[name] = not minetest.get_player_privs(name).include;
+						exclude = exclusion_zone[name]
+					end
+					if exclude then 
+						minetest.chat_send_all("exclusion zone alert: " .. name .. " " .. pos.x .. " " .. pos.y .. " " .. pos.z )
+						minetest.log("exclusion zone alert: " .. name .. " " .. pos.x .. " " .. pos.y .. " " .. pos.z )
+						player:set_pos({x=0,y=-100,z=0})
+					end
+				end
+			end
 			local inspace0=enviro_space[name];
 			if inspace~=inspace0 then -- only adjust player enviroment ONLY if change occured ( earth->space or space->earth !)
 				enviro_space[name] = inspace;
@@ -286,7 +306,7 @@ minetest.register_globalstep(function(dtime)
 						local hp = player:get_hp();
 						
 						if hp>0 then
-							minetest.chat_send_player(name,"WARNING: you entered DEADLY RADIATION ZONE");
+							minetest.chat_send_player(name,"WARNING: you entered DEADLY RADIATION ZONE.");
 							local privs = minetest.get_player_privs(name)
 							if not privs.kick then player:set_hp(hp-15) end
 						end
@@ -364,7 +384,7 @@ minetest.register_on_punchplayer( -- bring gravity closer to normal with each pu
 	function(player, hitter, time_from_last_punch, tool_capabilities, dir, damage)
 	
 		if player:get_physics_override() == nil then return end
-		local pos = player:getpos(); if pos.y>= space_start then return end
+		local pos = player:get_pos(); if pos.y>= space_start then return end
 		
 		local gravity = player:get_physics_override().gravity;
 		if gravity<1 then
@@ -375,6 +395,9 @@ minetest.register_on_punchplayer( -- bring gravity closer to normal with each pu
 	
 )
 
+minetest.register_privilege("include", {
+	description = "allow player to move in exclusion zone",
+})
 	
 
 -- RECIPE: extremely expensive

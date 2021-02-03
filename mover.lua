@@ -13,12 +13,13 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "09/26/2019a";
+basic_machines.version = "03/02/2021a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
 basic_machines.hardness = {
-["default:stone"]=4,["default:tree"]=2,["default:jungletree"]=2,["default:pine_tree"]=2,["default:aspen_tree"]=2,["default:acacia_tree"]=2,
+["default:stone"]=3,["default:tree"]=1,["default:jungletree"]=1,["default:pine_tree"]=1,["default:aspen_tree"]=1,["default:acacia_tree"]=1, ["default:bush_leaves"] = 0.1,["default:leaves"] = 0.1, ["default:jungleleaves"] = 0.1,
+["gloopblocks:pumice_cooled"]=2,["default:cloud"] = 999999,
 ["default:lava_source"]=5950,["default:water_source"]=5950,["default:obsidian"]=20,["bedrock2:bedrock"]=999999};
 --move machines for free
 basic_machines.hardness["basic_machines:mover"]=0.;
@@ -319,8 +320,8 @@ minetest.register_node("basic_machines:mover", {
 	
 	on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 		local privs = minetest.get_player_privs(player:get_player_name());
-		local cant_build = minetest.is_protected(pos,player:get_player_name());
-		if not privs.privs and cant_build then return end -- only ppl sharing protection can setup
+		--local cant_build = minetest.is_protected(pos,player:get_player_name());
+		--if not privs.privs and cant_build then return end -- only ppl sharing protection can setup
 		
 		local form = get_mover_form(pos,player)
 		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
@@ -2158,7 +2159,10 @@ minetest.register_on_player_receive_fields(function(player,formname,fields)
 		local name = player:get_player_name(); if name==nil then return end
 		local meta = minetest.get_meta(pos)
 		local privs = minetest.get_player_privs(name);
-		if (minetest.is_protected(pos,name) and not privs.privs) or not fields then return end -- only builder can interact
+		if not fields then return end
+		local can_edit =  (not minetest.is_protected(pos,name)) or privs.privs
+		
+		if not can_edit and not fields.tabs then return end
 		
 	
 		if fields.help == "help" then

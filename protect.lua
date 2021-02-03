@@ -32,7 +32,7 @@ end
 minetest.register_on_chat_message(function(name, message)
 	local player = minetest.get_player_by_name(name);
 	if not player then return end
-	local pos = player:getpos();
+	local pos = player:get_pos();
 	local r = 20;local p = {x=round(pos.x/r+0.5)*r,y=round(pos.y/r+0.5)*r+1,z=round(pos.z/r+0.5)*r}
 	--minetest.chat_send_all(minetest.pos_to_string(p))
 	if minetest.get_node(p).name == "basic_machines:distributor" then -- attempt to activate distributor at special grid location: coordinates of the form 20*i
