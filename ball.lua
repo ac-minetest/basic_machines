@@ -215,13 +215,13 @@ minetest.register_entity("basic_machines:ball",{
 			
 			local node = minetest.get_node(pos);
 			local table = minetest.registered_nodes[node.name];
-			if table and table.mesecons and table.mesecons.effector then -- activate target
+			if table and table.effector then -- activate target
 
 				local energy = self.energy;
 				if energy~=0 then
 					if minetest.is_protected(pos,self.owner) then return end
 				end
-				local effector = table.mesecons.effector;
+				local effector = table.effector;
 				
 				local count = ballcount[self.owner] or 1; count=count-1; ballcount[self.owner] = count; 
 				self.object:remove();
@@ -340,7 +340,7 @@ minetest.register_entity("basic_machines:ball",{
 minetest.register_node("basic_machines:ball_spawner", {
 	description = "Spawns energy ball one block above",
 	tiles = {"basic_machines_ball.png"},
-	groups = {cracky=3, mesecon_effector_on = 1},
+	groups = {cracky=3},
 	drawtype = "allfaces",
 	paramtype = "light",
 	param1=1,
@@ -368,7 +368,7 @@ minetest.register_node("basic_machines:ball_spawner", {
 		
 	end,
 
-	mesecons = {effector = {
+	effector = {
 		action_on = function (pos, node,ttl) 
 			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end
@@ -483,7 +483,6 @@ minetest.register_node("basic_machines:ball_spawner", {
 			luaent.energy = -1;
 			obj:set_properties({textures={"basic_machines_ball.png^[colorize:blue:120"}})
 		end
-		}
 	},
 	
 	on_receive_fields = function(pos, formname, fields, sender)

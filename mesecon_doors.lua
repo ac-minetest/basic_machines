@@ -13,14 +13,15 @@ tablecopy = function(a)
 end
 
 local function door_signal_overwrite(name)
+
 	local table = minetest.registered_nodes[name]; if not table then return end
 	--if table.mesecons then return end -- already exists, don't change
 	local door_on_rightclick = table.on_rightclick;	
 	
-	
 	minetest.override_item(name,
-		{mesecons = {effector = {
-			action_on  =  function (pos,node)
+		{
+		effector = {
+			action_on = function(pos,node)
 				local meta = minetest.get_meta(pos);local name = meta:get_string("owner");
 				-- create virtual player
 				local clicker = {}; 
@@ -34,9 +35,9 @@ local function door_signal_overwrite(name)
 				if door_on_rightclick then  door_on_rightclick(pos, nil, clicker,ItemStack(""),{}) end -- safety if it doesnt exist
 				--minetest.swap_node(pos, {name = "protector:trapdoor", param1 = node.param1, param2 = node.param2}) -- more direct approach?, need to set param2 then too
 			end
-			}
 		}
-})
+		}
+	)
 		
 end
 

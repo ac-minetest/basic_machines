@@ -252,7 +252,7 @@ minetest.register_node("basic_machines:autocrafter", {
 	description = "Autocrafter", 
 	drawtype = "normal", 
 	tiles = {"pipeworks_autocrafter.png"}, 
-	groups = {cracky=3, mesecon_effector_on = 1},
+	groups = {cracky=3},
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		local inv = meta:get_inventory()
@@ -333,7 +333,7 @@ minetest.register_node("basic_machines:autocrafter", {
 		return 0; -- no internal inventory moves!
 	end,
 	
-	mesecons = {effector = {  -- rnd: run machine when activated by signal
+	effector = {  -- rnd: run machine when activated by signal
 		action_on = function (pos, node,ttl) 
 		if type(ttl)~="number" then ttl = 1 end
 		if ttl<0 then return end -- machines_TTL prevents infinite recursion
@@ -350,7 +350,6 @@ minetest.register_node("basic_machines:autocrafter", {
 			
 		end
 
-	}
 	}
 	
 	--on_timer = run_autocrafter -- rnd

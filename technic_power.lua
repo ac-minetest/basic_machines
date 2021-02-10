@@ -147,7 +147,7 @@ local machines_activate_furnace = minetest.registered_nodes["default:furnace"].o
 minetest.register_node("basic_machines:battery_0", {
 	description = "battery - stores energy, generates energy from fuel, can power nearby machines, or accelerate/run furnace above it. Its upgradeable.",
 	tiles = {"basic_machine_outlet.png","basic_machine_battery.png","basic_machine_battery_0.png"},
-	groups = {cracky=3, mesecon_effector_on = 1},
+	groups = {cracky=3},
 	sounds = default.node_sound_wood_defaults(),
 	
 	after_place_node = function(pos, placer)
@@ -161,7 +161,7 @@ minetest.register_node("basic_machines:battery_0", {
 		meta:set_float("energy",0);
 	end,
 	
-	mesecons = {effector = { 
+	effector = {
 		action_on = function (pos, node,ttl) 
 			if type(ttl)~="number" then ttl = 1 end
 			if ttl<0 then return end -- machines_TTL prevents infinite recursion
@@ -246,7 +246,7 @@ minetest.register_node("basic_machines:battery_0", {
 			if full_coef_new ~= full_coef then minetest.swap_node(pos,{name = "basic_machines:battery_".. full_coef_new}) end
 			
 		end
-		}},
+		},
 		
 		on_rightclick = function(pos, node, player, itemstack, pointed_thing)
 			local meta = minetest.get_meta(pos);
@@ -366,7 +366,7 @@ end
 minetest.register_node("basic_machines:generator", {
 	description = "Generator - very expensive, generates power crystals that provide power. Its upgradeable.",
 	tiles = {"basic_machine_generator.png"},
-	groups = {cracky=3, mesecon_effector_on = 1},
+	groups = {cracky=3},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 

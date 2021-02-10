@@ -65,7 +65,7 @@ minetest.register_node("basic_machines:enviro", {
 	drawtype = "allfaces",
 	paramtype = "light",
 	param1=1,
-	groups = {cracky=3, mesecon_effector_on = 1},
+	groups = {cracky=3},
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)
@@ -90,7 +90,7 @@ minetest.register_node("basic_machines:enviro", {
 		enviro_update_form(pos);
 	end,
 		
-	mesecons = {effector = { 
+	effector = { 
 		action_on = function (pos, node,ttl) 
 			local meta = minetest.get_meta(pos);
 			local machines = meta:get_int("machines");
@@ -145,7 +145,6 @@ minetest.register_node("basic_machines:enviro", {
 			
 			
 		end
-	}
 	},
 	
 	

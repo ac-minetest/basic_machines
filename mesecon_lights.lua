@@ -10,22 +10,12 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	
 	local offname = "basic_machines:"..string.gsub(name, ":", "_").. "_OFF";
 	
-	table2.mesecons = {effector = { -- action to toggle light off
+	table2.effector = { -- action to toggle light off
 		action_off  =  function (pos,node,ttl)
 			minetest.swap_node(pos,{name = offname});
 		end
-		}
-	};
+		};
 	
-	table2.after_place_node = function(pos, placer)
-		minetest.after(5, -- fixes mesecons turning light off after place
-			function()
-				if minetest.get_node(pos).name == offname then
-					minetest.swap_node(pos,{name = name})
-				end
-			end
-		)
-	end
 	
 	minetest.register_node(":"..name, table2) -- redefine item
 
@@ -38,11 +28,10 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	end
 	
 	table3.light_source = 0; -- off block has light off
-	table3.mesecons = {effector = {
+	effector = {
 		action_on  =  function (pos,node,ttl)
 			minetest.swap_node(pos,{name = name});
 		end
-		}
 	};
 	 
 	-- REGISTER OFF BLOCK 

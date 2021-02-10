@@ -30,6 +30,10 @@ dofile(minetest.get_modpath("basic_machines").."/constructor.lua") -- enable cra
 
 dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- enable interaction with players, adds local on protect/chat event handling
 
+-- MESECON functionality
+if mesecon then 
+	dofile(minetest.get_modpath("basic_machines").."/mesecon_adapter.lua")
+end
 -- OPTIONAL ADDITIONAL STUFF ( comment to disable )
 
 dofile(minetest.get_modpath("basic_machines").."/ball.lua") -- interactive flying ball, can activate blocks or be used as a weapon
