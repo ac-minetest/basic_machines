@@ -28,7 +28,7 @@ local table = minetest.registered_nodes[name]; if not table then return end
 	end
 	
 	table3.light_source = 0; -- off block has light off
-	effector = {
+	table3.effector = {
 		action_on  =  function (pos,node,ttl)
 			minetest.swap_node(pos,{name = name});
 		end
