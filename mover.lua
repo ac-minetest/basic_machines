@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "10/02/2021a";
+basic_machines.version = "03/05/2021a";
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -66,18 +66,36 @@ basic_machines.harvest_table = {
 };
 
 -- set up nodes for plant with reverse on and filter set (for example seeds -> plant) : [nodename] = plant_name
-basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1", -- so it works with farming redo mod
-["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
-["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
-["farming:seed_cotton"]="farming:cotton_1",["farming:cucumber"]="farming:cucumber_1",["farming:grapes"]="farming:grapes_1",
-["farming:melon_slice"]="farming:melon_1",["farming:potato"]="farming:potato_1",["farming:pumpkin_slice"]="farming:pumpkin_1",
-["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
-["farming:seed_wheat"]="farming:wheat_1",["farming:seed_rice"]="farming:rice_1"}
+basic_machines.plant_table  = {
+	["farming:seed_cotton"] = "farming:cotton_1", ["farming:seed_wheat"] = "farming:wheat_1" -- minetest_game farming mod
+}
+if minetest.global_exists("farming") and farming.mod == "redo" then -- farming redo mod version "20210311"
+	basic_machines.plant_table  = {
+		-- ["farming:seed_cotton"] = "farming:cotton_1", ["farming:seed_wheat"] = "farming:wheat_1",
+		["farming:artichoke"] = "farming:artichoke_1", ["farming:beans"] = "farming:beanpole_1",
+		["farming:beetroot"] = "farming:beetroot_1", ["farming:blackberry"] = "farming:blackberry_1",
+		["farming:blueberries"] = "farming:blueberry_1", ["farming:cabbage"] = "farming:cabbage_1",
+		["farming:carrot"] = "farming:carrot_1", ["farming:chili_pepper"] = "farming:chili_1",
+		["farming:cocoa_beans"] = "farming:cocoa_1", ["farming:coffee_beans"] = "farming:coffee_1",
+		["farming:corn"] = "farming:corn_1", ["farming:cucumber"] = "farming:cucumber_1",
+		["farming:garlic_clove"] = "farming:garlic_1", ["farming:grapes"] = "farming:grapes_1",
+		["farming:lettuce"] = "farming:lettuce_1", ["farming:melon_slice"] = "farming:melon_1",
+		["farming:onion"] = "farming:onion_1", ["farming:parsley"] = "farming:parsley_1",
+		["farming:pea_pod"] = "farming:pea_1", ["farming:peppercorn"] = "farming:pepper_1",
+		["farming:pineapple_top"] = "farming:pineapple_1", ["farming:potato"] = "farming:potato_1",
+		["farming:pumpkin_slice"] = "farming:pumpkin_1", ["farming:raspberries"] = "farming:raspberry_1",
+		["farming:rhubarb"] = "farming:rhubarb_1", ["farming:seed_barley"] = "farming:barley_1",
+		["farming:seed_hemp"] = "farming:hemp_1", ["farming:seed_mint"] = "farming:mint_1",
+		["farming:seed_rice"] = "farming:rice_1", ["farming:soy_pod"] = "farming:soy_1",
+		["farming:tomato"] = "farming:tomato_1", ["farming:vanilla"] = "farming:vanilla_1"
+	}
+end
 
 -- list of objects that cant be teleported with mover
 basic_machines.no_teleport_table = {
-["itemframes:item"] = true,
-["signs:text"] = true
+	["itemframes:item"] = true,
+	["signs:text"] = true,
+	["signs_lib:text"] = true
 }
 
 -- list of nodes mover cant take from in inventory mode
@@ -270,6 +288,19 @@ end
 
 local check_for_falling = minetest.check_for_falling or nodeupdate; -- 1st for mt 5.0.0+, 2nd for 0.4.17.1 and older
 
+-- anal retentive change in minetest 5.0.0 to minetest 5.1.0 changing unknown node warning into crash
+-- forcing many checks with all possible combinations + adding many new crash combinations
+
+local check_mover_filter = function(mode, filter, mreverse) -- mover input validation, is it correct node
+	if filter == "" then return true end -- allow clearing filter
+	if mode == "normal" or mode == "dig" then
+		local nodedef = minetest.registered_nodes[filter]
+		if mreverse==1 and basic_machines.plant_table[filter] then return true end -- allow farming
+		if not nodedef then return false end
+	end
+	return true
+end
+
 
 -- MOVER --
 minetest.register_node("basic_machines:mover", {
@@ -332,11 +363,18 @@ minetest.register_node("basic_machines:mover", {
 		if listname == "filter" then
 			local meta = minetest.get_meta(pos);
 			local itemname = stack:to_string() or "";
-			meta:set_string("prefer",itemname);
+			if meta:get_string("prefer")~=itemname then
+				-- input validation
+				if check_mover_filter(meta:get_string("mode"), itemname, meta:get_int("reverse")) then
+					meta:set_string("prefer",itemname);
+				else
+					minetest.chat_send_player(player:get_player_name(),"MOVER: wrong filter - must be name of existing minetest block")
+				end
+			end
 			--minetest.chat_send_player(player:get_player_name(),"#mover: filter set as " .. itemname)
 			local form = get_mover_form(pos,player)
 			minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
-			return 1;
+			return meta:get_string("prefer")==itemname and 1 or 0;
 		end
 
 		if listname == "upgrade" then
@@ -366,8 +404,10 @@ minetest.register_node("basic_machines:mover", {
 
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
 		if minetest.is_protected(pos,player:get_player_name()) then return 0 end
-		local meta = minetest.get_meta(pos);
-		meta:set_float("upgrade",1); -- reset upgrade
+		if listname == "upgrade" then
+			local meta = minetest.get_meta(pos);
+			meta:set_float("upgrade",1); -- reset upgrade
+		end
 		local form = get_mover_form(pos,player)
 		minetest.show_formspec(player:get_player_name(), "basic_machines:mover_"..minetest.pos_to_string(pos), form)
 		return stack:get_count();
@@ -844,18 +884,6 @@ minetest.register_node("basic_machines:mover", {
 
 })
 
--- anal retentive change in minetest 5.0.0 to minetest 5.1.0 changing unknown node warning into crash
--- forcing many checks with all possible combinations + adding many new crash combinations
-
-local check_mover_filter = function(mode, filter, mreverse) -- mover input validation, is it correct node
-	if filter == "" then return true end -- allow clearing filter
-	if mode == "normal" or mode == "dig" then
-		local nodedef = minetest.registered_nodes[filter]
-		if mreverse==1 and basic_machines.plant_table[filter] then return true end -- allow farming
-		if not nodedef then return false end
-	end
-	return true
-end
 local use_signs_lib = minetest.global_exists("signs_lib")
 
 
