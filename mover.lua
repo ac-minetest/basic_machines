@@ -66,13 +66,13 @@ basic_machines.harvest_table = {
 };
 
 -- set up nodes for plant with reverse on and filter set (for example seeds -> plant) : [nodename] = plant_name
-basic_machines.plant_table  = {["farming:seed_barley"]="farming:barley_1",["farming:beans"]="farming:beanpole_1", -- so it works with farming redo mod
-["farming:blueberries"]="farming:blueberry_1",["farming:carrot"]="farming:carrot_1",["farming:cocoa_beans"]="farming:cocoa_1",
-["farming:coffee_beans"]="farming:coffee_1",["farming:corn"]="farming:corn_1",["farming:blueberries"]="farming:blueberry_1",
-["farming:seed_cotton"]="farming:cotton_1",["farming:cucumber"]="farming:cucumber_1",["farming:grapes"]="farming:grapes_1",
-["farming:melon_slice"]="farming:melon_1",["farming:potato"]="farming:potato_1",["farming:pumpkin_slice"]="farming:pumpkin_1",
-["farming:raspberries"]="farming:raspberry_1",["farming:rhubarb"]="farming:rhubarb_1",["farming:tomato"]="farming:tomato_1",
-["farming:seed_wheat"]="farming:wheat_1",["farming:seed_rice"]="farming:rice_1"}
+basic_machines.plant_table  = {["farming:seed_cotton"] = "farming:cotton_1", ["farming:seed_wheat"] = "farming:wheat_1"} -- minetest_game farming mod
+
+if minetest.global_exists("farming") and farming.mod == "redo" then -- so it works with farming redo mod
+	for _, plant in pairs(farming.registered_plants or {}) do
+		basic_machines.plant_table[plant.seed] = plant.crop .. "_1"
+	end
+end
 
 -- list of objects that cant be teleported with mover
 basic_machines.no_teleport_table = {
