@@ -13,7 +13,7 @@ basic_machines.max_range = 10 -- machines normal range of operation
 basic_machines.machines_operations = 10 -- 1 coal will provide 10 mover basic operations ( moving dirt 1 block distance)
 basic_machines.machines_TTL = 16 -- time to live for signals, how many hops before signal dissipates
 
-basic_machines.version = "10/02/2021a";
+basic_machines.version = "2025.02.17"
 basic_machines.clockgen = 1; -- if 0 all background continuously running activity (clockgen/keypad) repeating is disabled
 
 -- how hard it is to move blocks, default factor 1, note fuel cost is this multiplied by distance and divided by machine_operations..
@@ -328,7 +328,7 @@ minetest.register_node("basic_machines:mover", {
 	end,
 	
 	allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-		if minetest.is_protected(pos,player:get_player_name()) then return end
+		if minetest.is_protected(pos,player:get_player_name()) then return 0 end
 		if listname == "filter" then
 			local meta = minetest.get_meta(pos);
 			local itemname = stack:to_string() or "";
@@ -365,7 +365,7 @@ minetest.register_node("basic_machines:mover", {
 	end,
 	
 	allow_metadata_inventory_take = function(pos, listname, index, stack, player)
-		if minetest.is_protected(pos,player:get_player_name()) then return end
+		if minetest.is_protected(pos,player:get_player_name()) then return 0 end
 		local meta = minetest.get_meta(pos);
 		meta:set_float("upgrade",1); -- reset upgrade
 		local form = get_mover_form(pos,player)

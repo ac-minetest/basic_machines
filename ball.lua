@@ -345,7 +345,6 @@ minetest.register_node("basic_machines:ball_spawner", {
 	paramtype = "light",
 	param1=1,
 	walkable = false,
-	alpha = 150,
 	sounds = default.node_sound_wood_defaults(),
 	after_place_node = function(pos, placer)
 		local meta = minetest.env:get_meta(pos)

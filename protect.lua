@@ -18,7 +18,7 @@ function minetest.is_protected(pos, digger)
 				if meta:get_int("x1") ~= 0 then -- trigger protection event
 					meta:set_string("infotext",digger); -- record diggers name onto distributor
 					local table = minetest.registered_nodes["basic_machines:distributor"];
-					local effector=table.mesecons.effector;
+					local effector=table.effector;
 					local node = nil;
 					effector.action_on(p,node,machines_TTL); 
 				end

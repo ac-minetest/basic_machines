@@ -9,7 +9,7 @@ local no_recycle_list  = {
 	["dye:white"]=1,["dye:grey"]=1,["dye:dark_grey"]=1,["dye:black"]=1,
 	["dye:violet"]=1,["dye:blue"]=1,["dye:cyan"]=1,["dye:dark_green"]=1,
 	["dye:green"]=1,["dye:yellow"]=1,["dye:brown"]=1,["dye:orange"]=1,
-	["dye:red"]=1,["dye:magenta"]=1,["dye:pink"]=1,
+	["dye:red"]=1,["dye:magenta"]=1,["dye:pink"]=1,["default:mossycobble"]=1,
 }
 
 

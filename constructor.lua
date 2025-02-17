@@ -40,12 +40,6 @@ basic_machines.craft_recipe_order = { -- order in which nodes appear
 	"keypad","light","grinder","mover", "battery","generator","detector", "distributor", "clock_generator","recycler","autocrafter","ball_spawner", "enviroment", "power_block", "power_cell", "coal_lump",
 }
 
-if mesecon then -- add mesecon adapter
-	basic_machines.craft_recipes["mesecon_adapter"] = {item = "basic_machines:mesecon_adapter", description = "interface between machines and mesecons", craft = {"default:mese_crystal_fragment"}, tex = "jeija_luacontroller_top"}
-	basic_machines.craft_recipe_order[1+#basic_machines.craft_recipe_order] = "mesecon_adapter"
-end
-
-		
 
 local constructor_process = function(pos) 
 	

@@ -31,8 +31,10 @@ dofile(minetest.get_modpath("basic_machines").."/constructor.lua") -- enable cra
 dofile(minetest.get_modpath("basic_machines").."/protect.lua") -- enable interaction with players, adds local on protect/chat event handling
 
 -- MESECON functionality
-if mesecon then 
+if mesecon then -- DO NOT REMOVE THIS CHECK or it wont work with mesecons
 	dofile(minetest.get_modpath("basic_machines").."/mesecon_adapter.lua")
+	basic_machines.craft_recipes["mesecon_adapter"] = {item = "basic_machines:mesecon_adapter", description = "interface between machines and mesecons", craft = {"default:mese_crystal_fragment"}, tex = "jeija_luacontroller_top"}
+	basic_machines.craft_recipe_order[1+#basic_machines.craft_recipe_order] = "mesecon_adapter"
 end
 -- OPTIONAL ADDITIONAL STUFF ( comment to disable )
 
